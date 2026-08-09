@@ -1,0 +1,446 @@
+
+    <!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- nhúng style -->
+    <link rel="stylesheet" href="../css/FontRainbow.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <!-- nhúng cdn -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <!-- --------------------- -->
+    <title>Những địa danh Văn học ở Việt Nam</title>
+  </head>
+  <body>
+    <!-- Mở đầu và các chức năng  -->
+    <span class="widgetbar">
+      <!--  -->
+      <div class="widgets">
+        <button class="menu-btn" id="toggleBtn">
+          <i class="fa-solid fa-bars"></i>
+          Tác Phẩm
+        </button>
+        <!--  -->
+        <span class="icon">
+          <a href="../index.html">
+            <i class="fa-solid fa-house" style="color: rgb(76, 60, 60)"></i>
+            <span class="icon-text">Trang chủ</span>
+          </a>
+          |
+          <a href="">
+            <i class="fa-solid fa-rotate" style="color: rgb(31, 37, 42)"></i>
+            <span class="icon-text">Làm mới</span>
+          </a>
+        </span>
+      </div>
+      <!--  -->
+      <span class="search-group">
+        <span class="searchbar">
+          <input
+            type="text"
+            id="search"
+            class="inp"
+            placeholder="Tìm kiếm thông tin tác phẩm văn học.."
+          />
+          <div id="bangdexuat" class="danhsachdx"></div>
+        </span>
+        <button id="submit" class="btn">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+      </span>
+    </span>
+    <!-- ----- -->
+    <div class="menu-container">
+      <ul class="vertical-menu" id="menuList">
+        <li>
+          <a>Lớp 10</a>
+          <ul class="tacPham">
+            <li tabindex="0">
+              <a>Thần Trụ Trời</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Nui_Thach_Mon.html">Núi Thạch Môn</a></li>
+              </ul>
+            </li>
+
+            <li tabindex="0">
+              <a>Tản Viên từ phán sự lục</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Den_Tan_Vien.html">Đền Tản Viên</a></li>
+                <li>
+                  <a href="../html/Huyen_Yen_Dung_Dat_Lang_Giang.html"
+                    >Huyện Yên Dũng, đất Lạng Giang</a
+                  >
+                </li>
+                <li>
+                  <a href="../html/Thanh_Dong_Quan.html"
+                    >Thành Đông Quan (thành Thăng Long, Hà Nội)</a
+                  >
+                </li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Hiền tài là nguyên khí của quốc gia</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Cua_Hien_Quan.html">Cửa Hiền Quan</a></li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Bình Ngô Đại Cáo</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Bo_Dang.html">Bồ Đằng</a></li>
+                <li><a href="../html/Can_Tram.html">Cần Trạm</a></li>
+                <li><a href="../html/Chi_Lang.html">Chi Lăng</a></li>
+                <li><a href="../html/Dong_Do.html">Đông Đô</a></li>
+                <li><a href="../html/Ham_Tu.html">Hàm Tử</a></li>
+                <li><a href="../html/Khoi_Huyen.html">Khôi Huyện</a></li>
+                <li><a href="../html/Lang_Giang.html">Lạng Giang</a></li>
+                <li>
+                  <a href="../html/Linh_Son.html">Linh Sơn (núi Linh Sơn)</a>
+                </li>
+                <li><a href="../html/Ma_An.html">Mã An</a></li>
+                <li><a href="../html/Ninh_Kieu.html">Ninh Kiều</a></li>
+                <li>
+                  <a href="../html/Song_Bach_Dang.html">Sông Bạch Đằng</a>
+                </li>
+                <li><a href="../html/Tay_Kinh.html">Tây Kinh</a></li>
+                <li><a href="../html/Tot_Dong.html">Tốt Động</a></li>
+                <li><a href="../html/Tra_Lan.html">Trà Lân</a></li>
+                <li><a href="../html/Vung_Lam_Son.html">Lam Sơn</a></li>
+                <li>
+                  <a href="../html/Xuong_Giang_Binh_Than.html"
+                    >Xương Giang Bình Than</a
+                  >
+                </li>
+              </ul>
+            </li>
+
+            <li tabindex="0">
+              <a>Dục Thúy Sơn</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Nui_Duc_Thuy.html">Núi Dục Thuý</a></li>
+              </ul>
+            </li>
+
+            <li tabindex="0">
+              <a>Nghệ thuật truyền thống của người Việt</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Dinh_Bang.html">Đình Bảng</a></li>
+                <li><a href="../html/Bia_Lam_Son.html">Bia Lam Sơn</a></li>
+                <li><a href="../html/Lang_Tam.html">Lăng tẩm</a></li>
+                <li>
+                  <a href="../html/Pho_Tuong_Trann_Vu.html"
+                    >Pho tượng Trấn Vũ</a
+                  >
+                </li>
+                <li>
+                  <a href="../html/Chua_Phat_Tich_But_Thap.html"
+                    >Chùa Phật Tích, Bút Tháp</a
+                  >
+                </li>
+                <li><a href="../html/Dong_Do.html">Hà Đông</a></li>
+                <li>
+                  <a href="../html/Chua_Tay_Phuong.html">Chùa Tây Phương</a>
+                </li>
+                <li><a href="../html/Chua_Coi.html">Chùa Cói</a></li>
+              </ul>
+            </li>
+
+            <!-- <li><a>Xúy Vân giả dại</a></li> -->
+          </ul>
+        </li>
+        <li>
+          <a>Lớp 11</a>
+          <ul class="tacPham">
+            <li tabindex="0">
+              <a>Vợ nhặt</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Nam_Dinh.html">Nam Định</a></li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Chí Phèo</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Lang_Vu_Dai.html">Làng Vũ Đại</a></li>
+              </ul>
+            </li>
+
+            <li tabindex="0">
+              <a>Cải ơi</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Cho_Lon.html">Chợ Lớn</a></li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Nhớ đồng</a>
+              <ul class="diaDanh">
+                <li>
+                  <a href="../html/Nha_Lao_Thua_Phu.html">Nhà lao Thừa Phủ</a>
+                </li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Tràng Giang</a>
+              <ul class="diaDanh">
+                <li>
+                  <a href="../html/Song_Hong_vung_chem_ve.html"
+                    >Sông Hồng(Vùng Chèm - Vẽ)</a
+                  >
+                </li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Lời tiễn dặn</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Tay_Bac.html">Tây Bắc</a></li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Vĩnh biệt Cửu Trùng Đài</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Thang_Long.html">Thăng Long</a></li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Mộng đắc thái liên (Mơ đi hái sen)</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Ho_Tay.html">Hồ Tây</a></li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Ai đã đặt tên cho dòng sông</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Song_Huong.html">Sông Hương</a></li>
+                <li><a href="../html/Nui_kim_phung.html">Núi Kim Phụng</a></li>
+                <li><a href="../html/Chau_Hoa.html">Châu Hoá</a></li>
+                <li><a href="../html/Ngoc_Tran.html">Ngọc Trản</a></li>
+                <li><a href="../html/Chua_Thien_Mu.html">Chùa Thiên Mụ</a></li>
+                <li>
+                  <a href="../html/Vong_Canh.html">Vọng Cảnh</a>
+                </li>
+                <li><a href="../html/Tam_Thai.html">Tam Thai</a></li>
+                <li><a href="../html/Luu_Bao.html">Lựu Bảo</a></li>
+                <li><a href="../html/Kim_Long.html">Kim Long</a></li>
+                <li>
+                  <a href="../html/Con_Gia_Vien.html">Cồn Giã Viên</a>
+                </li>
+                <li><a href="../html/Con_Hen.html">Cồn Hến</a></li>
+                <li><a href="../html/Bao_Vinh.html">Bao Vinh</a></li>
+                <li><a href="../html/Phu_Xuan.html">Phú Xuân</a></li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Cà Mau quê xứ</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Ca_Mau.html">Cà Mau</a></li>
+              </ul>
+            </li>
+
+            <li tabindex="0">
+              <a>Nữ phóng viên đầu tiên</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Sai_Gon.html">Sài Gòn</a></li>
+                <li><a href="../html/Hue.html">Huế</a></li>
+                <li><a href="../html/Ha_Noi.html">Hà Nội</a></li>
+                <li><a href="../html/Hai_Phong.html">Hải Phòng</a></li>
+                <li><a href="../html/Nam_Dinh.html">Nam Định</a></li>
+              </ul>
+            </li>
+
+            <li tabindex="0">
+              <a>Ca nhạc ở Miệt Vườn</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Vinh_Kim_Dong.html">Vĩnh Kim Đông</a></li>
+                <li><a href="../html/Hau_Giang.html">Hậu Giang</a></li>
+                <li><a href="../html/My_Tho.html">Mỹ Tho</a></li>
+                <li><a href="../html/Vinh_Long.html">Vĩnh Long</a></li>
+                <li><a href="../html/Sa_Dec.html">Sa Đéc</a></li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Văn tế nghĩa sĩ Cần Giuộc</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Can_Giuoc.html">Cần Giuộc</a></li>
+                <li>
+                  <a href="../html/Chua_Tong_Thanh.html">Chùa Tông Thạnh</a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <a>Lớp 12</a>
+          <ul class="tacPham">
+            <li tabindex="0">
+              <a>Tây Tiến</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Song_Ma.html">Sông Mã</a></li>
+                <li><a href="../html/Sai_Khao.html">Sài Khao (Sơn La)</a></li>
+                <li><a href="../html/Muong_Lat.html">Mường Lát</a></li>
+                <li><a href="../html/Pha_Luong.html">Pha Luông</a></li>
+                <li><a href="../html/Muong_Hich.html">Mường Hịch</a></li>
+                <li><a href="../html/Mai_Chau.html">Mai Châu</a></li>
+                <li><a href="../html/Chau_Moc.html">Châu Mộc (Mộc Châu)</a></li>
+              </ul>
+            </li>
+            <li tabindex="0">
+              <a>Hải khẩu linh từ</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Ky_Hoa.html">Kỳ Hoa</a></li>
+              </ul>
+            </li>
+
+            <li tabindex="0">
+              <a>Tuyên ngôn Độc lập</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Quang_Tri.html">Quảng Trị</a></li>
+                <li>
+                  <a
+                    href="../html/Thai_Binh(thay_the_Bac_Ki_tp_Tuyen_ngon_doc_lap).html"
+                    >Thái Bình</a
+                  >
+                </li>
+                <li><a href="../html/Yen_Bai.html">Yên Bái</a></li>
+                <li><a href="../html/Cao_Bang.html">Cao Bằng</a></li>
+              </ul>
+            </li>
+
+            <li tabindex="0">
+              <a>Bước vào đời</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Dong_Hoi.html">Đồng Hới</a></li>
+              </ul>
+            </li>
+
+            <li tabindex="0">
+              <a>Vĩ tuyến 17</a>
+              <ul class="diaDanh">
+                <li><a href="../html/Vinh_Linh.html">Vĩnh Linh</a></li>
+                <li><a href="../html/Ha_Noi.html">Hà Nội</a></li>
+                <li><a href="../html/Thanh_Hoa.html">Thanh Hoá</a></li>
+                <li><a href="../html/Ha_Tinh.html">Hà Tĩnh</a></li>
+                <li><a href="../html/Deo_Da_Deo.html">Đèo Đá Đẽo</a></li>
+                <li><a href="../html/Quang_Binh.html">Quảng Bình</a></li>
+              </ul>
+            </li>
+
+            <li tabindex="0">
+              <a>Khúc đồng quê</a>
+              <ul class="diaDanh">
+                <li>
+                  <a href="../html/Thanh_Hoa(tac_pham_Khuc_Dong_Que).html"
+                    >Thanh Hoá</a
+                  >
+                </li>
+                <li><a href="../html/Song_Chua.html">Sông Chu</a></li>
+                <li><a href="../html/Yen_Loc.html">Yên Lộc</a></li>
+              </ul>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <!--  -->
+    <h1 class="codepro-auto-text">Yên Lộ</h1>
+    <hr />
+    <p>
+      Địa danh trên hiện nay thuộc huyện Thiệu Hoá, Thanh Hoá<br />
+      Xuất hiện ở tác phẩm Khúc Đông Quê: <br />
+"Còn ngay ở Yên Lộ, hình như không có mua rào hay mưa dầm như kiểu ở làng Quỳnh." Trang 124
+
+    </p>
+
+    <img
+      src="../HÌNH NCKH 10-11-12/Thần Trụ Trời Núi Thạch Môn (Núi Dương Nham,Núi Yên Phụ).jpg"
+      alt="Hình ảnh Núi Thạch Môn"
+      style="width: auto; height: auto"
+    />
+    <p>Vị trí địa lí trên bản đồ bạn đọc có thể tham khảo</p>
+    <iframe
+      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.0117437668005!2d106.507421!3d21.0322161!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x313581088884a085%3A0x8e08093a6ffbc829!2zTsO6aSBExrDGoW5nIE5oYW0!5e0!3m2!1svi!2s!4v1784983417024!5m2!1svi!2s"
+      width="100%"
+      height="450"
+      style="border: 20"
+      allowfullscreen=""
+      loading="lazy"
+      referrerpolicy="strict-origin-when-cross-origin"
+    ></iframe>
+
+    <p>
+      Vai trò của địa danh trong tác phẩm góp phần làm tăng sức hút của địa
+      danh.Địa danh này là biểu tượng của sự bình yên, ấm áp và sự gắn kết bền chặt giữa con người với mảnh đất quê hương.
+    </p>
+
+    <a href="#" style="color: #9c4128">
+      <b>Quay về đầu trang</b>
+    </a>
+
+    <div class="horizontal-recommend">
+      <h3 class="recommend-title">Địa điểm gợi ý</h3>
+
+      <div class="recommend-list">
+        <!-- Bài viết 1 -->
+        <a href="../html/Song_Bach_Dang.html" class="recommend-item">
+          <img
+            src="../HÌNH NCKH 10-11-12/Bình Ngô đại cáo( sông bạch đằng ).jpg"
+            alt="Sông Bạch Đằng"
+          />
+          <div class="item-content">
+            <h4 class="item-title">
+              Sông Bạch Đằng trong tác phẩm Bình Ngô Đại Cáo
+            </h4>
+          </div>
+        </a>
+
+        <!-- Bài viết 2 -->
+        <a href="../html/Chi_Lang.html" class="recommend-item">
+          <img
+            src="../HÌNH NCKH 10-11-12/Bình Ngô đại cáo ( Chi Lăng ).jpg"
+            alt="Chi Lăng"
+          />
+          <div class="item-content">
+            <h4 class="item-title">
+              Hình ảnh Chi Lăng trong tác phẩm Bình Ngô Đại Cáo
+            </h4>
+          </div>
+        </a>
+
+        <!-- Bài viết 3 -->
+        <a href="../html/Ham_Tu.html" class="recommend-item">
+          <img
+            src="../HÌNH NCKH 10-11-12/Bình Ngô đại cáo ( hàm tử ).jpg"
+            alt="Hàm Tử"
+          />
+          <div class="item-content">
+            <h4 class="item-title">
+              Hàm Tử ra sao trong tác phẩm Bình Ngô Đại Cáo
+            </h4>
+          </div>
+        </a>
+      </div>
+    </div>
+
+    <div
+      class="About us"
+      style="background-color: #76764ed6; padding: 10px; border-radius: 5px"
+    >
+      <h2 style="color: white">About us</h2>
+      <p style="color: white">
+        Nhóm chúng mình gồm 2 thành viên, đều là học sinh trường THPT Bình
+        Chánh. Chúng mình đã cùng nhau tạo ra trang web này nhằm mục đích giới
+        thiệu tới các bạn những địa danh Văn học nổi tiếng và những tác phẩm văn
+        học gắn liền với nó.
+      </p>
+      <b><p>&copy; Web được phát triển bởi nhóm THPT Bình Chánh</p></b>
+    </div>
+    <!-- nhúng js -->
+    <script src="../js/main.js"></script>
+  </body>
+</html>
