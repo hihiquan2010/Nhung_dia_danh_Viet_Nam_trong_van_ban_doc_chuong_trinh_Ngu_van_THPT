@@ -1,0 +1,196 @@
+body {
+  background-image: url("../bgindex.jpg");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+}
+
+.widgetbar {
+  background-color: #5f5f5469;
+  padding: 10px;
+  border-radius: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.widgets {
+  display: flex;
+  width: 240px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.widgets a {
+  text-decoration: none;
+}
+
+/* 
+.menu-btn {
+  width: 180px;
+  padding: 12px;
+  background-color: #2c3e50;
+  color: white;
+  border: none;
+  text-align: center;
+  font-size: 15px;
+  cursor: pointer;
+  border-radius: 4px;
+}  */
+
+.menu-container {
+  width: 100%;
+  max-width: 1000px;
+  font-family: "Times New Roman", sans-serif;
+  margin: 0 auto;
+}
+
+/* Big parent */
+.menu {
+  display: flex;
+  gap: 15px;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.menu > li {
+  flex: 1;
+  position: relative;
+}
+
+/* Lop 10 11 12 */
+.menu > li > a {
+  display: block;
+  padding: 15px;
+  margin-top: 10px;
+  color: white;
+  text-align: center;
+  font-size: 18px;
+  font-weight: bold;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+#lop10 {
+  background-color: #63150c;
+}
+
+#lop11 {
+  background-color: #13065f;
+}
+
+#lop12 {
+  background-color: #af7a0a;
+}
+
+.menu > li > a:hover,
+.menu > li > a:focus {
+  background-color: #2c2b27;
+  color: #c9c5c5e4;
+  outline: none;
+}
+
+/* Tac pham */
+.menu .tacPham {
+  display: none;
+  position: absolute;
+  top: calc(100% + 5px);
+  left: 0;
+  width: 100%;
+  min-width: 250px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 5px 0;
+  list-style-type: none;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  z-index: 100;
+}
+
+.menu > li:hover > .tacPham,
+.menu > li:focus-within > .tacPham {
+  display: block;
+}
+
+.menu .tacPham > li {
+  position: relative;
+  border-bottom: 1px solid #eee;
+}
+
+.menu .tacPham > li:last-child {
+  border-bottom: none;
+}
+
+.menu .tacPham a {
+  display: block;
+  padding: 12px 15px;
+  color: #333;
+  font-size: 16px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.menu .tacPham a::before {
+  content: "🧾 ";
+}
+
+.menu .tacPham a:hover,
+.menu .tacPham a:focus {
+  background-color: #2c3e50;
+  color: #fff;
+  outline: none;
+}
+
+/* diaDanh */
+.menu .tacPham .diaDanh {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 100%;
+  margin-left: 2px;
+  min-width: 220px;
+  background-color: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 5px 0;
+  list-style-type: none;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 101;
+}
+
+.menu .tacPham > li:hover > .diaDanh,
+.menu .tacPham > li:focus-within > .diaDanh {
+  display: block;
+}
+
+.menu .tacPham .diaDanh a {
+  padding: 10px 15px;
+  font-size: 15px;
+  color: #0b0b0b;
+}
+
+.menu .tacPham .diaDanh a::before {
+  content: "📍 ";
+}
+
+.menu .tacPham .diaDanh a:hover {
+  background-color: #e9ecef;
+  color: #d35400;
+}
+
+.infoGroup {
+  background-color: #76764ed6;
+  padding: 10px;
+  border-radius: 5px;
+}
+
+.infoGroup .text {
+  color: white;
+  text-align: center;
+}
