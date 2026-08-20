@@ -12,7 +12,7 @@ function buildMenuHtml() {
 
     gradeItem.works.forEach((work) => {
       const workLink = work.link
-        ? `<a href="${work.link}" target="_blank">${work.name}</a>`
+        ? `<a href="${work.link}" target="_blank" class="require-double-click">${work.name}</a>`
         : `<a>${work.name}</a>`;
 
       html += `
@@ -47,7 +47,27 @@ export function renderMenu() {
   if (!container) return;
 
   container.innerHTML = buildMenuHtml();
+
+  container.addEventListener("click", function (e) {
+    const targetLink = e.target.closest("a.require-double-click");
+
+    if (targetLink) {
+      if (!targetLink.dataset.clickedOnce) {
+        e.preventDefault();
+        targetLink.dataset.clickedOnce = "true";
+
+        const originalText = targetLink.innerHTML;
+        targetLink.innerHTML = `${originalText} (Xác nhận xem bản đồ trực quan ?)`;
+        targetLink.style.color = "red";
+
+        setTimeout(() => {
+          targetLink.dataset.clickedOnce = "";
+          targetLink.innerHTML = originalText;
+          targetLink.style.color = "";
+        }, 3000);
+      }
+    }
+  });
 }
 
-// Tự động chạy khi tải trang
 document.addEventListener("DOMContentLoaded", renderMenu);
