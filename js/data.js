@@ -48,7 +48,7 @@ export const menuData = [
           { name: "Tây Kinh", url: "./html/Tay_Kinh.html" },
           { name: "Tốt Động", url: "./html/Tot_Dong.html" },
           { name: "Trà Lân", url: "./html/Tra_Lan.html" },
-          { name: "Lam Sơn", url: "./html/Vung_Lam_Son.html" },
+          { name: "Vùng Lam Sơn", url: "./html/Vung_Lam_Son.html" },
           {
             name: "Xương Giang Bình Than",
             url: "./html/Xuong_Giang_Binh_Than.html",
