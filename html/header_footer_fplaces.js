@@ -4,7 +4,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const rootPath = "../";
   const basePath = "./";
 
-  // --- 2. RENDER HEADER (Bao gồm icon, chỗ chứa Menu và thanh Tìm kiếm) ---
+  // --- 1. RENDER HEADER (Bao gồm icon, chỗ chứa Menu và thanh Tìm kiếm) ---
   const headerContainer = document.getElementById("header");
 
   if (headerContainer) {
@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
     `;
   }
 
-  // --- 3. RENDER MENU VÀO TRONG <div id="menu"> ---
+  // --- 2. RENDER MENU VÀO TRONG <div id="menu"> ---
   const menuContainer = document.getElementById("menu");
   if (menuContainer) {
     let menuHtml = `<div class="menu-container"><ul class="menu" id="menuList">`;
@@ -54,8 +54,9 @@ document.addEventListener("DOMContentLoaded", function () {
       `;
 
       gradeItem.works.forEach((work) => {
+        // 1. Thêm class "require-double-click" vào link tác phẩm có chứa URL
         const workLink = work.link
-          ? `<a href="${work.link}" target="_blank">${work.name}</a>`
+          ? `<a href="${work.link}" target="_blank" class="require-double-click">${work.name}</a>`
           : `<a>${work.name}</a>`;
 
         menuHtml += `
@@ -84,9 +85,49 @@ document.addEventListener("DOMContentLoaded", function () {
 
     menuHtml += `</ul></div>`;
     menuContainer.innerHTML = menuHtml;
+
+    // 3. Thêm sự kiện yêu cầu xác nhận 2 lần khi bấm vào link có class "require-double-click"
+    menuContainer.addEventListener("click", function (e) {
+      const targetLink = e.target.closest("a.require-double-click");
+
+      if (targetLink) {
+        if (!targetLink.dataset.clickedOnce) {
+          e.preventDefault(); // Ngăn chặn việc mở tab mới ở lần click đầu tiên
+          targetLink.dataset.clickedOnce = "true";
+
+          const originalText = targetLink.innerHTML;
+          // Lưu lại nội dung gốc vào dataset để tiện phục hồi
+          targetLink.dataset.originalText = originalText;
+
+          targetLink.innerHTML = `${originalText} <span style="font-size: 0.85em;">(Xác nhận xem bản đồ trực quan ?)</span>`;
+          targetLink.style.color = "red";
+
+          // Hủy trạng thái xác nhận sau 3 giây
+          setTimeout(() => {
+            targetLink.dataset.clickedOnce = "";
+            targetLink.innerHTML = targetLink.dataset.originalText;
+            targetLink.style.color = "";
+          }, 3000);
+        }
+      }
+    });
+
+    // Xử lí địa danh visited
+    const placeLinks = menuContainer.querySelectorAll(".tacPham .diaDanh a");
+    placeLinks.forEach((link) => {
+      
+      if (localStorage.getItem(link.href) === "visited") {
+        link.innerHTML +=
+          " <span style='color: green; font-size: 0.8em;'>(Đã xem)</span>";
+      }
+
+      link.addEventListener("click", function () {
+        localStorage.setItem(this.href, "visited");
+      });
+    });
   }
 
-  // --- 4. RENDER FOOTER ---
+  // --- RENDER ---
   const footer = document.getElementById("footer");
   if (footer) {
     footer.innerHTML = `
@@ -102,14 +143,12 @@ document.addEventListener("DOMContentLoaded", function () {
           <i class="fa-solid fa-school"></i> Đơn vị: Trường THPT Bình Chánh
         </p></b>
       <pre></pre>
-      <p>Nhóm thực hiện: Phạm Gia Uy 11A3 và Trần Thanh Duy 12A16</p>
-      <pre></pre>
-      <i><p>&copy; Web được phát triển bởi nhóm học sinh THPT Bình Chánh</p></i>
+      <p><i class="fa-solid fa-user-group"></i> Nhóm thực hiện: Phạm Gia Uy 11A3 và Trần Thanh Duy 12A16</p>
     </div>
     `;
   }
 
-  // --- 5. TẠO DỮ LIỆU TÌM KIẾM (PAGEMAP) VÀ SỰ KIỆN TÌM KIẾM ---
+  // Gợi ý tìm kiếm ---
   const pageMap = {};
   menuData.forEach((gradeItem) => {
     if (gradeItem.works) {
