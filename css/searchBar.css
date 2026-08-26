@@ -1,0 +1,38 @@
+﻿.search-group {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-end;
+  width: 400px;
+}
+
+.inp {
+  position: relative;
+  box-sizing: border-box;
+  border-radius: 5px;
+  padding: 5px;
+  width: 100%;
+}
+.btn {
+  border-radius: 5px;
+  padding: 5px;
+}
+
+.danhsachdx {
+  position: absolute;
+  width: 180px;
+  border: 0px solid #f4efef8d;
+  border-radius: 7px;
+  background: #f4f4f4c1;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.nddx {
+  padding: 10px;
+  cursor: pointer;
+}
+
+.nddx:hover {
+  background-color: #f0f0f0;
+}
