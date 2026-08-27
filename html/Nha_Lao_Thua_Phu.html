@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <title>NHÀ LAO THỪA PHỦ - DỰ ÁN SÁNG TẠO SỐ</title>
+    
+    <style>
+      .slider-container {
+        position: relative;
+        width: 100%;
+        height: 350px; 
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        perspective: 1000px; 
+        margin-top: 30px;
+        margin-bottom: 50px;
+      }
+      .rotator {
+        position: relative;
+        width: 180px; 
+        height: 250px; 
+        transform-style: preserve-3d;
+        animation: spin 20s linear infinite; 
+      }
+      .slider-container:hover .rotator {
+        animation-play-state: paused;
+      }
+      .rotator span {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: center;
+        transform-style: preserve-3d;
+        transform: rotateY(calc(var(--i) * 180deg)) translateZ(220px);
+      }
+      .rotator span img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 2px solid #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        -webkit-box-reflect: below 5px
+          linear-gradient(transparent, transparent, rgba(0, 0, 0, 0.35));
+        transition: transform 0.3s;
+        cursor: pointer;
+      }
+      .rotator span img:hover {
+        transform: scale(1.15) translateY(-10px);
+      }
+      @keyframes spin {
+        0% {
+          transform: rotateY(0deg);
+        }
+        100% {
+          transform: rotateY(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header id="header"></header>
+    <div class="header-section">
+      <div class="title-wrapper">
+        <span class="leaf-icon left-leaf">🌿</span>
+        <h1 class="main-title">NHÀ LAO THỪA PHỦ</h1>
+        <span class="leaf-icon right-leaf">🌿</span>
+      </div>
+      <p class="sub-title">
+        Địa danh hiện nay là Thừa Thiên Huế (Thành phố Huế)
+      </p>
+      <div class="divider-ornament">⚬❖⚬</div>
+    </div>
+    <div class="dia-danh-container">
+      <div class="info-column">
+        <div class="content-grid">
+          <div class="map-box feature-box">
+            <h3 class="box-title">
+              <span class="icon"><i class="fa-solid fa-location-dot"></i></span>
+              VỊ TRÍ TRÊN BẢN ĐỒ
+            </h3>
+            <div class="map-container">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3724.0117437668005!2d106.507421!3d21.0322161!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x313581088884a085%3A0x8e08093a6ffbc829!2zTsO6aSBExrDGoW5nIE5oYW0!5e0!3m2!1svi!2s!4v1784983417024!5m2!1svi!2s"
+                width="100%"
+                height="300"
+                style="border: 0; border-radius: 10px"
+                allowfullscreen=""
+                loading="lazy"
+              ></iframe>
+            </div>
+          </div>
+          <div class="text-boxes">
+            <div class="quote-box feature-box">
+              <h3 class="box-title">
+                <span class="icon">📖</span> TRÍCH DẪN VĂN BẢN
+              </h3>
+              <div class="quote-content">
+                <p></p>
+              </div>
+            </div>
+            <div class="role-box feature-box">
+              <h3 class="box-title">
+                <span class="icon"><i class="fa-solid fa-lightbulb"></i></span>
+                VAI TRÒ CỦA ĐỊA DANH
+              </h3>
+              <ul class="role-list">
+                <li>
+                  <span class="check-icon"
+                    ><i class="fa-solid fa-check"></i></span
+                  >Tác phẩm được viết khi tác giả bị giam ở nhà lao Thừa Phủ
+                  (Thừa Thiên Huế)
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="image-column">
+        <div class="image-header">
+          <h3><span class="icon">📸</span> HÌNH ẢNH NHÀ LAO THỪA PHỦ</h3>
+          <div class="divider-ornament small">⚬❖⚬</div>
+        </div>
+        <div class="slider-container">
+          <div class="rotator">
+            
+            <span style="--i: 1"
+              ><img
+                src="../HÌNH NCKH 10-11-12/Nhà Lao Thừa Phủ 1.png"
+                alt="Ảnh Nhà lao Thừa Phủ 1"
+              />
+            </span>
+            <span style="--i: 2"
+              ><img
+                src="../HÌNH NCKH 10-11-12/Nhà Lao Thừa Phủ 2.png"
+                alt="Ảnh Nhà lao Thừa Phủ 2"
+            /></span>
+          </div>
+        </div>
+        <p class="caption" style="margin-top: 40px">
+          <a
+            href="https://khamphahue.com.vn/Van-hoa/Chi-tiet/tid/Khu-chung-tich-lao-Thua-Phu.html/pid/15094/cid/147"
+            style="text-decoration: none"
+            ><i class="fa-solid fa-camera"></i> Nguồn: Khu chứng tích lao Thừa
+            Phủ - khamphahue.com.vn</a
+          >
+        </p>
+      </div>
+    </div>
+    <footer id="footer"></footer>
+    <script type="module" src="./header_footer_fplaces.js"></script>
+    <script src="../js/ico.js"></script>
+  </body>
+</html>
