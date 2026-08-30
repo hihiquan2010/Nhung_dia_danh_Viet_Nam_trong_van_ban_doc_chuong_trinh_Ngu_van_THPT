@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="../css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <title>LĂNG TẨM - DỰ ÁN SÁNG TẠO SỐ</title>
+    <style>
+      .slider-container {
+        position: relative;
+        width: 100%;
+        height: 350px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        perspective: 1200px;
+        margin-top: 30px;
+        margin-bottom: 50px;
+      }
+      .rotator {
+        position: relative;
+        width: 180px;
+        height: 250px;
+        transform-style: preserve-3d;
+        animation: spin 30s linear infinite;
+      }
+      .slider-container:hover .rotator {
+        animation-play-state: paused;
+      }
+      .rotator span {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        transform-origin: center;
+        transform-style: preserve-3d;
+        transform: rotateY(calc(var(--i) * 32.72deg)) translateZ(340px);
+      }
+      .rotator span img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: 12px;
+        object-fit: cover;
+        border: 2px solid #fff;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        -webkit-box-reflect: below 5px
+          linear-gradient(transparent, transparent, rgba(0, 0, 0, 0.35));
+        transition: transform 0.3s;
+        cursor: pointer;
+      }
+      .rotator span:hover img {
+        transform: scale(1.15) translateY(-10px);
+      }
+      .rotator span .caption-tooltip {
+        position: absolute;
+        bottom: -30px;
+        left: 50%;
+        transform: translateX(-50%);
+        background-color: rgba(0, 0, 0, 0.8);
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 13px;
+        text-align: center;
+        width: max-content;
+        max-width: 250px;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+        z-index: 10;
+        pointer-events: none;
+      }
+      .rotator span .caption-tooltip a {
+        color: #fff;
+        text-decoration: none;
+        display: -webkit-box;
+        -webkit-line-clamp: 3; 
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+      }
+      .rotator span .caption-tooltip a:hover {
+        text-decoration: underline;
+        color: #4da6ff;
+      }
+      .rotator span:hover .caption-tooltip {
+        opacity: 1;
+        visibility: visible;
+        bottom: -15px;
+        pointer-events: auto;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotateY(0deg);
+        }
+        100% {
+          transform: rotateY(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header id="header"></header>
+    <div class="header-section">
+      <div class="title-wrapper">
+        <span class="leaf-icon left-leaf">🌿</span>
+        <h1 class="main-title">LĂNG TẨM</h1>
+        <span class="leaf-icon right-leaf">🌿</span>
+      </div>
+      <p class="sub-title">Địa danh thuộc Huế</p>
+      <div class="divider-ornament">⚬❖⚬</div>
+    </div>
+    <div class="dia-danh-container">
+      <div class="info-column">
+        <div class="content-grid">
+          <div class="map-box feature-box">
+            <h3 class="box-title">
+              <span class="icon"><i class="fa-solid fa-location-dot"></i></span>
+              VỊ TRÍ TRÊN BẢN ĐỒ
+            </h3>
+            <div class="map-container">
+              <iframe
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3826.456583480724!2d107.5928141!3d16.452402599999996!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3141a14393bcf0e3%3A0x5c27b0097892ed38!2zTMSDbmcgROG7pWMgw5Dhu6lj!5e0!3m2!1svi!2s!4v1785579391853!5m2!1svi!2s"
+                width="100%"
+                height="300"
+                style="border: 0; border-radius: 10px"
+                allowfullscreen=""
+                loading="lazy"
+              ></iframe>
+            </div>
+          </div>
+          <div class="text-boxes">
+            <div class="quote-box feature-box">
+              <h3 class="box-title">
+                <span class="icon">📖</span> TRÍCH DẪN VĂN BẢN
+              </h3>
+              <div class="quote-content">
+                <p>
+                  <strong>"</strong>Tuy nhiên, các cung điện lộng lẫy ở Huế, các
+                  đền thờ Khổng Tử uy nghi tại Hà Nội, đền thờ các vua Lý ở Đình
+                  Bảng với nhiều đồ vật tại đấy, các tấm bia Lam Sơn, các lăng
+                  tẩm ở Huế, pho tượng Trấn Vũ lớn bằng đồng ở Hà Nội, các ngôi
+                  chùa Phật Tích, Bút Tháp thanh tao,... là những chứng cứ đáng
+                  tin cậy về đỉnh cao mà kĩ thuật của các nghệ sĩ Việt Nam đã
+                  đạt đến.<strong>"</strong>
+                </p>
+              </div>
+            </div>
+            <div class="role-box feature-box">
+              <h3 class="box-title">
+                <span class="icon"><i class="fa-solid fa-lightbulb"></i></span>
+                VAI TRÒ CỦA ĐỊA DANH
+              </h3>
+              <ul class="role-list">
+                <li>
+                  <span class="check-icon"
+                    ><i class="fa-solid fa-check"></i></span
+                  >Tạo sức tin cậy cho thông tin: những chứng cứ về một nền nghệ
+                  thuật rực rỡ, lâu đời.
+                </li>
+                <li>
+                  <span class="check-icon"
+                    ><i class="fa-solid fa-check"></i></span
+                  >Thể hiện sự trải rộng và tính thống nhất của văn hóa Việt.
+                </li>
+                <li>
+                  <span class="check-icon"
+                    ><i class="fa-solid fa-check"></i></span
+                  >Khơi dậy niềm tự hào và ý thức bảo tồn di sản.
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="image-column">
+        <div class="image-header">
+          <h3><span class="icon">📸</span> HÌNH ẢNH LĂNG TẨM</h3>
+          <div class="divider-ornament small">⚬❖⚬</div>
+        </div>
+        <div class="slider-container">
+          <div class="rotator">
+            
+            <span style="--i: 1">
+              <img
+                src="../HÌNH NCKH 10-11-12/Lăng Tẩm 1.png"
+                alt="Khám Phá 7 Lăng Tẩm Huế Vua Nguyễn Đẹp Nhất Cố Đô"
+              />
+              <div class="caption-tooltip">
+                <a href="https://queenbus.com.vn/lang-tam-hue" target="_blank">
+                  <i class="fa-solid fa-camera"></i> Khám Phá 7 Lăng Tẩm Huế Vua
+                  Nguyễn Đẹp Nhất Cố Đô
+                </a>
+              </div>
+            </span>
+            
+            <span style="--i: 2">
+              <img
+                src="../HÌNH NCKH 10-11-12/Lăng Tẩm 2.png"
+                alt="Lăng Tự Đức Huế: Kiến Trúc & Bí ẩn Lớn Nhất"
+              />
+              <div class="caption-tooltip">
+                <a
+                  href="https://queenbus.com.vn/kham-pha-lang-tu-duc-hue"
+                  target="_blank"
+                >
+                  <i class="fa-solid fa-camera"></i> Lăng Tự Đức Huế: Kiến Trúc
+                  & Bí ẩn Lớn Nhất
+                </a>
+              </div>
+            </span>
+            
+            <span style="--i: 3">
+              <img
+                src="../HÌNH NCKH 10-11-12/Lăng Tẩm 3.png"
+                alt="Lăng ông vua thứ 5 vương triều nhà Nguyễn"
+              />
+              <div class="caption-tooltip">
+                <a
+                  href="https://danviet.vn/day-la-lang-mo-vua-duc-duc-vua-thu-5-nha-nguyen-noi-yen-nghi-cua-3-hoang-de-cha-con-chau-20241126100642107-d1197000.html"
+                  target="_blank"
+                >
+                  <i class="fa-solid fa-camera"></i> Lăng ông vua thứ 5 vương
+                  triều Nguyễn, nơi yên nghỉ của 3 hoàng đế
+                </a>
+              </div>
+            </span>
+            
+            <span style="--i: 4">
+              <img
+                src="../HÌNH NCKH 10-11-12/Lăng Tẩm 4.png"
+                alt="Du lịch Tết Đà Nẵng - Huế"
+              />
+              <div class="caption-tooltip">
+                <a href="https://trieuhaotourist.vn/" target="_blank">
+                  <i class="fa-solid fa-camera"></i> DU LỊCH TẾT ĐÀ NẴNG – BÀ NÀ
+                  HILL – HUẾ
+                </a>
+              </div>
+            </span>
+            
+            <span style="--i: 5">
+              <img
+                src="../HÌNH NCKH 10-11-12/Lăng Tẩm 5.png"
+                alt="Lăng Thiệu Trị (Xương Lăng)"
+              />
+              <div class="caption-tooltip">
+                <a href="https://vietnamtourism.gov.vn/" target="_blank">
+                  <i class="fa-solid fa-camera"></i> Lăng Thiệu Trị (Xương Lăng)
+                  - Cục Du lịch Quốc gia Việt Nam
+                </a>
+              </div>
+            </span>
+            
+            <span style="--i: 6">
+              <img
+                src="../HÌNH NCKH 10-11-12/Lăng Tẩm 6.png"
+                alt="Lăng Thiệu Trị - Nét đẹp kiến trúc riêng"
+              />
+              <div class="caption-tooltip">
+                <a
+                  href="https://danangbest.com/lang-thieu-tri-lang-tam-noi-tieng-bac-nhat-xu-co-do.html"
+                  target="_blank"
+                >
+                  <i class="fa-solid fa-camera"></i> Lăng Thiệu Trị - Nét đẹp
+                  kiến trúc riêng độc nhất vô nhị
+                </a>
+              </div>
+            </span>
+            
+            <span style="--i: 7">
+              <img
+                src="../HÌNH NCKH 10-11-12/Lăng Tẩm 7.png"
+                alt="Lăng Minh Mạng Huế"
+              />
+              <div class="caption-tooltip">
+                <a
+                  href="https://vinpearl.com/vi/lang-minh-mang-hue-kien-truc-dep-chuan-muc-bac-nhat-thoi-nguyen"
+                  target="_blank"
+                >
+                  <i class="fa-solid fa-camera"></i> Lăng Minh Mạng Huế - Điểm
+                  đến không thể bỏ lỡ tại cố đô
+                </a>
+              </div>
+            </span>
+            
+            <span style="--i: 8">
+              <img
+                src="../HÌNH NCKH 10-11-12/Lăng Tẩm 8.png"
+                alt="Lăng vua Minh Mạng (Hiếu Lăng)"
+              />
+              <div class="caption-tooltip">
+                <a
+                  href="https://khamphahue.com.vn/Van-hoa/Chi-tiet/tid/Lang-vua-Minh-Mang-Hieu-Lang.html/pid/11267/cid/43"
+                  target="_blank"
+                >
+                  <i class="fa-solid fa-camera"></i> Lăng vua Minh Mạng (Hiếu
+                  Lăng) - Khám Phá Huế
+                </a>
+              </div>
+            </span>
+            
+            <span style="--i: 9">
+              <img
+                src="../HÌNH NCKH 10-11-12/Lăng Tẩm 9.png"
+                alt="Lăng Minh Mạng (Hiếu Lăng)"
+              />
+              <div class="caption-tooltip">
+                <a
+                  href="https://phuot3mien.com/lang-minh-mang-o-hue.html"
+                  target="_blank"
+                >
+                  <i class="fa-solid fa-camera"></i> Lăng Minh Mạng - Sự kết hợp
+                  hài hòa giữa kiến trúc xưa và thiên nhiên
+                </a>
+              </div>
+            </span>
+            
+            <span style="--i: 10">
+              <img
+                src="../HÌNH NCKH 10-11-12/Lăng Tẩm 10.png"
+                alt="Lăng Gia Long"
+              />
+              <div class="caption-tooltip">
+                <a
+                  href="https://vi.wikipedia.org/wiki/L%C4%83ng_Gia_Long"
+                  target="_blank"
+                >
+                  <i class="fa-solid fa-camera"></i> Lăng Gia Long – Wikipedia
+                  tiếng Việt
+                </a>
+              </div>
+            </span>
+            
+            <span style="--i: 11">
+              <img
+                src="../HÌNH NCKH 10-11-12/Lăng Tẩm 11.png"
+                alt="Lăng Gia Long (Thiên Thọ Lăng)"
+              />
+              <div class="caption-tooltip">
+                <a
+                  href="https://hue.gov.vn/Du-khach/Thong-tin-du-khach/Kham-pha-Hue/tb/Lang-Gia-Long-Thien-Tho-Lang-777708"
+                  target="_blank"
+                >
+                  <i class="fa-solid fa-camera"></i> Lăng Gia Long (Thiên Thọ
+                  Lăng)
+                </a>
+              </div>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <footer id="footer"></footer>
+    <script type="module" src="./header_footer_fplaces.js"></script>
+    <script src="../js/ico.js"></script>
+  </body>
+</html>
