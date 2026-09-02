@@ -404,7 +404,7 @@ img {
 }
 
 .box-title {
-  font-size: clamp(1.05rem, 1.45vw, 1.4rem);
+  font-size: 1.2rem;
   color: #2c4c3b;
   margin-top: 0;
   margin-bottom: 15px;
@@ -471,7 +471,7 @@ img {
   font-style: italic;
   line-height: 1.75;
   color: #4a4a4a;
-  font-size: clamp(1.08rem, 1.4vw, 1.5rem);
+  font-size: clamp(1rem, 1.2vw, 1.1rem);
   margin: 0;
 }
 
@@ -487,7 +487,7 @@ img {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  font-size: clamp(1rem, 1.25vw, 1.25rem);
+  font-size: clamp(1rem, 1.2vw, 1.1rem);
 }
 
 .check-icon {
