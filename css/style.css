@@ -995,3 +995,42 @@ img {
     border-bottom: none;
   }
 }
+
+@media (max-width: 400px) {
+  /* Ngăn body hoặc container bị tràn ngang */
+  body {
+    overflow-x: hidden;
+  }
+
+  .widgetbar {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  .menu {
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+  }
+
+  .menu > li {
+    position: relative;
+    width: 100%;
+  }
+
+  .menu .tacPham {
+    position: static !important; /* Đưa về dạng tĩnh trên mobile để không bị tràn màn */
+    width: 100% !important;
+    box-shadow: none;
+    border: 1px solid var(--line);
+  }
+
+  .menu .tacPham#k10 .diaDanh,
+  .menu .tacPham#k11 .diaDanh,
+  .menu .tacPham#k12 .diaDanh {
+    position: static !important;
+    width: 100% !important;
+    max-height: none; /* Cho phép giãn tự nhiên hoặc giới hạn vừa phải */
+  }
+}
+
