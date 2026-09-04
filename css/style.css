@@ -518,9 +518,9 @@ img {
 }
 
 .info-column {
-  -webkit-box-flex: 6.5;
-      -ms-flex: 6.5;
-          flex: 6.5;
+  -webkit-box-flex: 5.5;
+      -ms-flex: 5.5;
+          flex: 5.5;
   padding: 30px;
   display: -webkit-box;
   display: -ms-flexbox;
