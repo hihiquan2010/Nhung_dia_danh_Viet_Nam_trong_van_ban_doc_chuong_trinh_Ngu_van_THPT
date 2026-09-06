@@ -49,10 +49,8 @@ export const menuData = [
           { name: "Chi Lăng", url: "./html/Chi_Lang.html" },
           { name: "Mã An", url: "./html/Ma_An.html" },
           { name: "Lạng Giang", url: "./html/Lang_Giang.html" },
-          {
-            name: "Xương Giang Bình Than",
-            url: "./html/Xuong_Giang_Binh_Than.html",
-          },
+          { name: "Xương Giang", url: "./html/Xuong_Giang.html" },
+          { name: "Bình Than", url: "./html/Binh_Than.html" },
           { name: "Cần Trạm", url: "./html/Can_Tram.html" },
         ],
       },
