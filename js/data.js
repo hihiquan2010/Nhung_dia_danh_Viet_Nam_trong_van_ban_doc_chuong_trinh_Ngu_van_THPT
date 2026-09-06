@@ -20,7 +20,7 @@ export const menuData = [
             url: "./html/Huyen_Yen_Dung_Dat_Lang_Giang.html",
           },
           {
-            name: "Thành Đông Quan (thành Thăng Long, Hà Nội)",
+            name: "Thành Đông Quan",
             url: "./html/Thanh_Dong_Quan.html",
           },
         ],
