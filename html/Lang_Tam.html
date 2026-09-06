@@ -24,6 +24,7 @@
       perspective: 1000px;
       margin-top: 20px;
       margin-bottom: 20px;
+      overflow-x: hidden;
       }
       .rotator {
       width: var(--rotator-width);
@@ -109,11 +110,6 @@
           transform: rotateY(360deg);
         }
       }
-      @media (max-width: 768px) {
-        .rotator span {
-          transform: rotateY(calc(var(--i) * 32.72deg)) translateZ(180px);
-        }
-      } 
     </style>
   </head>
   <body>
