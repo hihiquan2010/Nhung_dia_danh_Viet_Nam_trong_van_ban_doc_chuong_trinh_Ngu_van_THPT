@@ -24,12 +24,11 @@
       perspective: 1000px;
       margin-top: 20px;
       margin-bottom: 20px;
-      --rotator-width: 140px; 
-      --translate-z: calc(var(--rotator-width) - 10px);
       }
       .rotator {
       width: var(--rotator-width);
       position: relative;
+      width: 140px; 
       height: 200px;
       transform-style: preserve-3d;
       animation: spin 30s linear infinite;
@@ -45,7 +44,7 @@
         height: 100%;
         transform-origin: center;
         transform-style: preserve-3d;
-        transform: rotateY(calc(var(--i) * 32.72deg)) translateZ(var(--translate-z));
+        transform: rotateY(calc(var(--i) * 32.72deg)) translateZ(min(280px, 40vw));
       }
       .rotator span img {
         position: absolute;
