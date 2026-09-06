@@ -109,6 +109,20 @@
           transform: rotateY(360deg);
         }
       }
+      @media (max-width: 768px) {
+        .slider-container {
+          height: 300px; 
+        }
+
+        .rotator {
+          width: 85px; 
+          height: 125px; 
+        }
+
+        .rotator span {
+          transform: rotateY(calc(var(--i) * 32.72deg)) translateZ(180px);
+        }
+      } 
     </style>
   </head>
   <body>
