@@ -239,7 +239,6 @@ export const menuData = [
           { name: "Thanh Hoá", url: "./html/Thanh_Hoa.html" },
           { name: "Hà Tĩnh", url: "./html/Ha_Tinh.html" },
           { name: "Đèo Đá Đẽo", url: "./html/Deo_Da_Deo.html" },
-          { name: "Quảng Bình", url: "./html/Quang_Binh.html" },
         ],
       },
       {
