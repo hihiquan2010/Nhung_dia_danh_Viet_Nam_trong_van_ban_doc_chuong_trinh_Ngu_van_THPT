@@ -12,7 +12,7 @@ function buildMenuHtml() {
 
     gradeItem.works.forEach((work) => {
       const workLink = work.link
-        ? `<a href="${work.link}" target="_blank" class="require-double-click">${work.name}</a>`
+        ? `<a href="${work.link}" target="_self" class="require-double-click">${work.name}</a>`
         : `<a>${work.name}</a>`;
 
       html += `
