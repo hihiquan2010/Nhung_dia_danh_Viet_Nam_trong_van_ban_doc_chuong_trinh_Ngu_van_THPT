@@ -45,7 +45,7 @@ export const menuData = [
           { name: "Đông Đô", url: "./html/Dong_Do.html" },
           { name: "Ninh Kiều", url: "./html/Ninh_Kieu.html" },
           { name: "Tốt Động", url: "./html/Tot_Dong.html" },
-          
+
           { name: "Chi Lăng", url: "./html/Chi_Lang.html" },
           { name: "Mã An", url: "./html/Ma_An.html" },
           { name: "Lạng Giang", url: "./html/Lang_Giang.html" },
@@ -89,6 +89,8 @@ export const menuData = [
         places: [
           { name: "Nam Định", url: "./html/Nam_Dinh.html" },
           { name: "Thái Bình", url: "./html/Thai_Binh.html" },
+          { name: "Thái Nguyên", url: "./html/Thai_Nguyen.html" },
+          { name: "Bắc Giang", url: "./html/Bac_Giang.html" },
         ],
       },
       {
@@ -216,6 +218,10 @@ export const menuData = [
         name: "Tuyên ngôn Độc lập",
         link: "https://arcg.is/1imi9e1",
         places: [
+          {
+            name: "Quảng Trường Ba Đình",
+            url: "./html/Quang_Truong_Ba_Dinh.html",
+          },
           { name: "Quảng Trị", url: "./html/Quang_Tri.html" },
           {
             name: "Bắc Kỳ",
