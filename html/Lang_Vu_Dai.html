@@ -13,6 +13,51 @@
       referrerpolicy="no-referrer"
     />
     <title>LÀNG VŨ ĐẠI - DỰ ÁN SÁNG TẠO SỐ</title>
+
+    <style>
+      .more-diadanh-info {
+        display: block;
+        background-color: #f4efdc;
+        border: 1.5px solid #dcd3b6;
+        width: 95%;
+        height: fit-content;
+        border-radius: 12px;
+        padding: 10px;
+        margin-top: 60px;
+        -webkit-transition:
+          -webkit-transform 0.3s ease,
+          -webkit-box-shadow 0.3s ease;
+        transition:
+          -webkit-transform 0.3s ease,
+          -webkit-box-shadow 0.3s ease;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease,
+          -webkit-transform 0.3s ease,
+          -webkit-box-shadow 0.3s ease;
+      }
+      .text-more-info {
+        display: none;
+        font-size: 16px;
+        line-height: 1.6;
+        color: #333;
+      }
+
+      .title-more-info {
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+      }
+
+      .text-more-info.show {
+        display: block;
+      }
+    </style>
   </head>
   <body>
     <header id="header"></header>
@@ -30,6 +75,36 @@
     </div>
     <div class="dia-danh-container">
       <div class="info-column">
+        <div class="more-diadanh-info">
+          <h3 class="title-more-info">💡 Bạn có biết?</h3>
+          <p class="text-more-info">
+            Nhắc đến làng Vũ Đại, người ta thường nghĩ ngay đến những từ khoá:
+            nông thôn miền Bắc, lò gạch cũ, con quỷ dữ, quần ngư tranh thực, xã
+            hội thu nhỏ. Thực chất, bối cảnh làng Vũ Đại
+            <strong>
+              nguyên mẫu là làng Đại Hoàng ở thôn Nhân Hậu, xã Hòa Hậu, huyện Lý
+              Nhân, tỉnh Hà Nam
+            </strong>
+            – nơi tưởng niệm nhà văn Nam Cao và là nơi nổi tiếng trồng chuối
+            ngự. Trong truyện, đây là làng có khoảng 2000 dân, xa phủ; là nơi
+            diễn ra sự lưu manh hoá của Chí Phèo và sự bốc lột tàn bạo của Bá
+            Kiến. Nhà Bá Kiến – ngôi nhà được làm bối cảnh trong truyện, hiện
+            vẫn còn ở làng Đại Hoàng. <br />
+            <br />
+            Một điểm đặc biệt, bạn có biết nhà Chí Phèo, Thị Nở ở vào vị trí nào
+            so với làng Vũ Đại không? Câu trả lời là: Chí Phèo bị cự tuyệt và bị
+            đẩy ra ở bên ngoài bãi. Thị Nở cũng &quot;bị kì thị&quot; không kém
+            hắn, cũng bị dân làng xa lánh. Thị ở cách nhà Chí Phèo bởi một con
+            đê – vốn được xem là ranh giới giữa Chí Phèo và làng Vũ Đại. Việc
+            nhà văn đặt nhân vật trong tương quan với bối cảnh như vậy cho thấy
+            con đường để Chí Phèo quay trở về làng chính là Thị Nở. Thị Nở là
+            &quot;cây cầu&quot; để Chí Phèo quay đầu. Nhưng cuối cùng, bi kịch
+            bị cự tuyệt quyền làm người lại lần nữa xảy đến…
+            <br />
+            <br />
+            <strong>💭Bạn có cảm nghĩ gì về địa danh này?</strong>
+          </p>
+        </div>
         <div class="content-grid">
           <div class="map-box feature-box">
             <h3 class="box-title">
@@ -118,6 +193,15 @@
         </div>
       </div>
     </div>
+
+    <script>
+      const titleInfo = document.querySelector(".title-more-info");
+      const textInfo = document.querySelector(".text-more-info");
+
+      titleInfo.addEventListener("click", function () {
+        textInfo.classList.toggle("show");
+      });
+    </script>
 
     <footer id="footer"></footer>
     <script type="module" src="./header_footer_fplaces.js"></script>
