@@ -13,6 +13,51 @@
       referrerpolicy="no-referrer"
     />
     <title>PHA LUÔNG - DỰ ÁN SÁNG TẠO SỐ</title>
+    
+    <style>
+      .more-diadanh-info {
+        display: block;
+        background-color: #f4efdc;
+        border: 1.5px solid #dcd3b6;
+        width: 95%;
+        height: fit-content;
+        border-radius: 12px;
+        padding: 10px;
+        margin-top: 60px;
+        -webkit-transition:
+          -webkit-transform 0.3s ease,
+          -webkit-box-shadow 0.3s ease;
+        transition:
+          -webkit-transform 0.3s ease,
+          -webkit-box-shadow 0.3s ease;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease,
+          -webkit-transform 0.3s ease,
+          -webkit-box-shadow 0.3s ease;
+      }
+      .text-more-info {
+        display: none;
+        font-size: 16px;
+        line-height: 1.6;
+        color: #333;
+      }
+
+      .title-more-info {
+        cursor: pointer;
+        font-size: 18px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+      }
+
+      .text-more-info.show {
+        display: block;
+      }
+    </style>
   </head>
   <body>
     <header id="header"></header>
@@ -27,6 +72,27 @@
     </div>
     <div class="dia-danh-container">
       <div class="info-column">
+        <div class="more-diadanh-info">
+          <h3 class="title-more-info">💡 Bạn có biết?</h3>
+          <p class="text-more-info">
+            Nói đến những địa danh mà đoàn quân Tây Tiến đi qua, người ta nghĩ
+            ngay đến những từ khoá: hiểm trở, hùng vĩ, thơ mộng… Có nhiều bài
+            báo viết về những địa danh trong &quot;Tây Tiến&quot; với những câu
+            chuyện, những kỉ niệm đáng nhớ của đoàn quân khi đi qua các địa
+            danh. Những vùng đất mà đoàn quân đi đều được viết lại bằng một câu
+            thơ đánh dấu &quot;bản sắc&quot; của vùng đất ấy: Sài Khao sương
+            lấp, Mường Lát hoa về, Pha Luông mưa xa khơi, Mường Hịch cọp trêu
+            người, Mai Châu mùa em. Sự hiểm trở của những vùng đất cho ta thấy
+            tinh thần dũng cảm kiên cường của đoàn quân, sự thơ mộng của những
+            vùng đất cho ta thấy vẻ đẹp lãng mạn trong tâm hồn người lính.
+            <br />
+            <br />
+            <strong
+              >💭Bạn có cảm nghĩ gì về những địa danh trong &quot;Tây
+              Tiến&quot;?</strong
+            >
+          </p>
+        </div>
         <div class="content-grid">
           <div class="map-box feature-box">
             <h3 class="box-title">
@@ -100,6 +166,15 @@
         </div>
       </div>
     </div>
+
+    <script>
+      const titleInfo = document.querySelector(".title-more-info");
+      const textInfo = document.querySelector(".text-more-info");
+
+      titleInfo.addEventListener("click", function () {
+        textInfo.classList.toggle("show");
+      });
+    </script>
 
     <footer id="footer"></footer>
     <script type="module" src="./header_footer_fplaces.js"></script>
