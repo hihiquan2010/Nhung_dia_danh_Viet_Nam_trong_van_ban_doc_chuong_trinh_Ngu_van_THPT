@@ -1029,7 +1029,7 @@ img {
   }
 }
 
-@media (max-width: 400px) {
+@media (max-width: 100px) {
   body {
     overflow-x: hidden;
   }
