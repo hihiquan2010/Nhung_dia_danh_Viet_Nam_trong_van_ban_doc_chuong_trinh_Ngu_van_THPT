@@ -64,8 +64,7 @@ function attachSearch(pageMap) {
   const btn = document.getElementById("submit");
   const bangdx = document.getElementById("bangdexuat");
 
-  if (/*DEBUG*/ input && btn && bangdx) {
-    // Danh sách các địa danh lấy từ pageMap đã tạo ở bước 1
+  if (input && btn && bangdx) {
     const data = Object.keys(pageMap);
 
     // Lọc từ khóa người dùng nhập vào và gợi ý
@@ -75,7 +74,7 @@ function attachSearch(pageMap) {
       if (!ainput) return;
 
       const matches = data.filter((tacpham) =>
-        tacpham.toLowerCase().includes(ainput),
+        tacpham.toLowerCase().includes(ainput)
       );
 
       matches.forEach((match) => {
@@ -92,15 +91,13 @@ function attachSearch(pageMap) {
       });
     });
 
-    // Bỏ trống gợi ý khi click ra ngoài
     document.addEventListener("click", function (e) {
-      if (e.target !== input) {
+      if (!input.contains(e.target) && !bangdx.contains(e.target)) {
         bangdx.innerHTML = "";
       }
     });
 
-    // Đưa người dùng đến file địa danh người dùng nhập
-    btn.addEventListener("click", function () {
+    function handleSearch() {
       const inpval = input.value.trim();
 
       if (!inpval) {
@@ -108,17 +105,28 @@ function attachSearch(pageMap) {
         return;
       }
 
-      // Lấy tên file tương ứng với địa danh
-      const fileName = pageMap[inpval];
+      const matchedKey = data.find(
+        (key) => key.toLowerCase() === inpval.toLowerCase()
+      );
+      const fileName = matchedKey ? pageMap[matchedKey] : null;
 
       if (fileName) {
         const htmlFolderDir = "./html/";
         window.location.href = htmlFolderDir + fileName;
       } else {
         alert(
-          "Vui lòng kiểm tra lại tên địa danh hoặc tham khảo ở 3 nút bấm có chữ lớp 10, lớp 11, lớp 12 trong trang.",
+          "Vui lòng kiểm tra lại tên địa danh hoặc tham khảo ở 3 nút bấm có chữ lớp 10, lớp 11, lớp 12 trong trang."
         );
         console.log("Không thấy đường dẫn liên quan!");
+      }
+    }
+
+    btn.addEventListener("click", handleSearch);
+
+    input.addEventListener("keypress", function (event) {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        handleSearch();
       }
     });
   }
