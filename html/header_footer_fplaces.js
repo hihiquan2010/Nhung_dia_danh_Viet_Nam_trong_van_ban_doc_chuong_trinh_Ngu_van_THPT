@@ -202,7 +202,7 @@ function setupSearch() {
     }
   });
 
-  btn.addEventListener("click", function () {
+  function handleSearch() {
     const keyword = input.value.trim();
 
     if (!keyword) {
@@ -220,6 +220,14 @@ function setupSearch() {
     alert(
       "Vui lòng kiểm tra lại tên địa danh hoặc tham khảo ở 3 nút bấm có chữ lớp 10, lớp 11, lớp 12 trong trang.",
     );
+  }
+  btn.addEventListener("click", handleSearch);
+
+  input.addEventListener("keypress", function (event) {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      handleSearch();
+    }
   });
 }
 
