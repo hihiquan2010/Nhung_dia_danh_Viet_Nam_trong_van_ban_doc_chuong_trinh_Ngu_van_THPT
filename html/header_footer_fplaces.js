@@ -196,8 +196,8 @@ function setupSearch() {
     });
   });
 
-  document.addEventListener("click", (event) => {
-    if (event.target !== input && !event.target.closest(".nddx")) {
+  document.addEventListener("click", function (e) {
+    if (!input.contains(e.target) && !bangdx.contains(e.target)) {
       bangdx.innerHTML = "";
     }
   });
@@ -210,9 +210,14 @@ function setupSearch() {
       return;
     }
 
-    const fileName = pageMap[keyword];
+    const matchedKey = dataList.find(
+      (key) => key.toLowerCase() === keyword.toLowerCase(),
+    );
+    
+    const fileName = matchedKey ? pageMap[matchedKey] : null;
 
     if (fileName) {
+      bangdx.innerHTML = "";
       window.location.href = getPageUrl(fileName);
       return;
     }
@@ -224,7 +229,7 @@ function setupSearch() {
   btn.addEventListener("click", handleSearch);
 
   input.addEventListener("keypress", function (event) {
-    if (event.key === "Enter") {
+    if (event.key === "Enter" && !event.isComposing) {
       event.preventDefault();
       handleSearch();
     }
