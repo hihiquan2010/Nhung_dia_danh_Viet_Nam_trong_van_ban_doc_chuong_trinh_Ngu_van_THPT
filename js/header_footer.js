@@ -124,7 +124,7 @@ function attachSearch(pageMap) {
     btn.addEventListener("click", handleSearch);
 
     input.addEventListener("keypress", function (event) {
-      if (event.key === "Enter") {
+      if (event.key === "Enter" && !event.isComposing) {
         event.preventDefault();
         handleSearch();
       }
