@@ -42,32 +42,50 @@ function renderFooter() {
   if (footer) {
     footer.innerHTML = `
       <span class="icon">
-      <a href="#" style="display: block; color: #9c4128; text-decoration: none">
-        <i class="fa-solid fa-up-long"></i>
-        <b>Quay về đầu trang</b>
-      </a>
-    </span>
+        <a href="#" style="display: block; color: #9c4128; text-decoration: none">
+          <i class="fa-solid fa-up-long"></i>
+          <b>Quay về đầu trang</b>
+        </a>
+      </span>
 
-    <div class="infoGroup">
-      <!-- Histats.com  (div with counter) --><div id="histats_counter"></div>
-      <!-- Histats.com  START  (aync)-->
-      <script type="text/javascript">var _Hasync= _Hasync|| [];
-      _Hasync.push(['Histats.start', '1,5053294,4,383,112,48,00011110']);
-      _Hasync.push(['Histats.fasi', '1']);
-      _Hasync.push(['Histats.track_hits', '']);
-      (function() {
-      var hs = document.createElement('script'); hs.type = 'text/javascript'; hs.async = true;
-      hs.src = ('//s10.histats.com/js15_as.js');
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(hs);
-      })();</script>
-      <noscript><a href="/" target="_blank"><img  src="//sstatic1.histats.com/0.gif?5053294&101" alt="" border="0"></a></noscript>
-      <!-- Histats.com  END  -->
-      <b><p id="dv">
-          <i class="fa-solid fa-school"></i> Đơn vị: Trường THPT Bình Chánh
-        </p></b>
-      <p><i class="fa-solid fa-user-group"></i>Nhóm thực hiện: Phạm Gia Uy 11A3 và Trần Thanh Duy 12A16</p>
-    </div>
+      <div class="infoGroup">
+        <!-- Histats.com  (div with counter) -->
+        <div id="histats_counter"></div>
+        
+        <!-- Histats.com  START  (aync)-->
+        <noscript>
+          <a href="/" target="_blank">
+            <img src="//sstatic1.histats.com/0.gif?5053294&101" alt="" border="0">
+          </a>
+        </noscript>
+        <!-- Histats.com  END  -->
+
+        <b>
+          <p id="dv">
+            <i class="fa-solid fa-school"></i> Đơn vị: Trường THPT Bình Chánh
+          </p>
+        </b>
+        <p>
+          <i class="fa-solid fa-user-group"></i> Nhóm thực hiện: Phạm Gia Uy 11A3 và Trần Thanh Duy 12A16
+        </p>
+      </div>
     `;
+
+    /* Histats.com START (async) */
+    window._Hasync = window._Hasync || [];
+    window._Hasync.push(['Histats.start', '1,5053294,4,383,112,48,00011110']);
+    window._Hasync.push(['Histats.fasi', '1']);
+    window._Hasync.push(['Histats.track_hits', '']);
+
+    if (!document.getElementById('histats-script')) {
+      const hs = document.createElement('script');
+      hs.id = 'histats-script';
+      hs.type = 'text/javascript';
+      hs.async = true;
+      hs.src = '//s10.histats.com/js15_as.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(hs);
+    }
+    /* Histats.com END */
   }
 }
 
