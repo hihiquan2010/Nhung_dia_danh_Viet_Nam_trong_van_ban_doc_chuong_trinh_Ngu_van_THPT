@@ -49,18 +49,17 @@ function renderFooter() {
       </span>
 
       <div class="infoGroup">
-        <!-- Histats.com  (div with counter) -->
-        <div id="histats_counter"></div>
-        
-        <!-- Histats.com  START  (aync)-->
-        <noscript>
-          <a href="/" target="_blank">
-            <img src="//sstatic1.histats.com/0.gif?5053294&101" alt="" border="0">
-          </a>
-        </noscript>
-        <!-- Histats.com  END  -->
-
         <b>
+          <!-- Histats.com  (div with counter) -->
+          <div id="histats_counter"></div>
+        
+          <!-- Histats.com  START  (aync)-->
+          <noscript>
+            <a href="/" target="_blank">
+              <img src="//sstatic1.histats.com/0.gif?5053294&101" alt="" border="0">
+            </a>
+          </noscript>
+          <!-- Histats.com  END  -->
           <p id="dv">
             <i class="fa-solid fa-school"></i> Đơn vị: Trường THPT Bình Chánh
           </p>
