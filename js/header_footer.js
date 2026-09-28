@@ -19,6 +19,11 @@ function renderHeader(rootPath) {
               <i class="fa-solid fa-rotate" style="color: rgb(31, 37, 42)"></i>
               <span class="icon-text">Làm mới</span>
             </a>
+            |
+            <a href="${rootPath}/html/game.html">
+              <i class="fa-solid fa-gamepad"></i>
+              <span class="icon-text">Trò chơi</span>
+            </a>
           </span>
         </div>
         
