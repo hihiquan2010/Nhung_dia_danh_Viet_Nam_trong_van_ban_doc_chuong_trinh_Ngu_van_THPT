@@ -187,6 +187,8 @@ export const menuData = [
         places: [
           { name: "Cần Giuộc", url: "./html/Can_Giuoc.html" },
           { name: "Chùa Tông Thạnh", url: "./html/Chua_Tong_Thanh.html" },
+          { name: "Sông Cần Giuộc", url: "./html/Song_Can_Giuoc.html" },
+          { name: "Chợ Trường Bình", url: "./html/Cho_Truong_Binh.html" },
         ],
       },
     ],
