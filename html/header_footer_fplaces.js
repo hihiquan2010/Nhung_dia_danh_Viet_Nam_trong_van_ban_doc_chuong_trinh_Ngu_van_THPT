@@ -1,89 +1,88 @@
-﻿import { menuData } from "../js/data.js";
+import { menuData } from "../js/data.js";
 
-const rootPath = "../";
-const basePath = "./";
+const assetBasePath = "../";
 
-function getFileNameFromUrl(url) {
-  return url.split("/").pop();
+function getFileNameFromUrl(pageUrl) {
+  return pageUrl.split("/").pop();
 }
 
-function getPageUrl(fileName) {
-  const currentPath = window.location.pathname.replace(/\\/g, "/");
-  return currentPath.includes("/html/")
-    ? `./${fileName}`
-    : `./html/${fileName}`;
+function getPageUrl(pageFileName) {
+  const currentPagePath = window.location.pathname.replace(/\\/g, "/");
+  return currentPagePath.includes("/html/")
+    ? `./${pageFileName}`
+    : `./html/${pageFileName}`;
 }
 
 function createMenuMarkup() {
-  let menuHtml = '<div class="menu-container"><ul class="menu" id="menuList">';
+  let menuMarkup = '<div class="menu-container"><ul class="menu" id="menuList">';
 
-  menuData.forEach((gradeItem) => {
-    menuHtml += `
+  menuData.forEach((gradeEntry) => {
+    menuMarkup += `
       <li>
-        <a tabindex="0" id="${gradeItem.id}">${gradeItem.grade}</a>
-        <ul class="tacPham" id="${gradeItem.kId}">
+        <a tabindex="0" id="${gradeEntry.id}">${gradeEntry.grade}</a>
+        <ul class="tacPham" id="${gradeEntry.kId}">
     `;
 
-    gradeItem.works.forEach((work) => {
-      const workLink = work.link
-        ? `<a href="${work.link}" target="_blank" class="require-double-click">${work.name}</a>`
-        : `<a>${work.name}</a>`;
+    gradeEntry.works.forEach((literaryWork) => {
+      const workLinkMarkup = literaryWork.link
+        ? `<a href="${literaryWork.link}" target="_blank" class="require-double-click">${literaryWork.name}</a>`
+        : `<a>${literaryWork.name}</a>`;
 
-      menuHtml += `
+      menuMarkup += `
         <li tabindex="0">
-          ${workLink}
+          ${workLinkMarkup}
           <ul class="diaDanh">
       `;
 
-      work.places.forEach((place) => {
-        const fileName = getFileNameFromUrl(place.url);
-        menuHtml += `<li><a href="${getPageUrl(fileName)}" target="_self">${place.name}</a></li>`;
+      literaryWork.places.forEach((place) => {
+        const pageFileName = getFileNameFromUrl(place.url);
+        menuMarkup += `<li><a href="${getPageUrl(pageFileName)}" target="_self">${place.name}</a></li>`;
       });
 
-      menuHtml += `
+      menuMarkup += `
           </ul>
         </li>
       `;
     });
 
-    menuHtml += `
+    menuMarkup += `
         </ul>
       </li>
     `;
   });
 
-  return `${menuHtml}</ul></div>`;
+  return `${menuMarkup}</ul></div>`;
 }
 
 function setupMenuInteractions(menuContainer) {
   menuContainer.addEventListener("click", (event) => {
-    const targetLink = event.target.closest("a.require-double-click");
+    const workMapLink = event.target.closest("a.require-double-click");
 
-    if (!targetLink || targetLink.dataset.clickedOnce) return;
+    if (!workMapLink || workMapLink.dataset.clickedOnce) return;
 
     event.preventDefault();
-    targetLink.dataset.clickedOnce = "true";
-    targetLink.dataset.originalText = targetLink.innerHTML;
-    targetLink.innerHTML = `${targetLink.dataset.originalText} <span style="font-size: 0.85em;">(Xác nhận xem bản đồ trực quan ?)</span>`;
-    targetLink.style.color = "red";
+    workMapLink.dataset.clickedOnce = "true";
+    workMapLink.dataset.originalText = workMapLink.innerHTML;
+    workMapLink.innerHTML = `${workMapLink.dataset.originalText} <span style="font-size: 0.85em;">(Xác nhận xem bản đồ trực quan ?)</span>`;
+    workMapLink.style.color = "red";
 
     setTimeout(() => {
-      targetLink.dataset.clickedOnce = "";
-      targetLink.innerHTML = targetLink.dataset.originalText;
-      targetLink.style.color = "";
+      workMapLink.dataset.clickedOnce = "";
+      workMapLink.innerHTML = workMapLink.dataset.originalText;
+      workMapLink.style.color = "";
     }, 3000);
   });
 
-  menuContainer.querySelectorAll(".tacPham .diaDanh a").forEach((link) => {
-    if (localStorage.getItem(link.href) === "visited") {
-      link.insertAdjacentHTML(
+  menuContainer.querySelectorAll(".tacPham .diaDanh a").forEach((placeLink) => {
+    if (localStorage.getItem(placeLink.href) === "visited") {
+      placeLink.insertAdjacentHTML(
         "beforeend",
         " <span style='color: green; font-size: 0.8em;'>(Đã xem)</span>",
       );
     }
 
-    link.addEventListener("click", () => {
-      localStorage.setItem(link.href, "visited");
+    placeLink.addEventListener("click", () => {
+      localStorage.setItem(placeLink.href, "visited");
     });
   });
 }
@@ -96,9 +95,9 @@ function renderHeader() {
   headerContainer.innerHTML = `
     <span class="widgetbar">
       <div class="widgets">
-        <img src="${rootPath}webico/android-icon-36x36.png" alt="web_icon" style="border-radius: 10px;">
+        <img src="${assetBasePath}webico/android-icon-36x36.png" alt="web_icon" style="border-radius: 10px;">
         <span class="icon">
-          <a href="${rootPath}index.html">
+          <a href="${assetBasePath}index.html">
             <i class="fa-solid fa-house" style="color: rgb(76, 60, 60)"></i>
             <span class="icon-text">Trang chủ</span>
           </a>
@@ -134,10 +133,10 @@ function renderMenu() {
 }
 
 function renderFooter() {
-  const footer = document.getElementById("footer");
+  const footerContainer = document.getElementById("footer");
 
-  if (footer) {
-    footer.innerHTML = `
+  if (footerContainer) {
+    footerContainer.innerHTML = `
       <span class="icon">
         <a href="#" style="display: block; color: #9c4128; text-decoration: none">
           <i class="fa-solid fa-up-long"></i>
@@ -174,83 +173,88 @@ function renderFooter() {
     window._Hasync.push(['Histats.track_hits', '']);
 
     if (!document.getElementById('histats-script')) {
-      const hs = document.createElement('script');
-      hs.id = 'histats-script';
-      hs.type = 'text/javascript';
-      hs.async = true;
-      hs.src = '//s10.histats.com/js15_as.js';
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(hs);
+      const histatsScript = document.createElement("script");
+      histatsScript.id = "histats-script";
+      histatsScript.type = "text/javascript";
+      histatsScript.async = true;
+      histatsScript.src = "//s10.histats.com/js15_as.js";
+      (document.head || document.body).appendChild(histatsScript);
     }
     /* Histats.com END */
   }
 }
 
 function createPageMap() {
-  return menuData.reduce((map, gradeItem) => {
-    gradeItem.works.forEach((work) => {
-      work.places.forEach((place) => {
-        map[place.name] = getFileNameFromUrl(place.url);
+  return menuData.reduce((pageFileByPlaceName, gradeEntry) => {
+    gradeEntry.works.forEach((literaryWork) => {
+      literaryWork.places.forEach((place) => {
+        pageFileByPlaceName[place.name] = getFileNameFromUrl(place.url);
       });
     });
-    return map;
+    return pageFileByPlaceName;
   }, {});
 }
 
 function setupSearch() {
-  const input = document.getElementById("search");
-  const btn = document.getElementById("submit");
-  const bangdx = document.getElementById("bangdexuat");
+  const searchInput = document.getElementById("search");
+  const searchButton = document.getElementById("submit");
+  const suggestionsContainer = document.getElementById("bangdexuat");
 
-  if (!input || !btn || !bangdx) return;
+  if (!searchInput || !searchButton || !suggestionsContainer) return;
 
-  const pageMap = createPageMap();
-  const dataList = Object.keys(pageMap);
+  const pageFileByPlaceName = createPageMap();
+  const placeNames = Object.keys(pageFileByPlaceName);
 
-  input.addEventListener("input", function () {
-    const keyword = this.value.toLowerCase().trim();
-    bangdx.innerHTML = "";
+  searchInput.addEventListener("input", (event) => {
+    const searchTerm = event.currentTarget.value.toLowerCase().trim();
+    suggestionsContainer.innerHTML = "";
 
-    if (!keyword) return;
+    if (!searchTerm) return;
 
-    const matches = dataList.filter((name) =>
-      name.toLowerCase().includes(keyword),
+    const matchingPlaceNames = placeNames.filter((placeName) =>
+      placeName.toLowerCase().includes(searchTerm),
     );
 
-    matches.forEach((match) => {
+    matchingPlaceNames.forEach((placeName) => {
       const suggestion = document.createElement("div");
       suggestion.classList.add("nddx");
-      suggestion.textContent = match;
+      suggestion.textContent = placeName;
       suggestion.addEventListener("click", () => {
-        input.value = match;
-        bangdx.innerHTML = "";
+        searchInput.value = placeName;
+        suggestionsContainer.innerHTML = "";
       });
-      bangdx.appendChild(suggestion);
+      suggestionsContainer.appendChild(suggestion);
     });
   });
 
-  document.addEventListener("click", function (e) {
-    if (!input.contains(e.target) && !bangdx.contains(e.target)) {
-      bangdx.innerHTML = "";
+  document.addEventListener("click", function (event) {
+    if (
+      !searchInput.contains(event.target) &&
+      !suggestionsContainer.contains(event.target)
+    ) {
+      suggestionsContainer.innerHTML = "";
     }
   });
 
-  function handleSearch() {
-    const keyword = input.value.trim();
+  function handlePlaceSearch() {
+    const searchTerm = searchInput.value.trim();
 
-    if (!keyword) {
+    if (!searchTerm) {
       alert("Hãy nhập tên địa danh!");
       return;
     }
 
-    const matchedKey = dataList.find(
-      (key) => key.toLowerCase() === keyword.toLowerCase(),
+    const matchingPlaceName = placeNames.find(
+      (placeName) => placeName.toLowerCase() === searchTerm.toLowerCase(),
     );
-    
-    const fileName = matchedKey ? pageMap[matchedKey] : null;
 
-    if (fileName) {
-      bangdx.innerHTML = "";
-      window.location.href = getPageUrl(fileName);
+    const pageFileName = matchingPlaceName
+      ? pageFileByPlaceName[matchingPlaceName]
+      : null;
+
+    if (pageFileName) {
+      suggestionsContainer.innerHTML = "";
+      window.location.href = getPageUrl(pageFileName);
       return;
     }
 
@@ -258,94 +262,94 @@ function setupSearch() {
       "Vui lòng kiểm tra lại tên địa danh hoặc tham khảo ở 3 nút bấm có chữ lớp 10, lớp 11, lớp 12 trong trang.",
     );
   }
-  btn.addEventListener("click", handleSearch);
+  searchButton.addEventListener("click", handlePlaceSearch);
 
-  input.addEventListener("keydown", function (event) {
+  searchInput.addEventListener("keydown", function (event) {
     if (event.key === "Enter" && !event.isComposing) {
       event.preventDefault();
-      handleSearch();
+      handlePlaceSearch();
     }
   });
 }
 
 function getAllPlaces() {
-  return menuData.flatMap((gradeItem) =>
-    gradeItem.works.flatMap((work) =>
-      work.places.map((place) => {
-        const fileName = getFileNameFromUrl(place.url);
+  return menuData.flatMap((gradeEntry) =>
+    gradeEntry.works.flatMap((literaryWork) =>
+      literaryWork.places.map((place) => {
+        const pageFileName = getFileNameFromUrl(place.url);
 
         return {
           name: place.name,
-          fileName,
-          url: getPageUrl(fileName),
-          workName: work.name,
-          grade: gradeItem.grade,
+          pageFileName,
+          url: getPageUrl(pageFileName),
+          workName: literaryWork.name,
+          grade: gradeEntry.grade,
         };
       }),
     ),
   );
 }
 
-function getCurrentPlace(allPlaces) {
-  const currentPath = window.location.pathname.toLowerCase();
+function getCurrentPlace(places) {
+  const currentPagePath = window.location.pathname.toLowerCase();
 
-  return allPlaces.find((place) =>
-    currentPath.endsWith(place.fileName.toLowerCase()),
+  return places.find((place) =>
+    currentPagePath.endsWith(place.pageFileName.toLowerCase()),
   );
 }
 
-function getRandomItem(items) {
-  return items[Math.floor(Math.random() * items.length)];
+function getRandomItem(candidates) {
+  return candidates[Math.floor(Math.random() * candidates.length)];
 }
 
 function shuffleArray(items) {
-  return [...items].sort(() => Math.random() - 0.5);
+  return items.slice().sort(() => Math.random() - 0.5);
 }
 
-function getRecommendedPlaces(count = 3) {
+function getRecommendedPlaces(recommendationCount = 3) {
   const allPlaces = getAllPlaces();
   const currentPlace = getCurrentPlace(allPlaces);
 
   if (!currentPlace) {
-    return shuffleArray(allPlaces).slice(0, count);
+    return shuffleArray(allPlaces).slice(0, recommendationCount);
   }
 
-  const sameWorkPlaces = allPlaces.filter(
+  const placesFromSameWork = allPlaces.filter(
     (place) =>
       place.workName === currentPlace.workName &&
       place.url !== currentPlace.url,
   );
-  const otherWorkPlaces = allPlaces.filter(
+  const placesFromOtherWorks = allPlaces.filter(
     (place) => place.workName !== currentPlace.workName,
   );
   const recommendations = [];
-  const usedUrls = new Set([currentPlace.url]);
+  const selectedPlaceUrls = new Set([currentPlace.url]);
 
-  for (let i = 0; i < count; i += 1) {
-    const randomValue = Math.random();
-    const availableSame = sameWorkPlaces.filter(
-      (place) => !usedUrls.has(place.url),
+  for (let index = 0; index < recommendationCount; index += 1) {
+    const selectionChance = Math.random();
+    const availableFromSameWork = placesFromSameWork.filter(
+      (place) => !selectedPlaceUrls.has(place.url),
     );
-    const availableOther = otherWorkPlaces.filter(
-      (place) => !usedUrls.has(place.url),
+    const availableFromOtherWorks = placesFromOtherWorks.filter(
+      (place) => !selectedPlaceUrls.has(place.url),
     );
 
-    let selected = null;
+    let recommendedPlace = null;
 
-    if (randomValue < 0.6 && availableSame.length > 0) {
-      selected = getRandomItem(availableSame);
-      selected.isSameWork = true;
-    } else if (availableOther.length > 0) {
-      selected = getRandomItem(availableOther);
-      selected.isSameWork = false;
-    } else if (availableSame.length > 0) {
-      selected = getRandomItem(availableSame);
-      selected.isSameWork = true;
+    if (selectionChance < 0.6 && availableFromSameWork.length > 0) {
+      recommendedPlace = getRandomItem(availableFromSameWork);
+      recommendedPlace.isSameWork = true;
+    } else if (availableFromOtherWorks.length > 0) {
+      recommendedPlace = getRandomItem(availableFromOtherWorks);
+      recommendedPlace.isSameWork = false;
+    } else if (availableFromSameWork.length > 0) {
+      recommendedPlace = getRandomItem(availableFromSameWork);
+      recommendedPlace.isSameWork = true;
     }
 
-    if (selected) {
-      usedUrls.add(selected.url);
-      recommendations.push(selected);
+    if (recommendedPlace) {
+      selectedPlaceUrls.add(recommendedPlace.url);
+      recommendations.push(recommendedPlace);
     }
   }
 
@@ -353,20 +357,20 @@ function getRecommendedPlaces(count = 3) {
 }
 
 function renderRecommendations() {
-  const recommendedList = getRecommendedPlaces(3);
+  const recommendedPlaces = getRecommendedPlaces(3);
 
-  if (recommendedList.length === 0) return "";
+  if (recommendedPlaces.length === 0) return "";
 
-  const cardsHTML = recommendedList
+  const recommendationCardsMarkup = recommendedPlaces
     .map(
-      (item) => `
-        <div class="recommend-card" onclick="window.location.href='${item.url}'">
-          <div class="recommend-badge ${item.isSameWork ? "same-work" : "other-work"}">
-            ${item.isSameWork ? "Cùng tác phẩm" : "Gợi ý khám phá"}
+      (placeRecommendation) => `
+        <div class="recommend-card" onclick="window.location.href='${placeRecommendation.url}'">
+          <div class="recommend-badge ${placeRecommendation.isSameWork ? "same-work" : "other-work"}">
+            ${placeRecommendation.isSameWork ? "Cùng tác phẩm" : "Gợi ý khám phá"}
           </div>
-          <h4 class="recommend-title">${item.name}</h4>
-          <p class="recommend-meta">📖 ${item.workName} • <span class="recommend-grade">${item.grade}</span></p>
-          <a href="${item.url}" class="recommend-btn">Khám phá ngay ➔</a>
+          <h4 class="recommend-title">${placeRecommendation.name}</h4>
+          <p class="recommend-meta">📖 ${placeRecommendation.workName} • <span class="recommend-grade">${placeRecommendation.grade}</span></p>
+          <a href="${placeRecommendation.url}" class="recommend-btn">Khám phá ngay ➔</a>
         </div>
       `,
     )
@@ -379,7 +383,7 @@ function renderRecommendations() {
         <p class="recommendations-sub">Các địa danh văn học có thể bạn quan tâm</p>
       </div>
       <div class="recommendations-grid">
-        ${cardsHTML}
+        ${recommendationCardsMarkup}
       </div>
     </section>
   `;
@@ -391,14 +395,14 @@ document.addEventListener("DOMContentLoaded", () => {
   renderFooter();
   setupSearch();
 
-  const recommendHTML = renderRecommendations();
+  const recommendationsMarkup = renderRecommendations();
   const footerElement = document.getElementById("footer");
 
-  if (recommendHTML) {
+  if (recommendationsMarkup) {
     if (footerElement) {
-      footerElement.insertAdjacentHTML("beforebegin", recommendHTML);
+      footerElement.insertAdjacentHTML("beforebegin", recommendationsMarkup);
     } else {
-      document.body.insertAdjacentHTML("beforeend", recommendHTML);
+      document.body.insertAdjacentHTML("beforeend", recommendationsMarkup);
     }
   }
 });
