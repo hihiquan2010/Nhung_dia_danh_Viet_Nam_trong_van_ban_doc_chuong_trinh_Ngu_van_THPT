@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <link rel="stylesheet" href="../css/style.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <title>BÌNH NGÔ ĐẠI CÁO - DỰ ÁN SÁNG TẠO SỐ</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #eeeae0;
+        color: #333;
+        font-family: Arial, sans-serif;
+      }
+
+      .ngb-title-area {
+        padding: 24px 20px 8px;
+        text-align: center;
+      }
+
+      .ngb-title-line {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 15px;
+      }
+
+      .ngb-page-title {
+        margin: 0;
+        color: #2c4c3b;
+        font-family: "Playfair Display", serif;
+        font-size: 3rem;
+        text-transform: uppercase;
+      }
+
+      .ngb-author {
+        margin: 10px 0 0;
+        color: #9c603b;
+        font-family: Georgia, serif;
+        font-size: 1.2rem;
+        font-style: italic;
+      }
+
+      .ngb-ornament {
+        margin-top: 10px;
+        color: #9c603b;
+        font-size: 1.5rem;
+      }
+
+      .ngb-layout {
+        display: flex;
+        flex-wrap: wrap;
+        width: 100%;
+        max-width: 1600px;
+        margin: 0 auto;
+        gap: 24px;
+        padding: 20px 24px;
+        align-items: stretch;
+      }
+
+      .ngb-poem-column {
+        flex: 0 0 auto;
+        width: max-content;
+        min-width: 0;
+      }
+
+      .ngb-intro-column {
+        flex: 1 1 250px;
+        min-width: 250px;
+      }
+
+      .ngb-gallery-column {
+        display: flex;
+        flex: 1 1 200px;
+        min-width: 200px;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+        padding: 20px 0;
+      }
+
+      .ngb-poem-flow {
+        display: block;
+        line-height: 1.8;
+      }
+
+      .ngb-stanza {
+        white-space: nowrap;
+        line-height: 1.8;
+        font-size: 0.95rem;
+      }
+
+      .ngb-poem-controls {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-top: 16px;
+      }
+
+      .ngb-poem-button {
+        padding: 8px 12px;
+        border: 1px solid #9c603b;
+        border-radius: 6px;
+        background: #fffaf0;
+        color: #2c4c3b;
+        cursor: pointer;
+      }
+
+      .ngb-poem-button:hover:not(:disabled) {
+        background: #eee2c7;
+      }
+
+      .ngb-poem-button:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+      }
+
+      .ngb-poem-progress {
+        color: #6b5a46;
+        font-size: 0.9rem;
+        text-align: center;
+      }
+
+      .ngb-card {
+        width: fit-content;
+        padding: 16px;
+        border: 1.5px solid #dcd3b6;
+        border-radius: 12px;
+        background: #f4efdc;
+        transition:
+          transform 0.3s ease,
+          box-shadow 0.3s ease;
+      }
+
+      .ngb-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+      }
+
+      .ngb-intro-card {
+        padding: 20px;
+        line-height: 1.8;
+      }
+
+      .ngb-intro-card p {
+        margin: 0;
+      }
+
+      .ngb-places-card {
+        width: 100%;
+        margin-top: 16px;
+        padding: 20px;
+      }
+
+      .ngb-places-title {
+        margin: 0 0 12px;
+        color: #2c4c3b;
+        font-size: 1.1rem;
+      }
+
+      .ngb-places-list {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+        padding-left: 20px;
+      }
+
+      .ngb-places-list a {
+        color: #365a44;
+        text-decoration: none;
+      }
+
+      .ngb-places-list a:hover {
+        text-decoration: underline;
+      }
+
+      .ngb-image-card {
+        width: 100%;
+        max-width: 540px;
+        min-height: 300px;
+        margin: 0 auto;
+        padding: 16px 16px 10px;
+        border: 0;
+        border-radius: 14px;
+        background: #f5f3ee;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      .ngb-image {
+        display: block;
+        width: 100%;
+        height: 300px;
+        border-radius: 10px;
+        background: #f0f0f0;
+        object-fit: contain;
+        transition: transform 0.5s ease;
+      }
+
+      .ngb-image-card:hover .ngb-image {
+        transform: scale(1.02);
+      }
+
+      .ngb-caption {
+        margin: 14px 0 0;
+        color: #666;
+        font-size: 14px;
+        font-style: italic;
+        line-height: 1.6;
+        text-align: center;
+        overflow-wrap: anywhere;
+      }
+
+      .ngb-caption i {
+        margin-right: 6px;
+        color: #007bff;
+      }
+
+      .ngb-caption a {
+        text-decoration: none;
+      }
+
+      @media (max-width: 992px) {
+        .ngb-layout {
+          flex-direction: column;
+        }
+
+        .ngb-poem-column {
+          width: 100%;
+        }
+
+        .ngb-poem-column .ngb-card {
+          width: 100%;
+        }
+
+        .ngb-stanza {
+          white-space: normal;
+        }
+
+        .ngb-gallery-column {
+          padding: 0;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .ngb-title-area {
+          padding-right: 12px;
+          padding-left: 12px;
+        }
+
+        .ngb-page-title {
+          font-size: 2rem;
+        }
+
+        .ngb-layout {
+          gap: 16px;
+          padding: 16px 12px;
+        }
+
+        .ngb-poem-column,
+        .ngb-intro-column,
+        .ngb-gallery-column {
+          min-width: 0;
+        }
+
+        .ngb-poem-button {
+          padding: 8px;
+        }
+
+        .ngb-image {
+          height: auto;
+          max-height: 400px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header id="header"></header>
+
+    <div class="ngb-title-area">
+      <div class="ngb-title-line">
+        <a
+          class="ngb-page-title"
+          href="https://storymaps.arcgis.com/stories/880e9ce6036e486b882c59446a70709e"
+          >CHÍ PHÈO</a
+        >
+      </div>
+      <a
+        class="ngb-author"
+        href="https://storymaps.arcgis.com/stories/5e8e6933c8f04774a19509dff5a5c978"
+        >Nam Cao</a
+      >
+      <div class="ngb-ornament">⚬❖⚬</div>
+    </div>
+
+    <!-- KHUNG CHÍNH CHIA THÀNH 3 CỘT TRỰC TIẾP -->
+    <div class="ngb-layout">
+      <!-- CỘT 1: Bài thơ (Gồm các khổ thơ) -->
+      <div class="ngb-poem-column">
+        <div class="ngb-card">
+          <div class="ngb-poem-flow" aria-live="polite">
+            Hắn vừa đi vừa chửi. Bao giờ cũng thế, cứ rượu xong là hắn chửi. Bắt
+            đầu hắn chửi giời. Có hề gì? giời có của riêng nhà nào? Rồi hắn chửi
+            đời. Thế cũng chẳng sao: đời là tất cả nhưng chẳng là ai. Tức mình,
+            hắn chửi ngay tất cả làng Vũ Đại. Nhưng cả làng Vũ Đại, ai cũng tự
+            nhủ: “Chắc nó trừ mình ra!” Không ai lên tiếng cả. Tức thật! tức
+            thật! ồ! thế này thì tức thật! tức chết đi được mất! Đã thế, hắn
+            phải chửi cha đứa nào không chửi nhau với hắn. Nhưng cũng không ai
+            ra điều. Mẹ kiếp! thế thì có phí rượu không? Thế thì có khổ hắn
+            không? Không biết đứa chết mẹ nào lại đẻ ra thân hắn cho hắn khổ đến
+            nông nỗi này? A hà! Phải đấy, hắn cứ thế mà chửi, hắn cứ chửi đứa
+            chết mẹ nào đẻ ra thân hắn, đẻ ra thằng Chí Phèo! Hắn nghiến răng
+            vào mà chửi cái đứa đã đẻ ra Chí Phèo. Nhưng mà biết đứa nào đã đẻ
+            ra Chí Phèo? Có mà giời biết! Hắn không biết, cả làng Vũ Đại cũng
+            không ai biết...
+          </div>
+        </div>
+      </div>
+
+      <!-- CỘT 2: Đoạn văn giới thiệu bài cáo -->
+      <div class="ngb-intro-column">
+        <div class="ngb-card ngb-intro-card">
+          <p>
+            <b>Chí Phèo</b> là một truyện ngắn xuất sắc của nhà văn Nam Cao,
+            được sáng tác vào năm 1941. Tác phẩm ban đầu có nhan đề là Cái lò
+            gạch cũ, sau đó được nhà văn khác đổi thành Đôi lứa xứng đôi, và
+            cuối cùng Nam Cao đã đặt tên khác là Chí Phèo. Lấy bối cảnh làng Vũ
+            Đại (nguyên mẫu từ làng Đại Hoàng, huyện Lý Nhân, tỉnh Hà Nam), tác
+            phẩm cho thấy bi kịch đau đớn của Chí Phèo – một thanh niên lương
+            thiện nhưng bị Bá Kiến cùng nhà tù thực dân đẩy vào con đường tha
+            hóa, trở thành "con quỷ dữ" bị mất cả nhân hình lẫn nhân tính. Dù bị
+            xã hội xua đuổi, bản chất lương thiện cùng khát vọng sống hòa nhập
+            cộng đồng trong Chí Phèo đã được thức tỉnh nhờ thị Nở và bát cháo
+            hành ấm áp. Tuy nhiên, khi một lần nữa bị cự tuyệt, Chí Phèo đau
+            đớn, đâm chết Bá Kiến rồi tự vẫn để giải thoát. Qua đó, Nam Cao đã
+            kết án đanh thép xã hội tàn bạo, phơi bày hiện thực tha hóa bi thảm
+            ở nông thôn Việt Nam trước năm 1945.
+          </p>
+        </div>
+        <div class="ngb-card ngb-places-card" data-work-places hidden></div>
+      </div>
+
+      <!-- CỘT 3: Cột hình ảnh bên phải -->
+      <div class="ngb-gallery-column">
+        <div class="ngb-image-card">
+          <img
+            src="../HÌNH NCKH 10-11-12/Nam Cao.png"
+            alt="Nam Cao"
+            class="ngb-image"
+          />
+          <p class="ngb-caption">
+            <b>Nam Cao </b>
+            <a
+              >(1917–1951) quê ở tổng Cao Đà, huyện Nam Sang, phủ Lý Nhân, tỉnh
+              Hà Nam. Ông lấy bút danh Nam Cao bằng cách ghép các chữ từ tên
+              tổng và huyện của quê hương mình.
+            </a>
+            <br />
+            <i class="fa-solid fa-circle-arrow-up"></i>
+            <a
+              href="https://www.google.com/search?q=nam+cao&sca_esv=4724c275248d28cc&udm=2&biw=1272&bih=596&sxsrf=APpeQnvuEY5KpbbX4q9cQrkB0WnoPTO2Fw%3A1791010637287&ei=TafAavCMEYag0-kP-baeoAI&ved=2ahUKEwiw58vGop2XAxUG0DQHHXmbByQQ4dUDegQIBhAN&uact=5&oq=nam+cao&gs_lp=Egtnd3Mtd2l6LWltZyIHbmFtIGNhbzIQEAAYgAQYigUYQxixAxiDATIKEAAYgAQYigUYQzIFEAAYgAQyBRAAGIAEMgUQABiABDIFEAAYgAQyChAAGIAEGIoFGEMyBRAAGIAEMgUQABiABDIFEAAYgARImw5QlgZYvAxwAXgAkAEAmAFnoAGEBaoBAzYuMbgBA8gBAPgBAZgCCKAC-wWoAgrCAgoQIxjJAhjqAhgnwgIHECMYyQIYJ8ICCBAAGIAEGLEDwgIOEAAYgAQYigUYsQMYgwHCAgsQABiABBixAxiDAcICBBAAGAOYAwqSBwMzLjWgB_YksgcDMi41uAfxBcIHBTItMi42yAdTgAgB&sclient=gws-wiz-img#sv=CAMSXhoyKhBlLWF2VGc2RXNTX1RrOU5NMg5hdlRnNkVzU19UazlOTToOTkFFYVlURWdMdW93cU0gBCokCg5IUzV3SkV0dHEzbU1ITRIQZS1hdlRnNkVzU19UazlOTRgAMAEYByCfn9m5AUoIEAIYASACKAE"
+              style="text-decoration: none"
+            >
+              Nguồn: Nam Cao - Tìm trên Google
+            </a>
+          </p>
+        </div>
+        <div class="ngb-image-card">
+          <img
+            src="../HÌNH NCKH 10-11-12/Chí Phèo.png"
+            alt="Chí Phèo"
+            class="ngb-image"
+          />
+          <p class="ngb-caption">
+            <i class="fa-solid fa-circle-arrow-up"></i>
+            <a
+              href="https://www.google.com/search?q=ch%C3%AD+ph%C3%A8o&sca_esv=4724c275248d28cc&udm=2&biw=1272&bih=596&sxsrf=APpeQnveyDM8PL4LoqCZal1YBzw0XPA_lA%3A1791010570231&ei=CqfAavfGDfDf2roPipOckAI&ved=2ahUKEwj3886mop2XAxXwr1YBHYoJByIQ4dUDegQIBhAN&uact=5&oq=ch%C3%AD+ph%C3%A8o&gs_lp=Egtnd3Mtd2l6LWltZyIKY2jDrSBwaMOobzILEAAYgAQYsQMYgwEyBRAAGIAEMgUQABiABDIFEAAYgAQyBRAAGIAEMgUQABiABDIFEAAYgAQyBBAAGAMyBRAAGIAEMgsQABiABBixAxiDAUipGlCCBljHFHAEeACQAQGYAWOgAaoHqgECMTG4AQPIAQD4AQGYAg6gAuYHqAIKwgIKECMYyQIY6gIYJ8ICChAAGIAEGIoFGEPCAggQABiABBixA8ICEBAAGIAEGIoFGEMYsQMYgwHCAg4QABiABBiKBRixAxiDAcICBxAAGIAEGArCAgQQABgewgIGEAAYBRgemAMHkgcEMTAuNKAH_jWyBwM2LjS4B84HwgcHMC4xLjguNcgHaoAIAQ&sclient=gws-wiz-img#sv=CAMSURoyKhBlLUU5WWtadml1NlB3bTRNMg5FOVlrWnZpdTZQd200TToObkxzaWRMRTNiVE5qeU0gBCoXCgFzEhBlLUU5WWtadml1NlB3bTRNGAEwARgHIOTwu8QGSggQAhgBIAIoAQ"
+              style="text-decoration: none"
+            >
+              Nguồn: Chí Phèo - Tìm trên Google</a
+            >
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <footer id="footer"></footer>
+    <script type="module" src="./header_footer_fplaces.js"></script>
+    <script src="../js/ico.js"></script>
+    <script>
+      const poemStanzas = Array.from(
+        document.querySelectorAll(".ngb-poem-flow .ngb-stanza"),
+      );
+      const poemProgress = document.getElementById("ngb-progress");
+      const previousStanzaButton = document.getElementById("ngb-previous");
+      const nextStanzaButton = document.getElementById("ngb-next");
+      let currentStanza = 0;
+
+      if (
+        poemStanzas.length > 0 &&
+        poemProgress &&
+        previousStanzaButton &&
+        nextStanzaButton
+      ) {
+        function showStanza(index) {
+          currentStanza = (index + poemStanzas.length) % poemStanzas.length;
+          poemStanzas.forEach((stanza, stanzaIndex) => {
+            stanza.hidden = stanzaIndex !== currentStanza;
+          });
+          poemProgress.textContent = `Khổ ${currentStanza + 1} / ${poemStanzas.length}`;
+        }
+
+        previousStanzaButton.addEventListener("click", () => {
+          showStanza(currentStanza - 1);
+        });
+        nextStanzaButton.addEventListener("click", () => {
+          showStanza(currentStanza + 1);
+        });
+        showStanza(currentStanza);
+      }
+    </script>
+  </body>
+</html>
