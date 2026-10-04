@@ -24,8 +24,12 @@ function createMenuMarkup() {
     `;
 
     gradeEntry.works.forEach((literaryWork) => {
-      const workLinkMarkup = literaryWork.link
-        ? `<a href="${literaryWork.link}" target="_blank" class="require-double-click">${literaryWork.name}</a>`
+      const isLocalWorkPage = literaryWork.link?.startsWith("./html/");
+      const workUrl = isLocalWorkPage
+        ? getPageUrl(getFileNameFromUrl(literaryWork.link))
+        : literaryWork.link;
+      const workLinkMarkup = workUrl
+        ? `<a href="${workUrl}" target="${isLocalWorkPage ? "_self" : "_blank"}"${isLocalWorkPage ? "" : ' class="require-double-click" rel="noopener noreferrer"'}>${literaryWork.name}</a>`
         : `<a>${literaryWork.name}</a>`;
 
       menuMarkup += `
@@ -52,6 +56,46 @@ function createMenuMarkup() {
   });
 
   return `${menuMarkup}</ul></div>`;
+}
+
+function renderWorkPlaces() {
+  const introColumn = document.querySelector(".ngb-intro-column");
+  const placesContainer = introColumn?.querySelector("[data-work-places]");
+  if (!placesContainer) return;
+
+  const currentFileName = window.location.pathname.split("/").pop().toLowerCase();
+  const currentWork = menuData
+    .flatMap((gradeEntry) => gradeEntry.works)
+    .find(
+      (literaryWork) =>
+        literaryWork.link?.startsWith("./html/") &&
+        getFileNameFromUrl(literaryWork.link).toLowerCase() === currentFileName,
+    );
+
+  if (!currentWork) {
+    placesContainer.hidden = true;
+    return;
+  }
+
+  const heading = document.createElement("h2");
+  heading.className = "ngb-places-title";
+  heading.textContent = `Địa danh trong tác phẩm ${currentWork.name}`;
+
+  const placeList = document.createElement("ul");
+  placeList.className = "ngb-places-list";
+  placeList.setAttribute("aria-label", `Địa danh trong tác phẩm ${currentWork.name}`);
+
+  currentWork.places.forEach((place) => {
+    const listItem = document.createElement("li");
+    const placeLink = document.createElement("a");
+    placeLink.href = getPageUrl(getFileNameFromUrl(place.url));
+    placeLink.textContent = place.name;
+    listItem.appendChild(placeLink);
+    placeList.appendChild(listItem);
+  });
+
+  placesContainer.replaceChildren(heading, placeList);
+  placesContainer.hidden = false;
 }
 
 function setupMenuInteractions(menuContainer) {
@@ -392,6 +436,7 @@ function renderRecommendations() {
 document.addEventListener("DOMContentLoaded", () => {
   renderHeader();
   renderMenu();
+  renderWorkPlaces();
   renderFooter();
   setupSearch();
 
