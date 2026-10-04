@@ -32,7 +32,7 @@ export const menuData = [
       },
       {
         name: "Bình Ngô Đại Cáo",
-        link: "https://storymaps.arcgis.com/stories/e298af34c9794b6785186dbaac766046",
+        link: "./html/Binh_Ngo_Dai_Cao.html",
         places: [
           { name: "Hàm Tử", url: "./html/Ham_Tu.html" },
           { name: "Sông Bạch Đằng", url: "./html/Song_Bach_Dang.html" },
@@ -95,7 +95,7 @@ export const menuData = [
       },
       {
         name: "Chí Phèo",
-        link: "https://storymaps.arcgis.com/stories/880e9ce6036e486b882c59446a70709e",
+        link: "./html/Chi_Pheo.html",
         places: [{ name: "Làng Vũ Đại", url: "./html/Lang_Vu_Dai.html" }],
       },
       {
@@ -136,7 +136,7 @@ export const menuData = [
         places: [{ name: "Hồ Tây", url: "./html/Ho_Tay.html" }],
       },
       {
-        name: "Ai đã đặt tên cho dòng sông?",
+        name: "Ai đã đặt tên cho dòng sông",
         link: "https://storymaps.arcgis.com/stories/a8e04c3249f646ae94c798cdac80b72c",
         places: [
           { name: "Sông Hương", url: "./html/Song_Huong.html" },
@@ -183,7 +183,7 @@ export const menuData = [
       },
       {
         name: "Văn tế nghĩa sĩ Cần Giuộc",
-        link: "https://storymaps.arcgis.com/stories/f8de4ff2ead5435784700d14bf45c022",
+        link: "./html/Van_Te_Nghia_Si_Can_Giuoc.html",
         places: [
           { name: "Cần Giuộc", url: "./html/Can_Giuoc.html" },
           { name: "Chùa Tông Thạnh", url: "./html/Chua_Tong_Thanh.html" },
