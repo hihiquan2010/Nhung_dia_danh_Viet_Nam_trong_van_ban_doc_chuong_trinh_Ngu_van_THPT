@@ -1,4 +1,4 @@
-import { buildPageMap } from "./data.js";
+import { buildPageMap, menuData } from "./data.js";
 
 function renderHeader(assetBasePath) {
   const headerContainer = document.getElementById("header");
@@ -98,24 +98,33 @@ function attachSearch(pageFileByPlaceName) {
   const suggestionsContainer = document.getElementById("bangdexuat");
 
   if (searchInput && searchButton && suggestionsContainer) {
-    const placeNames = Object.keys(pageFileByPlaceName);
+    const pageFileBySearchTerm = { ...pageFileByPlaceName };
+    menuData.forEach((gradeEntry) => {
+      gradeEntry.works.forEach((literaryWork) => {
+        if (literaryWork.link?.startsWith("./html/")) {
+          pageFileBySearchTerm[literaryWork.name] =
+            literaryWork.link.split("/").pop();
+        }
+      });
+    });
+    const searchTerms = Object.keys(pageFileBySearchTerm);
 
     searchInput.addEventListener("input", (event) => {
       const searchTerm = event.currentTarget.value.toLowerCase().trim();
       suggestionsContainer.innerHTML = "";
       if (!searchTerm) return;
 
-      const matchingPlaceNames = placeNames.filter((placeName) =>
-        placeName.toLowerCase().includes(searchTerm)
+      const matchingSearchTerms = searchTerms.filter((name) =>
+        name.toLowerCase().includes(searchTerm)
       );
 
-      matchingPlaceNames.forEach((placeName) => {
+      matchingSearchTerms.forEach((name) => {
         const suggestion = document.createElement("div");
         suggestion.classList.add("nddx");
-        suggestion.textContent = placeName;
+        suggestion.textContent = name;
 
         suggestion.addEventListener("click", () => {
-          searchInput.value = placeName;
+          searchInput.value = name;
           suggestionsContainer.innerHTML = "";
         });
 
@@ -140,11 +149,11 @@ function attachSearch(pageFileByPlaceName) {
         return;
       }
 
-      const matchingPlaceName = placeNames.find(
-        (placeName) => placeName.toLowerCase() === searchTerm.toLowerCase()
+      const matchingSearchTerm = searchTerms.find(
+        (name) => name.toLowerCase() === searchTerm.toLowerCase()
       );
-      const pageFileName = matchingPlaceName
-        ? pageFileByPlaceName[matchingPlaceName]
+      const pageFileName = matchingSearchTerm
+        ? pageFileBySearchTerm[matchingSearchTerm]
         : null;
 
       if (pageFileName) {
