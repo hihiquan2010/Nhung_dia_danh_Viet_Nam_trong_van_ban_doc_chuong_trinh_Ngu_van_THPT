@@ -11,8 +11,12 @@ function buildMenuHtml() {
     `;
 
     gradeEntry.works.forEach((literaryWork) => {
-      const workLinkMarkup = literaryWork.link
-        ? `<a href="${literaryWork.link}" target="_self" class="require-double-click">${literaryWork.name}</a>`
+      const isLocalWorkPage = literaryWork.link?.startsWith("./html/");
+      const workUrl = isLocalWorkPage
+        ? resolvePlaceUrl(literaryWork.link)
+        : literaryWork.link;
+      const workLinkMarkup = workUrl
+        ? `<a href="${workUrl}" target="${isLocalWorkPage ? "_self" : "_blank"}"${isLocalWorkPage ? "" : ' class="require-double-click" rel="noopener noreferrer"'}>${literaryWork.name}</a>`
         : `<a>${literaryWork.name}</a>`;
 
       menuMarkup += `
