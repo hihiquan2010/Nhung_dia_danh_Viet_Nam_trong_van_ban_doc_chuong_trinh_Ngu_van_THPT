@@ -1,0 +1,201 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #eeeae0;
+  color: #333;
+  font-family: Arial, sans-serif;
+}
+
+.ngb-title-area {
+  padding: 24px 20px 8px;
+  text-align: center;
+}
+
+.ngb-title-line {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+}
+
+.ngb-page-title {
+  margin: 0;
+  color: #2c4c3b;
+  font-family: "Playfair Display", serif;
+  font-size: 3rem;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.ngb-author {
+  margin: 10px 0 0;
+  color: #9c603b;
+  font-family: Georgia, serif;
+  font-size: 1.2rem;
+  font-style: italic;
+  text-decoration: none;
+}
+
+.ngb-ornament {
+  margin-top: 10px;
+  color: #9c603b;
+  font-size: 1.5rem;
+}
+
+.ngb-layout {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 20px 24px;
+  align-items: stretch;
+}
+
+.ngb-intro-column {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ngb-card {
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  border: 1.5px solid #dcd3b6;
+  border-radius: 12px;
+  background: #f4efdc;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.ngb-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.ngb-poem-flow {
+  line-height: 1.8;
+  font-size: 0.95rem;
+  text-align: justify;
+}
+
+.ngb-intro-card {
+  flex: 0 0 auto;
+  min-height: 0;
+  height: auto;
+  line-height: 1.8;
+  font-size: 0.95rem;
+  text-align: justify;
+}
+
+.ngb-intro-card p {
+  margin: 0;
+}
+
+.ngb-gallery-column {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  height: 100%;
+}
+
+.ngb-places-card {
+  width: 100%;
+  flex: 0 0 auto;
+  min-height: 0;
+  height: auto;
+  margin-top: 0;
+  padding: 20px;
+}
+
+.ngb-places-title {
+  margin: 0 0 12px;
+  color: #2c4c3b;
+  font-size: 1.1rem;
+}
+
+.ngb-places-list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 20px;
+}
+
+.ngb-places-list a {
+  color: #365a44;
+  text-decoration: none;
+}
+
+.ngb-places-list a:hover {
+  text-decoration: underline;
+}
+
+.ngb-image-card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px;
+  border: 0;
+  border-radius: 14px;
+  background: #f5f3ee;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+}
+
+.ngb-image {
+  display: block;
+  width: 100%;
+  max-height: 200px;
+  border-radius: 10px;
+  background: transparent;
+  object-fit: contain;
+  transition: transform 0.5s ease;
+}
+
+.ngb-image-card:hover .ngb-image {
+  transform: scale(1.02);
+}
+
+.ngb-caption {
+  margin: 10px 0 0;
+  color: #666;
+  font-size: 13px;
+  font-style: italic;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.ngb-caption i {
+  margin-right: 6px;
+  color: #007bff;
+}
+
+.ngb-caption a {
+  color: #666;
+  text-decoration: none;
+}
+
+@media (max-width: 992px) {
+  .ngb-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .ngb-page-title {
+    font-size: 2rem;
+  }
+
+  .ngb-layout {
+    gap: 16px;
+    padding: 16px 12px;
+  }
+}
