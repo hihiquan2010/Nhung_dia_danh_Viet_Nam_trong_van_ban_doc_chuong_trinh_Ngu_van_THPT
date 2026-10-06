@@ -85,7 +85,7 @@ export const menuData = [
     works: [
       {
         name: "Vợ nhặt",
-        link: "https://storymaps.arcgis.com/stories/cf29be4c06ca48ed825b460c3d4559b5",
+        link: "./html/Vo_Nhat.html",
         places: [
           { name: "Nam Định", url: "./html/Nam_Dinh.html" },
           { name: "Thái Bình", url: "./html/Thai_Binh.html" },
@@ -105,14 +105,14 @@ export const menuData = [
       },
       {
         name: "Nhớ đồng",
-        link: "https://storymaps.arcgis.com/stories/eacb438f42754a25833310d0aba1ce29",
+        link: "./html/Nho_Dong.html",
         places: [
           { name: "Nhà lao Thừa Phủ", url: "./html/Nha_Lao_Thua_Phu.html" },
         ],
       },
       {
         name: "Tràng Giang",
-        link: "https://storymaps.arcgis.com/stories/02da91e9aba2405799c6244a992a34a4",
+        link: "./html/Trang_Giang.html",
         places: [
           {
             name: "Sông Hồng(Vùng Chèm - Vẽ)",
@@ -137,7 +137,7 @@ export const menuData = [
       },
       {
         name: "Ai đã đặt tên cho dòng sông",
-        link: "https://storymaps.arcgis.com/stories/a8e04c3249f646ae94c798cdac80b72c",
+        link: "./html/Ai_Dat_Ten_Cho_Dong_Song.html",
         places: [
           { name: "Sông Hương", url: "./html/Song_Huong.html" },
           { name: "Núi Kim Phụng", url: "./html/Nui_Kim_Phung.html" },
@@ -200,7 +200,7 @@ export const menuData = [
     works: [
       {
         name: "Tây Tiến",
-        link: "https://arcg.is/1y5Pj13",
+        link: "./html/Tay_Tien.html",
         places: [
           { name: "Sông Mã", url: "./html/Song_Ma.html" },
           { name: "Sài Khao (Sơn La)", url: "./html/Sai_Khao.html" },
@@ -218,7 +218,7 @@ export const menuData = [
       },
       {
         name: "Tuyên ngôn Độc lập",
-        link: "https://arcg.is/1imi9e1",
+        link: "./html/Tuyen_Ngon_Doc_Lap.html",
         places: [
           {
             name: "Quảng Trường Ba Đình",
