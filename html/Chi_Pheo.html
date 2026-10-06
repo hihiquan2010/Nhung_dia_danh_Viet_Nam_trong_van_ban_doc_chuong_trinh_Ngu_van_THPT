@@ -63,7 +63,6 @@
         font-size: 1.5rem;
       }
 
-      /* Chia 3 cột đều nhau tuyệt đối trên Desktop */
       .ngb-layout {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -92,14 +91,12 @@
         box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
       }
 
-      /* Cột 1: Trích đoạn */
       .ngb-poem-flow {
         line-height: 1.8;
         font-size: 0.95rem;
         text-align: justify;
       }
 
-      /* Cột 2: Giới thiệu */
       .ngb-intro-card {
         line-height: 1.8;
         font-size: 0.95rem;
@@ -110,7 +107,6 @@
         margin: 0;
       }
 
-      /* Cột 3: Gallery chia đều hình ảnh */
       .ngb-gallery-column {
         display: flex;
         flex-direction: column;
@@ -164,7 +160,6 @@
         text-decoration: none;
       }
 
-      /* Responsive cho màn hình nhỏ */
       @media (max-width: 992px) {
         .ngb-layout {
           grid-template-columns: 1fr;
@@ -202,9 +197,8 @@
       <div class="ngb-ornament">⚬❖⚬</div>
     </div>
 
-    <!-- KHUNG CHÍNH CHIA THÀNH 3 CỘT BẰNG NHAU -->
+   
     <div class="ngb-layout">
-      <!-- CỘT 1: Trích đoạn tác phẩm -->
       <div class="ngb-poem-column">
         <div class="ngb-card">
           <div class="ngb-poem-flow">
@@ -224,7 +218,6 @@
         </div>
       </div>
 
-      <!-- CỘT 2: Đoạn văn giới thiệu tác phẩm -->
       <div class="ngb-intro-column">
         <div class="ngb-card ngb-intro-card">
           <p>
@@ -242,7 +235,6 @@
         </div>
       </div>
 
-      <!-- CỘT 3: Cột hình ảnh bên phải -->
       <div class="ngb-gallery-column">
         <div class="ngb-image-card">
           <img
