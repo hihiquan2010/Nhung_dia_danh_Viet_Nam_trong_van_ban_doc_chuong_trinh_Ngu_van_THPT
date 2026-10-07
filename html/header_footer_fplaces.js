@@ -433,11 +433,162 @@ function renderRecommendations() {
   `;
 }
 
+function setupWorkColumnResizer() {
+  const layout = document.querySelector(".ngb-layout");
+  if (!layout) return;
+
+  const control = document.createElement("div");
+  control.className = "ngb-column-resizer";
+
+  const label = document.createElement("label");
+  label.htmlFor = "ngb-poem-column-size";
+  label.textContent = "Độ rộng cột bài tác phẩm:";
+
+  const slider = document.createElement("input");
+  slider.id = "ngb-poem-column-size";
+  slider.type = "range";
+  slider.min = "0.7";
+  slider.max = "1.5";
+  slider.step = "0.1";
+  slider.value = "1";
+  slider.setAttribute("aria-describedby", "ngb-poem-column-size-value");
+
+  const value = document.createElement("output");
+  value.id = "ngb-poem-column-size-value";
+  value.htmlFor = slider.id;
+  value.value = "1.0×";
+
+  slider.addEventListener("input", () => {
+    layout.style.setProperty("--ngb-poem-column-size", `${slider.value}fr`);
+    value.value = `${Number(slider.value).toFixed(1)}×`;
+  });
+
+  control.append(label, slider, value);
+  layout.before(control);
+}
+
+function setupPoemColumnHeight() {
+  const layout = document.querySelector(".ngb-layout");
+  const poemColumn = layout?.querySelector(".ngb-poem-column");
+  const introColumn = layout?.querySelector(".ngb-intro-column");
+  const galleryColumn = layout?.querySelector(".ngb-gallery-column");
+  if (!layout || !poemColumn || !introColumn || !galleryColumn) return;
+
+  const poemFlow = poemColumn.querySelector(".ngb-poem-flow");
+  const stanzas = poemFlow
+    ? Array.from(poemFlow.querySelectorAll(".ngb-stanza"))
+    : [];
+  const controls = poemFlow?.querySelector(".ngb-poem-controls");
+  const progress = controls?.querySelector(".ngb-poem-progress");
+  const buttons = controls?.querySelectorAll(".ngb-poem-button");
+  let pages = [];
+  let currentPage = 0;
+  let currentStart = 0;
+
+  const updatePages = (availableHeight) => {
+    if (!stanzas.length || !controls || !progress || !buttons?.length) return;
+
+    const previousStart = currentStart;
+    const desktopLayout = window.matchMedia("(min-width: 993px)").matches;
+    const card = poemColumn.querySelector(".ngb-card");
+    const cardStyle = card ? getComputedStyle(card) : null;
+    const reservedHeight = cardStyle
+      ? parseFloat(cardStyle.paddingTop) +
+        parseFloat(cardStyle.paddingBottom) +
+        parseFloat(cardStyle.borderTopWidth) +
+        parseFloat(cardStyle.borderBottomWidth)
+      : 0;
+    const contentHeight = desktopLayout
+      ? Math.max(0, availableHeight - reservedHeight)
+      : Number.POSITIVE_INFINITY;
+    const nextPages = [];
+
+    stanzas.forEach((stanza) => {
+      stanza.hidden = true;
+    });
+
+    let start = 0;
+    while (start < stanzas.length) {
+      stanzas.forEach((stanza) => {
+        stanza.hidden = true;
+      });
+
+      let visibleCount = 0;
+
+      for (let index = start; index < stanzas.length; index += 1) {
+        stanzas[index].hidden = false;
+        if (poemFlow.scrollHeight > contentHeight && visibleCount > 0) {
+          visibleCount += 1;
+          break;
+        }
+        visibleCount += 1;
+        if (poemFlow.scrollHeight > contentHeight) break;
+      }
+
+      nextPages.push({ start, count: visibleCount });
+      start += visibleCount;
+    }
+
+    pages = nextPages;
+    const pageIndex = pages.findIndex(
+      (page) =>
+        previousStart >= page.start &&
+        previousStart < page.start + page.count,
+    );
+    currentPage = pageIndex >= 0 ? pageIndex : 0;
+    showPage(currentPage);
+  };
+
+  const showPage = (pageIndex) => {
+    if (!pages.length) return;
+    currentPage = (pageIndex + pages.length) % pages.length;
+    const page = pages[currentPage];
+    currentStart = page.start;
+
+    stanzas.forEach((stanza, index) => {
+      stanza.hidden = index < page.start || index >= page.start + page.count;
+    });
+
+    progress.textContent =
+      page.count === 1
+        ? `Khổ ${page.start + 1} / ${stanzas.length}`
+        : `Khổ ${page.start + 1}–${page.start + page.count} / ${stanzas.length}`;
+  };
+
+  if (buttons?.length >= 2) {
+    buttons[0].addEventListener("click", () => showPage(currentPage - 1));
+    buttons[1].addEventListener("click", () => showPage(currentPage + 1));
+  }
+
+  const updateHeight = () => {
+    if (window.matchMedia("(max-width: 992px)").matches) {
+      poemColumn.style.maxHeight = "";
+      updatePages(Number.POSITIVE_INFINITY);
+      return;
+    }
+
+    const availableHeight = Math.max(
+      introColumn.getBoundingClientRect().height,
+      galleryColumn.getBoundingClientRect().height,
+    );
+    poemColumn.style.maxHeight = `${availableHeight}px`;
+    updatePages(availableHeight);
+  };
+
+  const resizeObserver = new ResizeObserver(updateHeight);
+  resizeObserver.observe(introColumn);
+  resizeObserver.observe(galleryColumn);
+  window.addEventListener("resize", updateHeight);
+  updateHeight();
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   renderHeader();
   renderMenu();
   renderWorkPlaces();
   renderFooter();
+  setupWorkColumnResizer();
+  setupPoemColumnHeight();
   setupSearch();
 
   const recommendationsMarkup = renderRecommendations();
