@@ -47,13 +47,52 @@ body {
 
 .ngb-layout {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  --ngb-poem-column-size: 1fr;
+  grid-template-columns:
+    minmax(0, var(--ngb-poem-column-size))
+    repeat(2, minmax(0, 1fr));
   gap: 24px;
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
   padding: 20px 24px;
-  align-items: stretch;
+  align-items: start;
+}
+
+.ngb-column-resizer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 8px 24px 0;
+  color: #365a44;
+  font-size: 0.9rem;
+}
+
+.ngb-column-resizer input {
+  width: min(280px, 45vw);
+  accent-color: #365a44;
+}
+
+.ngb-column-resizer output {
+  min-width: 3.5em;
+  font-variant-numeric: tabular-nums;
+}
+
+.ngb-layout > * {
+  min-width: 0;
+}
+
+.ngb-poem-column {
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.ngb-poem-column > .ngb-card {
+  height: auto;
 }
 
 .ngb-intro-column {
@@ -103,7 +142,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  height: 100%;
+  height: auto;
 }
 
 .ngb-places-card {
@@ -184,8 +223,17 @@ body {
 }
 
 @media (max-width: 992px) {
+  .ngb-column-resizer {
+    display: none;
+  }
+
   .ngb-layout {
     grid-template-columns: 1fr;
+  }
+
+  .ngb-poem-column {
+    max-height: none !important;
+    overflow-y: visible;
   }
 }
 
