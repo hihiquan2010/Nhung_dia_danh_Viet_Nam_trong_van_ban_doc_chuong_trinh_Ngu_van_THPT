@@ -311,28 +311,5 @@
     <footer id="footer"></footer>
     <script type="module" src="./header_footer_fplaces.js"></script>
     <script src="../js/ico.js"></script>
-    <script>
-      const poemStanzas = Array.from(
-        document.querySelectorAll(".ngb-poem-flow .ngb-stanza"),
-      );
-      const poemProgress = document.getElementById("ngb-progress");
-      let currentStanza = 0;
-
-      function showStanza(index) {
-        currentStanza = (index + poemStanzas.length) % poemStanzas.length;
-        poemStanzas.forEach((stanza, stanzaIndex) => {
-          stanza.hidden = stanzaIndex !== currentStanza;
-        });
-        poemProgress.textContent = `Khổ ${currentStanza + 1} / ${poemStanzas.length}`;
-      }
-
-      document.getElementById("ngb-previous").addEventListener("click", () => {
-        showStanza(currentStanza - 1);
-      });
-      document.getElementById("ngb-next").addEventListener("click", () => {
-        showStanza(currentStanza + 1);
-      });
-      showStanza(currentStanza);
-    </script>
   </body>
 </html>
