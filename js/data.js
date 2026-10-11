@@ -115,7 +115,7 @@ export const menuData = [
         link: "./html/Trang_Giang.html",
         places: [
           {
-            name: "Sông Hồng(Vùng Chèm - Vẽ)",
+            name: "Sông Hồng (Vùng Chèm - Vẽ)",
             url: "./html/Song_Hong_vung_chem_ve.html",
           },
         ],
