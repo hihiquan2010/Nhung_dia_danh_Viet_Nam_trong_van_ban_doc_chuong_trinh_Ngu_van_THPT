@@ -98,11 +98,11 @@ export const menuData = [
         link: "./html/Chi_Pheo.html",
         places: [{ name: "Làng Vũ Đại", url: "./html/Lang_Vu_Dai.html" }],
       },
-      {
+      /*{
         name: "Cải ơi",
         link: "https://storymaps.arcgis.com/stories/aac5a2ea5f774bbfa10a0fe3983815fb",
         places: [{ name: "Chợ Lớn", url: "./html/Cho_Lon.html" }],
-      },
+      },*/
       {
         name: "Nhớ đồng",
         link: "./html/Nho_Dong.html",
