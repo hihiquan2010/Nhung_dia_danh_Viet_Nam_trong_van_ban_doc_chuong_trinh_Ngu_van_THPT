@@ -562,8 +562,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderWorkPlaces();
   renderFooter();
   setupSearch();
-  setupWorkColumnResizer();
-  setupPoemColumnHeight();
 
   const currentFileName = window.location.pathname.split("/").pop().toLowerCase();
 
@@ -580,6 +578,9 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
   if (!isWorkPage) {
+    setupWorkColumnResizer();
+    setupPoemColumnHeight();
+
     const recommendationsMarkup = renderRecommendations();
     const footerElement = document.getElementById("footer");
 
