@@ -570,13 +570,12 @@ document.addEventListener("DOMContentLoaded", () => {
     .some((literaryWork) => {
       if (!literaryWork.link) return false;
 
-      if (literaryWork.link.startsWith("./html/")) {
-        return getFileNameFromUrl(literaryWork.link).toLowerCase() === currentFileName;
-      } else {
-        return false;
-      }
+      const workLinkFileName = getFileNameFromUrl(literaryWork.link).toLowerCase();
+      
+      return workLinkFileName === currentFileName;
     });
 
+  
   if (!isWorkPage) {
     setupWorkColumnResizer();
     setupPoemColumnHeight();
