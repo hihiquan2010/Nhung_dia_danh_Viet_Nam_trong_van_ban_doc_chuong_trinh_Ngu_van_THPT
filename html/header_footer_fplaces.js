@@ -561,18 +561,34 @@ document.addEventListener("DOMContentLoaded", () => {
   renderMenu();
   renderWorkPlaces();
   renderFooter();
+  setupSearch();
   setupWorkColumnResizer();
   setupPoemColumnHeight();
-  setupSearch();
 
-  const recommendationsMarkup = renderRecommendations();
-  const footerElement = document.getElementById("footer");
+  const currentFileName = window.location.pathname.split("/").pop().toLowerCase();
 
-  if (recommendationsMarkup) {
-    if (footerElement) {
-      footerElement.insertAdjacentHTML("beforebegin", recommendationsMarkup);
-    } else {
-      document.body.insertAdjacentHTML("beforeend", recommendationsMarkup);
+  const isWorkPage = menuData
+    .flatMap((gradeEntry) => gradeEntry.works)
+    .some((literaryWork) => {
+      if (!literaryWork.link) return false;
+
+      if (literaryWork.link.startsWith("./html/")) {
+        return getFileNameFromUrl(literaryWork.link).toLowerCase() === currentFileName;
+      } else {
+        return false;
+      }
+    });
+
+  if (!isWorkPage) {
+    const recommendationsMarkup = renderRecommendations();
+    const footerElement = document.getElementById("footer");
+
+    if (recommendationsMarkup) {
+      if (footerElement) {
+        footerElement.insertAdjacentHTML("beforebegin", recommendationsMarkup);
+      } else {
+        document.body.insertAdjacentHTML("beforeend", recommendationsMarkup);
+      }
     }
   }
 });
