@@ -191,16 +191,6 @@ function renderFooter() {
       <div class="infoGroup">
         <b>
           <p id="dv">
-            <!-- Histats.com  (div with counter) -->
-            <div id="histats_counter"></div>
-        
-            <!-- Histats.com  START  (aync)-->
-            <noscript>
-              <a href="/" target="_blank">
-                <img src="//sstatic1.histats.com/0.gif?5053294&101" alt="" border="0">
-                </a>
-              </noscript>
-              <!-- Histats.com  END  -->
               <i class="fa-solid fa-school"></i> Đơn vị: Trường THPT Bình Chánh
           </p>
         </b>
@@ -209,22 +199,6 @@ function renderFooter() {
         </p>
       </div>
     `;
-
-    /* Histats.com START (async) */
-    window._Hasync = window._Hasync || [];
-    window._Hasync.push(['Histats.start', '1,5053294,4,383,112,48,00011110']);
-    window._Hasync.push(['Histats.fasi', '1']);
-    window._Hasync.push(['Histats.track_hits', '']);
-
-    if (!document.getElementById('histats-script')) {
-      const histatsScript = document.createElement("script");
-      histatsScript.id = "histats-script";
-      histatsScript.type = "text/javascript";
-      histatsScript.async = true;
-      histatsScript.src = "//s10.histats.com/js15_as.js";
-      (document.head || document.body).appendChild(histatsScript);
-    }
-    /* Histats.com END */
   }
 }
 
