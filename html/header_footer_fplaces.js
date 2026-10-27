@@ -532,15 +532,19 @@ function setupPoemColumnHeight() {
   }
 
   const updateHeight = () => {
-    if (window.matchMedia("(max-width: 992px)").matches) {
+    const isMobile = window.matchMedia("(max-width: 992px)").matches;
+
+    if (isMobile) {
       poemColumn.style.maxHeight = "";
+      if (controls) controls.style.display = "none";
       updatePages(Number.POSITIVE_INFINITY);
       return;
     }
 
+    if (controls) controls.style.display = "";
     const availableHeight = Math.max(
-      introColumn.getBoundingClientRect().height,
-      galleryColumn.getBoundingClientRect().height,
+    introColumn.getBoundingClientRect().height,
+    galleryColumn.getBoundingClientRect().height,
     );
     poemColumn.style.maxHeight = `${availableHeight}px`;
     updatePages(availableHeight);
