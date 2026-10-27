@@ -189,11 +189,9 @@ function renderFooter() {
       </span>
 
       <div class="infoGroup">
-        <b>
-          <p id="dv">
-              <i class="fa-solid fa-school"></i> Đơn vị: Trường THPT Bình Chánh
-          </p>
-        </b>
+        <p id="dv">
+          <b><i class="fa-solid fa-school"></i> Đơn vị: Trường THPT Bình Chánh</b>
+        </p>
         <p>
           <i class="fa-solid fa-user-group"></i> Nhóm thực hiện: Phạm Gia Uy 11A3 và Trần Thanh Duy 12A16
         </p>
@@ -203,13 +201,13 @@ function renderFooter() {
 }
 
 function createPageMap() {
-  return menuData.reduce((pageFileByPlaceName, gradeEntry) => {
+  return menuData.reduce((acc, gradeEntry) => {
     gradeEntry.works.forEach((literaryWork) => {
       literaryWork.places.forEach((place) => {
-        pageFileByPlaceName[place.name] = getFileNameFromUrl(place.url);
+        acc[place.name] = getFileNameFromUrl(place.url);
       });
     });
-    return pageFileByPlaceName;
+    return acc;
   }, {});
 }
 
@@ -492,11 +490,10 @@ function setupPoemColumnHeight() {
       for (let index = start; index < stanzas.length; index += 1) {
         stanzas[index].hidden = false;
         if (poemFlow.scrollHeight > contentHeight && visibleCount > 0) {
-          visibleCount += 1;
+          stanzas[index].hidden = true;
           break;
         }
         visibleCount += 1;
-        if (poemFlow.scrollHeight > contentHeight) break;
       }
 
       nextPages.push({ start, count: visibleCount });
@@ -571,11 +568,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (!literaryWork.link) return false;
 
       const workLinkFileName = getFileNameFromUrl(literaryWork.link).toLowerCase();
-      
+
       return workLinkFileName === currentFileName;
     });
 
-  
   if (!isWorkPage) {
     setupWorkColumnResizer();
     setupPoemColumnHeight();
