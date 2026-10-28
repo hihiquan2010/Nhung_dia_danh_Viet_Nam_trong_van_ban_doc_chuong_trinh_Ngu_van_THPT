@@ -522,8 +522,8 @@ function setupPoemColumnHeight() {
 
     progress.textContent =
       page.count === 1
-        ? `Khổ ${page.start + 1} / ${stanzas.length}`
-        : `Khổ ${page.start + 1}–${page.start + page.count} / ${stanzas.length}`;
+        ? `Trang ${page.start + 1}`
+        : `Trang ${page.start + 1}–${page.start + page.count}`;
   };
 
   if (buttons?.length >= 2) {
