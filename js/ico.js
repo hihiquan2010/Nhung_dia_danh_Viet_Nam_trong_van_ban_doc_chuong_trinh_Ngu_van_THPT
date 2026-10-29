@@ -1,10 +1,9 @@
-// --- XÁC ĐỊNH ĐƯỜNG DẪN TƯƠNG ĐỐI ---
+
 function getRootPath() {
   const isNestedPage = window.location.pathname.includes("/html/");
   return isNestedPage ? "../" : "./";
 }
 
-// --- TỰ ĐỘNG CHÈN ICON VÀO THẺ <HEAD> ---
 function injectHeadIcons() {
   const assetBasePath = getRootPath();
 
