@@ -12,11 +12,19 @@ const IMAGE_EXTENSIONS = new Map([
 const authPanel = document.getElementById("auth-panel");
 const accountPanel = document.getElementById("account-panel");
 const postPanel = document.getElementById("post-panel");
+const moderationPanel = document.getElementById("moderation-panel");
+const ownerPanel = document.getElementById("owner-panel");
 const authForm = document.getElementById("auth-form");
 const profileForm = document.getElementById("profile-form");
 const postForm = document.getElementById("post-form");
+const moderatorForm = document.getElementById("moderator-form");
+const announcementForm = document.getElementById("announcement-form");
 const statusMessage = document.getElementById("status-message");
 const postsList = document.getElementById("posts-list");
+const moderationPosts = document.getElementById("moderation-posts");
+const banProposals = document.getElementById("ban-proposals");
+const moderatorList = document.getElementById("moderator-list");
+const announcementList = document.getElementById("announcement-list");
 const signInButton = document.getElementById("sign-in-button");
 const signUpButton = document.getElementById("sign-up-button");
 const saveProfileButton = document.getElementById("save-profile-button");
@@ -61,7 +69,7 @@ function makeAvatar(supabase, profile, className = "post-avatar") {
   return image;
 }
 
-function appendComments(supabase, card, post, currentUser) {
+function appendComments(supabase, card, post, currentUser, showSignInPrompt) {
   const commentSection = document.createElement("section");
   commentSection.className = "post-comments";
   const heading = document.createElement("h4");
@@ -105,7 +113,7 @@ function appendComments(supabase, card, post, currentUser) {
       void submitComment(event, form, button, post.id, supabase);
     });
     commentSection.append(form);
-  } else {
+  } else if (showSignInPrompt) {
     const signInNote = document.createElement("p");
     signInNote.className = "muted";
     signInNote.textContent = "Đăng nhập để tham gia bình luận.";
@@ -114,7 +122,60 @@ function appendComments(supabase, card, post, currentUser) {
   card.append(commentSection);
 }
 
-function renderPosts(supabase, posts, currentUser) {
+function addBanRequestForm(container, targetUserId, onBan) {
+  const form = document.createElement("form");
+  form.className = "moderation-actions";
+
+  const reasonLabel = document.createElement("label");
+  reasonLabel.textContent = "Lý do BAN";
+  const reason = document.createElement("input");
+  reason.required = true;
+  reason.maxLength = 1000;
+  reasonLabel.append(reason);
+
+  const durationLabel = document.createElement("label");
+  durationLabel.textContent = "Thời hạn";
+  const duration = document.createElement("select");
+  for (const [value, label] of [
+    ["24", "24 giờ"],
+    ["168", "7 ngày"],
+    ["720", "30 ngày"],
+    ["2160", "90 ngày"],
+    ["permanent", "Vĩnh viễn"],
+  ]) {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    duration.append(option);
+  }
+  durationLabel.append(duration);
+
+  const button = document.createElement("button");
+  button.type = "submit";
+  button.textContent = "Đề xuất BAN";
+  button.dataset.danger = "true";
+  form.append(reasonLabel, durationLabel, button);
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    void onBan({
+      target_user_id: targetUserId,
+      reason: reason.value.trim(),
+      duration_hours: duration.value === "permanent"
+        ? null
+        : Number(duration.value),
+    });
+  });
+  container.append(form);
+}
+
+function renderPosts(
+  supabase,
+  posts,
+  currentUser,
+  currentRole,
+  onBan,
+  currentUserIsBanned,
+) {
   postsList.replaceChildren();
 
   if (!posts.length) {
@@ -135,10 +196,17 @@ function renderPosts(supabase, posts, currentUser) {
     meta.className = "post-meta";
     meta.textContent = `${post.profiles?.display_name || "Thành viên"} · ${formatDate(post.created_at)}`;
     authorRow.append(meta);
-
     const title = document.createElement("h3");
     title.textContent = post.title;
     card.append(authorRow, title);
+    if (
+      currentUser &&
+      !currentUserIsBanned &&
+      currentUser.id !== post.author_id &&
+      (currentRole === "moderator" || currentRole === "owner")
+    ) {
+      addBanRequestForm(card, post.author_id, onBan);
+    }
 
     if (post.literary_work) {
       const literaryWork = document.createElement("p");
@@ -160,7 +228,13 @@ function renderPosts(supabase, posts, currentUser) {
     analysis.className = "post-analysis";
     analysis.textContent = post.analysis;
     card.append(analysis);
-    appendComments(supabase, card, post, currentUser);
+    appendComments(
+      supabase,
+      card,
+      post,
+      currentRole && !currentUserIsBanned ? currentUser : null,
+      !currentUser,
+    );
     postsList.append(card);
   }
 }
@@ -175,6 +249,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   let currentUser = null;
   let currentProfile = null;
+  let currentRole = null;
+  let currentUserIsBanned = false;
+  let authRevision = 0;
 
   async function invokeCommunity(action, payload) {
     const { data, error } = await supabase.functions.invoke("community-api", {
@@ -205,6 +282,21 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       database_unavailable: "Không thể lưu dữ liệu lúc này. Vui lòng thử lại.",
       post_not_found: "Bài viết này không còn tồn tại.",
       unauthorized: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+      account_banned: "Tài khoản đang bị cấm và không thể sử dụng cộng đồng.",
+      forbidden: "Tài khoản không có quyền thực hiện thao tác này.",
+      user_not_found: "Không tìm thấy tài khoản đã đăng ký.",
+      user_email_not_confirmed: "Tài khoản cần xác nhận email trước khi phân quyền.",
+      ban_saved_auth_lock_failed:
+        "Đã lưu lệnh cấm nhưng Supabase Auth chưa thể khóa phiên đăng nhập.",
+      ban_decision_rejected:
+        "Không thể duyệt đề xuất này. Có thể Moderator khác đã xử lý trước.",
+      ban_already_pending_or_active:
+        "Tài khoản đã có lệnh cấm hoặc đề xuất đang chờ duyệt.",
+      pending_proposal_not_found: "Đề xuất không còn chờ xử lý.",
+      cannot_approve_own_proposal: "Bạn không thể tự duyệt đề xuất BAN của mình.",
+      role_change_rejected: "Không thể thay đổi quyền của tài khoản này.",
+      post_moderation_rejected: "Không thể thay đổi trạng thái bài viết.",
+      database_unavailable: "Dịch vụ lưu trữ tạm thời không khả dụng.",
     };
     const code = responseBody?.error;
     throw new Error(
@@ -320,8 +412,169 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         post_comments: commentsByPostId.get(post.id) || [],
       })),
       currentUser,
+      currentRole,
+      requestBan,
+      currentUserIsBanned,
     );
     showStatus(posts.length ? `Đang hiển thị ${posts.length} bài đăng gần nhất.` : "");
+  }
+
+  async function loadModerationData() {
+    if (currentRole !== "moderator" && currentRole !== "owner") return;
+    const data = await invokeCommunity("get-moderation-data", {});
+    moderationPosts.replaceChildren();
+    banProposals.replaceChildren();
+
+    if (!data.posts.length) {
+      moderationPosts.textContent = "Chưa có bài viết cần xem.";
+    }
+    for (const post of data.posts) {
+      const item = document.createElement("article");
+      item.className = "moderation-item";
+      const title = document.createElement("h4");
+      title.textContent = post.title;
+      const author = document.createElement("p");
+      author.textContent =
+        `Tác giả: ${post.profiles?.display_name || "Thành viên"} · ` +
+        `trạng thái: ${post.status}`;
+      const preview = document.createElement("p");
+      preview.textContent = post.analysis.slice(0, 360);
+      const actions = document.createElement("div");
+      actions.className = "moderation-actions";
+      const reason = document.createElement("input");
+      reason.maxLength = 1000;
+      reason.setAttribute("aria-label", "Lý do kiểm duyệt bài viết");
+      reason.placeholder = "Lý do (không bắt buộc)";
+      const status = post.status === "approved" ? "rejected" : "approved";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.textContent = status === "rejected" ? "Ẩn bài" : "Khôi phục bài";
+      button.dataset.danger = String(status === "rejected");
+      button.addEventListener("click", async () => {
+        try {
+          await invokeCommunity("moderate-post", {
+            post_id: post.id,
+            status,
+            reason: reason.value.trim(),
+          });
+          showStatus(status === "rejected" ? "Đã ẩn bài viết." : "Đã khôi phục bài viết.");
+          await loadPosts();
+          await loadModerationData();
+        } catch (error) {
+          showStatus(`Không thể kiểm duyệt bài: ${error.message}`, true);
+        }
+      });
+      actions.append(reason, button);
+      item.append(title, author, preview, actions);
+      moderationPosts.append(item);
+    }
+
+    if (!data.proposals.length) {
+      banProposals.textContent = "Không có đề xuất BAN đang chờ.";
+    }
+    for (const proposal of data.proposals) {
+      const item = document.createElement("article");
+      item.className = "moderation-item";
+      const title = document.createElement("h4");
+      title.textContent = `Đề xuất BAN · tài khoản …${proposal.target_user_id.slice(-8)}`;
+      const details = document.createElement("p");
+      details.textContent =
+        `${proposal.reason} · ` +
+        (proposal.duration_hours === null
+          ? "vĩnh viễn"
+          : `${proposal.duration_hours} giờ`) +
+        ` · đề xuất bởi …${proposal.requested_by.slice(-8)}`;
+      const actions = document.createElement("div");
+      actions.className = "moderation-actions";
+      const decisionReason = document.createElement("input");
+      decisionReason.maxLength = 1000;
+      decisionReason.setAttribute("aria-label", "Lý do quyết định BAN");
+      decisionReason.placeholder = "Ghi chú (không bắt buộc)";
+      for (const approve of [true, false]) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = approve ? "Duyệt BAN" : "Từ chối";
+        button.dataset.danger = String(approve);
+        button.addEventListener("click", async () => {
+          try {
+            await invokeCommunity("resolve-ban", {
+              proposal_id: proposal.id,
+              approve,
+              decision_reason: decisionReason.value.trim(),
+            });
+            showStatus(approve ? "Đã duyệt lệnh BAN." : "Đã từ chối đề xuất.");
+            await loadModerationData();
+          } catch (error) {
+            showStatus(`Không thể xử lý đề xuất: ${error.message}`, true);
+          }
+        });
+        actions.append(button);
+      }
+      item.append(title, details, decisionReason, actions);
+      banProposals.append(item);
+    }
+
+    if (currentRole !== "owner") return;
+
+    moderatorList.replaceChildren();
+    if (!data.moderators.length) {
+      moderatorList.textContent = "Chưa có Moderator nào.";
+    }
+    for (const moderator of data.moderators) {
+      const item = document.createElement("article");
+      item.className = "moderation-item";
+      item.textContent = moderator.email || "Tài khoản Moderator";
+      moderatorList.append(item);
+    }
+
+    announcementList.replaceChildren();
+    if (!data.announcements.length) {
+      announcementList.textContent = "Chưa có thông báo.";
+    }
+    for (const announcement of data.announcements) {
+      const item = document.createElement("article");
+      item.className = "moderation-item";
+      const title = document.createElement("h4");
+      title.textContent = announcement.title;
+      const body = document.createElement("p");
+      body.textContent = announcement.body;
+      const status = document.createElement("p");
+      status.textContent = announcement.is_active ? "Đang hiển thị" : "Đã lưu trữ";
+      item.append(title, body, status);
+      if (announcement.is_active) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "Gỡ thông báo";
+        button.dataset.danger = "true";
+        button.addEventListener("click", async () => {
+          try {
+            await invokeCommunity("archive-announcement", {
+              announcement_id: announcement.id,
+            });
+            showStatus("Đã gỡ thông báo khỏi trang chủ.");
+            await loadModerationData();
+          } catch (error) {
+            showStatus(`Không thể gỡ thông báo: ${error.message}`, true);
+          }
+        });
+        item.append(button);
+      }
+      announcementList.append(item);
+    }
+  }
+
+  async function requestBan(payload) {
+    try {
+      const result = await invokeCommunity("request-ban", payload);
+      showStatus(
+        result.status === "pending"
+          ? "Đã gửi đề xuất BAN, cần Moderator khác xác nhận."
+          : "Đã cấm tài khoản.",
+      );
+      await loadModerationData();
+    } catch (error) {
+      showStatus(`Không thể cấm tài khoản: ${error.message}`, true);
+    }
   }
 
   function updateAccount(session) {
@@ -329,10 +582,79 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     const signedIn = Boolean(currentUser);
     authPanel.hidden = signedIn;
     accountPanel.hidden = !signedIn;
-    postPanel.hidden = !signedIn;
+    postPanel.hidden = !signedIn || !currentRole || currentUserIsBanned;
+    profileForm.hidden = !signedIn || !currentRole || currentUserIsBanned;
+    moderationPanel.hidden =
+      !signedIn ||
+      currentUserIsBanned ||
+      (currentRole !== "moderator" && currentRole !== "owner");
+    ownerPanel.hidden = !signedIn || currentUserIsBanned || currentRole !== "owner";
+    const banNotice = document.getElementById("account-ban-notice");
+    avatarPreview.hidden = true;
+    banNotice.hidden = !currentUserIsBanned;
+    banNotice.textContent = currentUserIsBanned
+      ? "Tài khoản đang bị cấm; các chức năng cộng đồng đã bị khóa."
+      : "";
     if (signedIn) {
       document.getElementById("account-email").textContent =
         currentUser.email || "";
+    }
+  }
+
+  async function handleSession(session) {
+    const revision = ++authRevision;
+    currentRole = null;
+    currentUserIsBanned = false;
+    updateAccount(session);
+    if (!session) {
+      currentProfile = null;
+      await loadPosts();
+      return;
+    }
+
+    let access;
+    try {
+      access = await invokeCommunity("get-access", {});
+    } catch (error) {
+      if (revision !== authRevision) return;
+      currentRole = null;
+      currentUserIsBanned = false;
+      updateAccount(session);
+      await loadPosts();
+      showStatus(`Không thể xác thực quyền tài khoản: ${error.message}`, true);
+      return;
+    }
+
+    if (revision !== authRevision) return;
+    currentRole = access.role;
+    currentUserIsBanned = access.banned;
+    updateAccount(session);
+    let accessStatus = "";
+    let profileStatus = "";
+    if (currentUserIsBanned) {
+      accessStatus = access.ban_expires_at
+        ? `Tài khoản đang bị cấm đến ${formatDate(access.ban_expires_at)}.`
+        : "Tài khoản đang bị cấm vĩnh viễn.";
+    } else {
+      try {
+        await loadProfile();
+      } catch (error) {
+        profileStatus = `Không thể tải hồ sơ: ${error.message}`;
+      }
+    }
+
+    await loadPosts();
+    if (accessStatus) showStatus(accessStatus, true);
+    else if (profileStatus) showStatus(profileStatus, true);
+    if (
+      !currentUserIsBanned &&
+      (currentRole === "moderator" || currentRole === "owner")
+    ) {
+      try {
+        await loadModerationData();
+      } catch (error) {
+        showStatus(`Không thể tải công cụ kiểm duyệt: ${error.message}`, true);
+      }
     }
   }
 
@@ -463,6 +785,42 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     }
   }
 
+  async function setModeratorRole(makeModerator) {
+    const emailInput = moderatorForm.elements.namedItem("email");
+    const email = emailInput.value.trim();
+    if (!email || !moderatorForm.reportValidity()) return;
+    try {
+      await invokeCommunity("manage-moderator", {
+        email,
+        make_moderator: makeModerator,
+      });
+      moderatorForm.reset();
+      showStatus(makeModerator ? "Đã thêm Moderator." : "Đã gỡ quyền Moderator.");
+      await loadModerationData();
+    } catch (error) {
+      showStatus(`Không thể thay đổi Moderator: ${error.message}`, true);
+    }
+  }
+
+  async function publishAnnouncement(event) {
+    event.preventDefault();
+    try {
+      const formData = new FormData(announcementForm);
+      const endsAtValue = formData.get("ends_at");
+      const endsAt = endsAtValue ? new Date(endsAtValue).toISOString() : null;
+      await invokeCommunity("publish-announcement", {
+        title: formData.get("title").trim(),
+        body: formData.get("body").trim(),
+        ends_at: endsAt,
+      });
+      announcementForm.reset();
+      showStatus("Đã đăng thông báo trên trang chủ.");
+      await loadModerationData();
+    } catch (error) {
+      showStatus(`Không thể đăng thông báo: ${error.message}`, true);
+    }
+  }
+
   document.getElementById("refresh-button").addEventListener("click", loadPosts);
   document.getElementById("sign-out-button").addEventListener("click", async () => {
     const { error } = await supabase.auth.signOut();
@@ -472,16 +830,16 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   signUpButton.addEventListener("click", signUp);
   profileForm.addEventListener("submit", saveProfile);
   postForm.addEventListener("submit", publishPost);
+  moderatorForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    void setModeratorRole(true);
+  });
+  document.getElementById("remove-moderator-button")
+    .addEventListener("click", () => void setModeratorRole(false));
+  announcementForm.addEventListener("submit", publishAnnouncement);
 
   supabase.auth.onAuthStateChange((_event, session) => {
-    updateAccount(session);
-    queueMicrotask(() => {
-      void loadProfile()
-        .then(loadPosts)
-        .catch((error) =>
-          showStatus(`Không thể tải hồ sơ: ${error.message}`, true),
-        );
-    });
+    queueMicrotask(() => void handleSession(session));
   });
 
   const { data: sessionData, error: sessionError } =
@@ -489,14 +847,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   if (sessionError) {
     showStatus(`Không thể kiểm tra phiên đăng nhập: ${sessionError.message}`, true);
   } else {
-    updateAccount(sessionData.session);
-    if (sessionData.session) {
-      try {
-        await loadProfile();
-      } catch (error) {
-        showStatus(`Không thể tải hồ sơ: ${error.message}`, true);
-      }
-    }
-    await loadPosts();
+    await handleSession(sessionData.session);
   }
 }

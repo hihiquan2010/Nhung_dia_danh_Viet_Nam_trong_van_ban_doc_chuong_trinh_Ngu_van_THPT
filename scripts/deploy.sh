@@ -117,10 +117,12 @@ git add \
   index.html \
   js/community.js \
   js/game.js \
+  js/homepage-community.js \
   js/header_footer.js \
   js/site_chrome.js \
   scripts/deploy.sh \
   scripts/run-community-local.sh \
+  scripts/setup-owner.sh \
   scripts/setup-gemini-local.sh \
   scripts/setup-local.sh \
   supabase/.env.example \
@@ -128,6 +130,7 @@ git add \
   supabase/functions/community-api/index.ts \
   supabase/migrations/20261103000000_community.sql \
   supabase/migrations/20261104000000_community_data_and_storage.sql \
+  supabase/migrations/20261104210000_community_roles_moderation.sql \
   css/game.css \
   css/recommendGroup.css \
   css/titleFont.css \

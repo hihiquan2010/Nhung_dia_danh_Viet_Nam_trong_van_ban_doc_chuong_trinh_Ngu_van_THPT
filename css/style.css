@@ -44,6 +44,41 @@ body {
   background: #1f382b;
 }
 
+.community-link[hidden],
+.site-announcements[hidden] {
+  display: none;
+}
+
+.site-announcements {
+  width: min(900px, calc(100% - 32px));
+  margin: 24px auto;
+  padding: 20px;
+  border: 1px solid #d6c6a0;
+  border-radius: 12px;
+  background: #fffaf0;
+  box-sizing: border-box;
+}
+
+.site-announcements h2 {
+  margin-top: 0;
+  color: #2c4c3b;
+}
+
+.site-announcement + .site-announcement {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #ddd2bb;
+}
+
+.site-announcement h3,
+.site-announcement p {
+  margin-bottom: 0;
+}
+
+.site-announcement h3 {
+  margin-top: 0;
+}
+
 img,
 iframe,
 video {

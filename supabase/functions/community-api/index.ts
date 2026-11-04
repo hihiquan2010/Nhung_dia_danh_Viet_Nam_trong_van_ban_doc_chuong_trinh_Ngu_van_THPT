@@ -44,6 +44,40 @@ function optionalOwnedPath(value: unknown, userId: string, folder: string) {
   return value;
 }
 
+function isUuid(value: unknown): value is string {
+  return typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+      .test(value);
+}
+
+async function getCommunityRole(adminClient: ReturnType<typeof createClient>, userId: string) {
+  const { data, error } = await adminClient
+    .from("community_user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw error;
+  return data?.role ?? null;
+}
+
+async function applyAuthBan(
+  adminClient: ReturnType<typeof createClient>,
+  userId: string,
+  durationHours: number | null,
+): Promise<boolean> {
+  const { error } = await adminClient.auth.admin.updateUserById(userId, {
+    ban_duration: durationHours === null ? "876000h" : `${durationHours}h`,
+  });
+  if (error) {
+    console.error("Could not apply the Supabase Auth ban.", {
+      userId,
+      message: error.message,
+    });
+    return false;
+  }
+  return true;
+}
+
 async function moderateText(
   apiKey: string,
   content: string,
@@ -185,6 +219,352 @@ async function handleRequest(request: Request): Promise<Response> {
 
   const userId = userData.user.id;
   const action = text(body.action);
+  if (action === "get-access") {
+    try {
+      const role = await getCommunityRole(adminClient, userId);
+      if (!role) {
+        console.error("Authenticated account has no community role.", { userId });
+        return jsonResponse({ error: "role_not_configured" }, 503);
+      }
+
+      const { data: ban, error: banError } = await adminClient
+        .from("community_bans")
+        .select("reason, expires_at")
+        .eq("user_id", userId)
+        .maybeSingle();
+      if (banError) {
+        console.error("Could not check the account ban status.", banError.message);
+        return jsonResponse({ error: "database_unavailable" }, 503);
+      }
+
+      const isBanned = Boolean(
+        ban && (!ban.expires_at || new Date(ban.expires_at).getTime() > Date.now()),
+      );
+      return jsonResponse({
+        role,
+        banned: isBanned,
+        ban_expires_at: isBanned ? ban.expires_at : null,
+      });
+    } catch (error) {
+      console.error("Could not load the account role.", {
+        userId,
+        message: error instanceof Error ? error.message : "unknown error",
+      });
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+  }
+
+  const { data: activeBan, error: activeBanError } = await adminClient
+    .from("community_bans")
+    .select("reason, expires_at")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (activeBanError) {
+    console.error("Could not check the account ban status.", activeBanError.message);
+    return jsonResponse({ error: "database_unavailable" }, 503);
+  }
+  if (
+    activeBan &&
+    (!activeBan.expires_at || new Date(activeBan.expires_at).getTime() > Date.now())
+  ) {
+    return jsonResponse({
+      error: "account_banned",
+      message: activeBan.expires_at
+        ? `Tài khoản đang bị cấm đến ${activeBan.expires_at}.`
+        : "Tài khoản đang bị cấm vĩnh viễn.",
+    }, 403);
+  }
+
+  let actorRole: string | null;
+  try {
+    actorRole = await getCommunityRole(adminClient, userId);
+  } catch (error) {
+    console.error("Could not load a community role.", {
+      userId,
+      message: error instanceof Error ? error.message : "unknown error",
+    });
+    return jsonResponse({ error: "database_unavailable" }, 503);
+  }
+  if (!actorRole) {
+    console.error("Authenticated account has no community role.", { userId });
+    return jsonResponse({ error: "role_not_configured" }, 503);
+  }
+
+  if (action === "get-moderation-data") {
+    if (actorRole !== "moderator" && actorRole !== "owner") {
+      return jsonResponse({ error: "forbidden" }, 403);
+    }
+    const { data: posts, error: postsError } = await adminClient
+      .from("posts")
+      .select(
+        "id, author_id, title, literary_work, analysis, image_path, status, created_at, profiles(display_name, avatar_path)",
+      )
+      .order("created_at", { ascending: false })
+      .limit(100);
+    const { data: proposals, error: proposalsError } = await adminClient
+      .from("community_ban_proposals")
+      .select(
+        "id, target_user_id, requested_by, duration_hours, reason, created_at",
+      )
+      .eq("status", "pending")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    if (postsError || proposalsError) {
+      console.error("Could not load moderation data.", {
+        posts: postsError?.message,
+        proposals: proposalsError?.message,
+      });
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+
+    const response: JsonRecord = { posts, proposals, role: actorRole };
+    if (actorRole === "owner") {
+      const { data: moderators, error: moderatorsError } = await adminClient
+        .from("community_user_roles")
+        .select("user_id, changed_at")
+        .eq("role", "moderator")
+        .order("changed_at", { ascending: false })
+        .limit(100);
+      const { data: announcements, error: announcementsError } = await adminClient
+        .from("site_announcements")
+        .select("id, title, body, is_active, starts_at, ends_at, created_at")
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (moderatorsError || announcementsError) {
+        console.error("Could not load owner controls.", {
+          moderators: moderatorsError?.message,
+          announcements: announcementsError?.message,
+        });
+        return jsonResponse({ error: "database_unavailable" }, 503);
+      }
+
+      const { data: authUsers, error: authUsersError } = await adminClient.auth.admin
+        .listUsers({ page: 1, perPage: 1000 });
+      if (authUsersError) {
+        console.error("Could not load moderator account details.", authUsersError.message);
+        return jsonResponse({ error: "database_unavailable" }, 503);
+      }
+      const usersById = new Map(
+        authUsers.users.map((authUser) => [
+          authUser.id,
+          { email: authUser.email ?? "", confirmed: Boolean(authUser.email_confirmed_at) },
+        ]),
+      );
+      response.moderators = moderators.map((moderator) => ({
+        ...moderator,
+        ...(usersById.get(moderator.user_id) ?? { email: "", confirmed: false }),
+      }));
+      response.announcements = announcements;
+    }
+    return jsonResponse(response);
+  }
+
+  if (action === "manage-moderator") {
+    if (actorRole !== "owner") return jsonResponse({ error: "forbidden" }, 403);
+    const email = text(body.email).toLowerCase();
+    const makeModerator = body.make_moderator;
+    if (!email || email.length > 254 || typeof makeModerator !== "boolean") {
+      return jsonResponse({ error: "invalid_moderator_request" }, 400);
+    }
+    const { data: authUsers, error: authUsersError } = await adminClient.auth.admin
+      .listUsers({ page: 1, perPage: 1000 });
+    if (authUsersError) {
+      console.error("Could not find requested moderator account.", authUsersError.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    const target = authUsers.users.find(
+      (candidate) => candidate.email?.toLowerCase() === email,
+    );
+    if (!target) return jsonResponse({ error: "user_not_found" }, 404);
+    if (!target.email_confirmed_at) {
+      return jsonResponse({ error: "user_email_not_confirmed" }, 409);
+    }
+
+    const { error } = await adminClient.rpc("set_community_moderator", {
+      p_actor_id: userId,
+      p_target_user_id: target.id,
+      p_make_moderator: makeModerator,
+    });
+    if (error) {
+      console.error("Could not change moderator role.", error.message);
+      return jsonResponse({ error: "role_change_rejected" }, 409);
+    }
+    return jsonResponse({ ok: true });
+  }
+
+  if (action === "request-ban") {
+    if (actorRole !== "moderator" && actorRole !== "owner") {
+      return jsonResponse({ error: "forbidden" }, 403);
+    }
+    const targetUserId = body.target_user_id;
+    const durationHours = body.duration_hours;
+    const reason = text(body.reason);
+    if (
+      !isUuid(targetUserId) ||
+      (durationHours !== null &&
+        (typeof durationHours !== "number" ||
+          !Number.isInteger(durationHours) ||
+          durationHours < 1 ||
+          durationHours > 876000)) ||
+      !reason ||
+      reason.length > 1000
+    ) {
+      return jsonResponse({ error: "invalid_ban_request" }, 400);
+    }
+
+    const { data: result, error } = await adminClient.rpc("request_community_ban", {
+      p_actor_id: userId,
+      p_target_user_id: targetUserId,
+      p_duration_hours: durationHours,
+      p_reason: reason,
+    });
+    if (error) {
+      console.error("Could not process ban request.", error.message);
+      return jsonResponse({
+        error: error.code === "23505" ? "ban_already_pending_or_active" : "ban_request_rejected",
+      }, error.code === "23505" ? 409 : 403);
+    }
+
+    if (result?.status === "banned") {
+      const authBanApplied = await applyAuthBan(
+        adminClient,
+        targetUserId,
+        durationHours,
+      );
+      if (!authBanApplied) {
+        return jsonResponse({
+          error: "ban_saved_auth_lock_failed",
+          message: "Lệnh cấm đã được lưu và nội dung bị khóa; chưa thể chặn đăng nhập Supabase Auth.",
+        }, 503);
+      }
+    }
+    return jsonResponse(result);
+  }
+
+  if (action === "resolve-ban") {
+    if (actorRole !== "moderator") return jsonResponse({ error: "forbidden" }, 403);
+    const proposalId = body.proposal_id;
+    const approve = body.approve;
+    const decisionReason = text(body.decision_reason);
+    if (
+      !isUuid(proposalId) ||
+      typeof approve !== "boolean" ||
+      decisionReason.length > 1000
+    ) {
+      return jsonResponse({ error: "invalid_ban_decision" }, 400);
+    }
+
+    const { data: proposal, error: proposalError } = await adminClient
+      .from("community_ban_proposals")
+      .select("target_user_id, duration_hours")
+      .eq("id", proposalId)
+      .eq("status", "pending")
+      .maybeSingle();
+    if (proposalError) {
+      console.error("Could not load ban proposal.", proposalError.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    if (!proposal) return jsonResponse({ error: "pending_proposal_not_found" }, 404);
+
+    const { data: result, error } = await adminClient.rpc("resolve_community_ban", {
+      p_actor_id: userId,
+      p_proposal_id: proposalId,
+      p_approve: approve,
+      p_decision_reason: decisionReason,
+    });
+    if (error) {
+      console.error("Could not resolve ban proposal.", error.message);
+      return jsonResponse({ error: "ban_decision_rejected" }, 409);
+    }
+    if (approve) {
+      const authBanApplied = await applyAuthBan(
+        adminClient,
+        proposal.target_user_id,
+        proposal.duration_hours,
+      );
+      if (!authBanApplied) {
+        return jsonResponse({
+          error: "ban_saved_auth_lock_failed",
+          message: "Lệnh cấm đã được duyệt và nội dung bị khóa; chưa thể chặn đăng nhập Supabase Auth.",
+        }, 503);
+      }
+    }
+    return jsonResponse(result);
+  }
+
+  if (action === "moderate-post") {
+    if (actorRole !== "moderator" && actorRole !== "owner") {
+      return jsonResponse({ error: "forbidden" }, 403);
+    }
+    const postId = body.post_id;
+    const status = text(body.status);
+    const reason = text(body.reason);
+    if (!isUuid(postId) || !["approved", "rejected"].includes(status) || reason.length > 1000) {
+      return jsonResponse({ error: "invalid_post_moderation" }, 400);
+    }
+    const { error } = await adminClient.rpc("moderate_community_post", {
+      p_actor_id: userId,
+      p_post_id: postId,
+      p_status: status,
+      p_reason: reason,
+    });
+    if (error) {
+      console.error("Could not moderate community post.", error.message);
+      return jsonResponse({ error: "post_moderation_rejected" }, 409);
+    }
+    return jsonResponse({ ok: true });
+  }
+
+  if (action === "publish-announcement" || action === "archive-announcement") {
+    if (actorRole !== "owner") return jsonResponse({ error: "forbidden" }, 403);
+
+    if (action === "archive-announcement") {
+      const announcementId = body.announcement_id;
+      if (!isUuid(announcementId)) {
+        return jsonResponse({ error: "invalid_announcement" }, 400);
+      }
+      const { error } = await adminClient
+        .from("site_announcements")
+        .update({ is_active: false })
+        .eq("id", announcementId);
+      if (error) {
+        console.error("Could not archive announcement.", error.message);
+        return jsonResponse({ error: "database_unavailable" }, 503);
+      }
+      return jsonResponse({ ok: true });
+    }
+
+    const title = text(body.title);
+    const announcementBody = text(body.body);
+    const endsAt = body.ends_at === null || body.ends_at === "" ? null : body.ends_at;
+    if (
+      !title ||
+      title.length > 160 ||
+      !announcementBody ||
+      announcementBody.length > 4000 ||
+      (endsAt !== null &&
+        (typeof endsAt !== "string" || !Number.isFinite(Date.parse(endsAt)) ||
+          Date.parse(endsAt) <= Date.now()))
+    ) {
+      return jsonResponse({ error: "invalid_announcement" }, 400);
+    }
+    const { data: announcement, error } = await adminClient
+      .from("site_announcements")
+      .insert({
+        title,
+        body: announcementBody,
+        created_by: userId,
+        ends_at: endsAt,
+      })
+      .select("id")
+      .single();
+    if (error) {
+      console.error("Could not publish announcement.", error.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    return jsonResponse({ id: announcement.id });
+  }
+
   let contentToModerate: string;
 
   try {

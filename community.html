@@ -71,6 +71,7 @@
           />
           <h2>Xin chào!</h2>
           <p id="account-email" class="muted"></p>
+          <p id="account-ban-notice" class="status-message" role="status" hidden></p>
         </div>
         <div class="account-actions">
           <form id="profile-form" class="profile-form">
@@ -136,6 +137,64 @@
           </p>
           <button type="submit" id="publish-button">Đăng bài</button>
         </form>
+      </section>
+
+      <section id="moderation-panel" class="panel" hidden aria-labelledby="moderation-title">
+        <h2 id="moderation-title">Công cụ Moderator</h2>
+        <p class="muted">
+          Moderator có thể ẩn/khôi phục bài viết và đề xuất cấm tài khoản users.
+          Đề xuất cấm cần một Moderator khác xác nhận.
+        </p>
+        <div id="moderation-posts" class="moderation-list"></div>
+        <h3>Đề xuất cấm đang chờ</h3>
+        <div id="ban-proposals" class="moderation-list"></div>
+      </section>
+
+      <section id="owner-panel" class="panel" hidden aria-labelledby="owner-title">
+        <h2 id="owner-title">Công cụ Owner</h2>
+        <form id="moderator-form">
+          <label for="moderator-email">Email tài khoản đã xác nhận</label>
+          <input
+            id="moderator-email"
+            name="email"
+            type="email"
+            required
+            maxlength="254"
+            autocomplete="off"
+          />
+          <div class="button-row">
+            <button type="submit">Thêm Moderator</button>
+            <button type="button" class="button-secondary" id="remove-moderator-button">
+              Gỡ Moderator
+            </button>
+          </div>
+        </form>
+        <h3>Danh sách Moderator</h3>
+        <div id="moderator-list" class="moderation-list"></div>
+
+        <form id="announcement-form">
+          <h3>Đăng thông báo trang chủ</h3>
+          <label for="announcement-title">Tiêu đề</label>
+          <input
+            id="announcement-title"
+            name="title"
+            required
+            maxlength="160"
+          />
+          <label for="announcement-body">Nội dung</label>
+          <textarea
+            id="announcement-body"
+            name="body"
+            required
+            maxlength="4000"
+            rows="4"
+          ></textarea>
+          <label for="announcement-ends-at">Tự ẩn sau (không bắt buộc)</label>
+          <input id="announcement-ends-at" name="ends_at" type="datetime-local" />
+          <button type="submit">Đăng thông báo</button>
+        </form>
+        <h3>Thông báo đã đăng</h3>
+        <div id="announcement-list" class="moderation-list"></div>
       </section>
 
       <section class="posts-section" aria-labelledby="posts-title">

@@ -24,6 +24,21 @@ cạn quota.
 Header, tìm kiếm và footer được dùng chung từ `js/site_chrome.js` trên trang chủ,
 cộng đồng, minigame và các trang địa danh.
 
+### Vai trò cộng đồng
+
+Mọi tài khoản mới mặc định có role `users`; chỉ Owner được cấp Moderator cho tài
+khoản đã xác nhận email. Moderator có thể kiểm duyệt bài và đề xuất cấm tài khoản
+users; đề xuất cần một Moderator khác duyệt. Owner có thể cấm trực tiếp và đăng
+thông báo trên trang chủ. Role, lệnh cấm và nhật ký bảo mật được kiểm tra phía
+Supabase/Edge Function; không trao quyền chỉnh sửa repository hay GitHub Pages.
+
+Sau khi migration vai trò đã được áp dụng lên đúng project, đăng nhập Supabase CLI
+bằng tài khoản quản trị project rồi chạy
+`bash scripts/setup-owner.sh <supabase-project-ref>` để cấp Owner đầu tiên cho
+một tài khoản đã đăng ký và xác nhận email. Script hỏi email trực tiếp trong
+terminal và không ghi email vào mã nguồn. Chỉ một Owner ban đầu được tạo; các
+Moderator được quản lý sau đó trong giao diện Cộng đồng.
+
 ### Chạy cộng đồng trên máy này
 
 Yêu cầu: Docker Desktop đang chạy, Node.js, Supabase CLI và Git Bash. Tạo Gemini API
