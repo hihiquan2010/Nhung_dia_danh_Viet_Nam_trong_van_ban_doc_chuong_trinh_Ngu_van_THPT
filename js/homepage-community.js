@@ -15,7 +15,7 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
   try {
     const { data: announcements, error } = await supabase
       .from("site_announcements")
-      .select("title, body")
+      .select("title, body, created_at")
       .eq("is_active", true)
       .order("starts_at", { ascending: false })
       .limit(10);
@@ -26,11 +26,21 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
       for (const announcement of announcements) {
         const article = document.createElement("article");
         article.className = "site-announcement";
+        const ornament = document.createElement("span");
+        ornament.className = "site-announcement-ornament";
+        ornament.setAttribute("aria-hidden", "true");
+        ornament.textContent = "❦";
         const title = document.createElement("h3");
         title.textContent = announcement.title;
         const body = document.createElement("p");
         body.textContent = announcement.body;
-        article.append(title, body);
+        const date = document.createElement("time");
+        date.className = "site-announcement-date";
+        date.dateTime = announcement.created_at;
+        date.textContent = new Intl.DateTimeFormat("vi-VN", {
+          dateStyle: "long",
+        }).format(new Date(announcement.created_at));
+        article.append(ornament, title, body, date);
         announcementsList.append(article);
       }
       announcementsSection.hidden = false;
