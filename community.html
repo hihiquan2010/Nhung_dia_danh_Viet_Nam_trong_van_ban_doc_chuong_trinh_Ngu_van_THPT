@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Đăng nhập và chia sẻ bài viết về văn học, địa danh Việt Nam."
+    />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/community.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <title>Cộng đồng | Dấu Chân Văn Học</title>
+  </head>
+  <body>
+    <span id="header"></span>
+    <main class="community">
+      <header class="community-heading">
+        <p class="eyebrow">DẤU CHÂN VĂN HỌC</p>
+        <h1>Cộng đồng</h1>
+        <p>Chia sẻ cảm nhận và câu chuyện về những miền đất trong trang văn.</p>
+      </header>
+
+      <section id="auth-panel" class="panel auth-panel" aria-labelledby="auth-title">
+        <h2 id="auth-title">Đăng nhập hoặc tạo tài khoản</h2>
+        <p class="muted">
+          Tài khoản sử dụng email và mật khẩu (ít nhất 8 ký tự khi tạo mới). Nếu bật
+          xác nhận email, hãy kiểm tra hộp thư sau khi đăng ký.
+        </p>
+        <form id="auth-form">
+          <label for="email">Email</label>
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autocomplete="email"
+            required
+            maxlength="254"
+          />
+          <label for="password">Mật khẩu</label>
+          <input
+            id="password"
+            name="password"
+            type="password"
+            autocomplete="current-password"
+            required
+          />
+          <div class="button-row">
+            <button type="submit" id="sign-in-button">Đăng nhập</button>
+            <button type="button" class="button-secondary" id="sign-up-button">
+              Tạo tài khoản
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section id="account-panel" class="panel account-panel" hidden>
+        <div class="account-summary">
+          <img
+            id="avatar-preview"
+            class="avatar-preview"
+            alt="Ảnh đại diện"
+            hidden
+          />
+          <h2>Xin chào!</h2>
+          <p id="account-email" class="muted"></p>
+        </div>
+        <div class="account-actions">
+          <form id="profile-form" class="profile-form">
+            <label for="display-name">Tên hiển thị</label>
+            <input id="display-name" name="display_name" required maxlength="80" />
+            <label for="avatar-file">Ảnh đại diện (JPG, PNG, WebP; tối đa 5 MB)</label>
+            <input
+              id="avatar-file"
+              name="avatar"
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+            />
+            <button type="submit" class="button-secondary" id="save-profile-button">
+              Lưu hồ sơ
+            </button>
+          </form>
+          <button type="button" class="button-secondary" id="sign-out-button">
+            Đăng xuất
+          </button>
+        </div>
+      </section>
+
+      <section id="post-panel" class="panel" hidden aria-labelledby="post-title">
+        <h2 id="post-title">Bài viết và phân tích mới</h2>
+        <form id="post-form">
+          <label for="post-title-input">Tiêu đề</label>
+          <input
+            id="post-title-input"
+            name="title"
+            required
+            maxlength="120"
+            placeholder="Bạn muốn chia sẻ điều gì?"
+          />
+          <label for="literary-work">Tác phẩm / địa danh (không bắt buộc)</label>
+          <input
+            id="literary-work"
+            name="literary_work"
+            maxlength="180"
+            placeholder="Ví dụ: Tây Tiến — Mường Lát"
+          />
+          <label for="post-analysis">Nội dung phân tích</label>
+          <textarea
+            id="post-analysis"
+            name="analysis"
+            required
+            minlength="10"
+            maxlength="5000"
+            rows="6"
+            placeholder="Viết nội dung phân tích (10–5.000 ký tự)..."
+          ></textarea>
+          <label for="post-image">Ảnh minh họa (JPG, PNG, WebP; tối đa 5 MB)</label>
+          <input
+            id="post-image"
+            name="image"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+          />
+          <p class="muted moderation-note">
+            Tiêu đề, tác phẩm, phân tích, bình luận và tên hiển thị được Gemini
+            kiểm duyệt trước khi lưu. Chỉ phần văn bản cần kiểm duyệt được gửi tới
+            Google Gemini; ảnh không được gửi. Nếu AI tạm lỗi hoặc hết quota, nội
+            dung sẽ chưa được đăng.
+          </p>
+          <button type="submit" id="publish-button">Đăng bài</button>
+        </form>
+      </section>
+
+      <section class="posts-section" aria-labelledby="posts-title">
+        <div class="section-heading">
+          <h2 id="posts-title">Bài đăng cộng đồng</h2>
+          <button type="button" class="button-secondary" id="refresh-button">
+            <i class="fa-solid fa-rotate"></i> Tải lại
+          </button>
+        </div>
+        <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
+        <div id="posts-list" class="posts-list" aria-live="polite"></div>
+      </section>
+    </main>
+    <span id="footer"></span>
+    <script type="module" src="./js/header_footer.js"></script>
+    <script type="module" src="./js/community.js?v=2"></script>
+  </body>
+</html>

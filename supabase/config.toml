@@ -1,0 +1,37 @@
+project_id = "diadanhvanhoc"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 17
+
+[studio]
+enabled = true
+port = 54323
+
+[local_smtp]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "5MiB"
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:8765"
+additional_redirect_urls = ["http://localhost:8765"]
+enable_signup = true
+
+[auth.email]
+enabled = true
+enable_confirmations = false
+
+[functions.community-api]
+verify_jwt = true

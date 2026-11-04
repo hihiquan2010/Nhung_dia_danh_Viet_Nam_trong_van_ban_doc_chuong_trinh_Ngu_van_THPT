@@ -22,6 +22,26 @@ body {
   background-position: center;
   background-attachment: fixed;
   margin: 0;
+  font-family: "Code Pro", sans-serif;
+}
+
+.community-link {
+  margin: 24px auto;
+  text-align: center;
+}
+
+.community-link a {
+  display: inline-block;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: #2c4c3b;
+  color: #fff;
+  text-decoration: none;
+}
+
+.community-link a:hover,
+.community-link a:focus-visible {
+  background: #1f382b;
 }
 
 img,
@@ -72,6 +92,34 @@ img {
   gap: 20px;
   position: relative;
   z-index: 10;
+}
+
+.site-brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.site-brand img {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px;
+}
+
+.site-nav a {
+  color: #333;
+}
+
+.site-nav a:hover,
+.site-nav a:focus-visible {
+  color: #2c4c3b;
+  text-decoration: underline;
 }
 
 .widgets a {
@@ -148,7 +196,7 @@ img {
 }
 
 .nproject {
-  font-family: "Arial Narrow Bold", sans-serif;
+  font-family: "Code Pro", sans-serif;
   font-size: 1rem;
   color: rgb(20, 173, 40);
   padding: 10px;
@@ -178,7 +226,7 @@ img {
 .menu-container {
   width: 100%;
   max-width: 1000px;
-  font-family: "Times New Roman", sans-serif;
+  font-family: "Code Pro", sans-serif;
   margin: 0 auto;
 }
 
@@ -363,7 +411,7 @@ img {
           justify-content: space-between;
   gap: 30px;
   width: 100%;
-  font-family: "Nunito", sans-serif;
+  font-family: "Code Pro", sans-serif;
   padding: 20px;
   -webkit-box-sizing: border-box;
           box-sizing: border-box;
@@ -472,7 +520,7 @@ img {
 }
 
 .main-title {
-  font-family: "Playfair Display", serif;
+  font-family: "Code Pro", sans-serif;
   font-size: 3rem;
   color: #2c4c3b;
   margin: 0;
@@ -485,7 +533,7 @@ img {
 }
 
 .sub-title {
-  font-family: "Playfair Display", serif;
+  font-family: "Code Pro", sans-serif;
   font-style: italic;
   font-size: 1.2rem;
   color: #9c603b;
@@ -507,7 +555,7 @@ img {
   margin: 0 auto;
   gap: 30px;
   padding: 20px 40px;
-  font-family: "Roboto", sans-serif;
+  font-family: "Code Pro", sans-serif;
   color: #333;
   border-radius: 12px;
   -webkit-box-align: stretch;
@@ -713,7 +761,7 @@ img {
 }
 
 .image-header h3 {
-  font-family: "Playfair Display", serif;
+  font-family: "Code Pro", sans-serif;
   color: #2c4c3b;
   font-size: 1.5rem;
   margin: 0;
@@ -910,6 +958,46 @@ img {
   line-height: 1;
 }
 
+.site-footer {
+  margin-top: 10px;
+}
+
+.site-back-to-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 10px;
+  color: #9c4128;
+  text-decoration: none;
+}
+
+.site-back-to-top:hover,
+.site-back-to-top:focus-visible {
+  text-decoration: underline;
+}
+
+.site-footer-info {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 20px;
+}
+
+.site-footer-info p {
+  margin: 8px 0;
+  line-height: 1.5;
+}
+
+.site-footer-info i {
+  margin-right: 5px;
+}
+
+#histats_counter {
+  flex: 0 0 auto;
+}
+
 @media screen and (max-width: 768px) {
   .widgetbar {
     -webkit-box-orient: vertical;
@@ -930,6 +1018,28 @@ img {
         -ms-flex-align: center;
             align-items: center;
     max-width: 100%;
+  }
+
+  .widgets {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px 14px;
+  }
+
+  .site-nav {
+    justify-content: center;
+    gap: 10px 14px;
+  }
+
+  .infoGroup {
+    flex-wrap: wrap;
+    line-height: 1.4;
+  }
+
+  .site-footer-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0;
   }
 
   .menu {
@@ -1026,5 +1136,23 @@ img {
 
   .full-image {
     max-height: 400px;
+  }
+}
+
+@media screen and (min-width: 769px) and (max-width: 992px) {
+  .site-header {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  .site-header .widgets {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .site-header .search-group {
+    justify-content: center;
+    max-width: min(100%, 400px);
   }
 }

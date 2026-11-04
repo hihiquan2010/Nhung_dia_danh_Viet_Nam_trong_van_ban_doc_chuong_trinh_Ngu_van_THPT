@@ -1,4 +1,9 @@
 import { menuData } from "../js/data.js";
+import {
+  attachSiteSearch,
+  renderSiteFooter,
+  renderSiteHeader,
+} from "../js/site_chrome.js";
 
 const assetBasePath = "../";
 
@@ -131,42 +136,6 @@ function setupMenuInteractions(menuContainer) {
   });
 }
 
-function renderHeader() {
-  const headerContainer = document.getElementById("header");
-
-  if (!headerContainer) return;
-
-  headerContainer.innerHTML = `
-    <span class="widgetbar">
-      <div class="widgets">
-        <img src="${assetBasePath}webico/android-icon-36x36.png" alt="web_icon" style="border-radius: 10px;">
-        <span class="icon">
-          <a href="${assetBasePath}index.html">
-            <i class="fa-solid fa-house" style="color: rgb(76, 60, 60)"></i>
-            <span class="icon-text">Trang chủ</span>
-          </a>
-          |
-          <a href="">
-            <i class="fa-solid fa-rotate" style="color: rgb(31, 37, 42)"></i>
-            <span class="icon-text">Làm mới</span>
-          </a>
-        </span>
-        <div id="menu"></div>
-      </div>
-
-      <span class="search-group">
-        <span class="searchbar">
-          <input type="text" id="search" class="inp" placeholder="Tìm kiếm địa danh ..." />
-          <div id="bangdexuat" class="danhsachdx"></div>
-        </span>
-        <button id="submit" class="btn">
-          <i class="fa-solid fa-magnifying-glass"></i>
-        </button>
-      </span>
-    </span>
-  `;
-}
-
 function renderMenu() {
   const menuContainer = document.getElementById("menu");
 
@@ -174,118 +143,6 @@ function renderMenu() {
 
   menuContainer.innerHTML = createMenuMarkup();
   setupMenuInteractions(menuContainer);
-}
-
-function renderFooter() {
-  const footerContainer = document.getElementById("footer");
-
-  if (footerContainer) {
-    footerContainer.innerHTML = `
-      <span class="icon">
-        <a href="#" style="display: block; color: #9c4128; text-decoration: none">
-          <i class="fa-solid fa-up-long"></i>
-          <b>Quay về đầu trang</b>
-        </a>
-      </span>
-
-      <div class="infoGroup">
-        <p id="dv">
-          <b><i class="fa-solid fa-school"></i> Đơn vị: Trường THPT Bình Chánh</b>
-        </p>
-        <p>
-          <i class="fa-solid fa-user-group"></i> Nhóm thực hiện: Phạm Gia Uy 11A3 và Trần Thanh Duy 12A16
-        </p>
-      </div>
-    `;
-  }
-}
-
-function createPageMap() {
-  return menuData.reduce((acc, gradeEntry) => {
-    gradeEntry.works.forEach((literaryWork) => {
-      literaryWork.places.forEach((place) => {
-        acc[place.name] = getFileNameFromUrl(place.url);
-      });
-    });
-    return acc;
-  }, {});
-}
-
-function setupSearch() {
-  const searchInput = document.getElementById("search");
-  const searchButton = document.getElementById("submit");
-  const suggestionsContainer = document.getElementById("bangdexuat");
-
-  if (!searchInput || !searchButton || !suggestionsContainer) return;
-
-  const pageFileByPlaceName = createPageMap();
-  const placeNames = Object.keys(pageFileByPlaceName);
-
-  searchInput.addEventListener("input", (event) => {
-    const searchTerm = event.currentTarget.value.toLowerCase().trim();
-    suggestionsContainer.innerHTML = "";
-
-    if (!searchTerm) return;
-
-    const matchingPlaceNames = placeNames.filter((placeName) =>
-      placeName.toLowerCase().includes(searchTerm),
-    );
-
-    matchingPlaceNames.forEach((placeName) => {
-      const suggestion = document.createElement("div");
-      suggestion.classList.add("nddx");
-      suggestion.textContent = placeName;
-      suggestion.addEventListener("click", () => {
-        searchInput.value = placeName;
-        suggestionsContainer.innerHTML = "";
-      });
-      suggestionsContainer.appendChild(suggestion);
-    });
-  });
-
-  document.addEventListener("click", function (event) {
-    if (
-      !searchInput.contains(event.target) &&
-      !suggestionsContainer.contains(event.target)
-    ) {
-      suggestionsContainer.innerHTML = "";
-    }
-  });
-
-  function handlePlaceSearch() {
-    const searchTerm = searchInput.value.trim();
-
-    if (!searchTerm) {
-      alert("Hãy nhập tên địa danh!");
-      return;
-    }
-
-    const matchingPlaceName = placeNames.find(
-      (placeName) => placeName.toLowerCase() === searchTerm.toLowerCase(),
-    );
-
-    const pageFileName = matchingPlaceName
-      ? pageFileByPlaceName[matchingPlaceName]
-      : null;
-
-    if (pageFileName) {
-      suggestionsContainer.innerHTML = "";
-      window.location.href = getPageUrl(pageFileName);
-      return;
-    }
-
-    alert(
-      "Vui lòng kiểm tra lại tên địa danh hoặc tham khảo ở 3 nút bấm có chữ lớp 10, lớp 11, lớp 12 trong trang.",
-    );
-  }
-  searchButton.addEventListener("click", handlePlaceSearch);
-
-  searchInput.addEventListener("keydown", function (event) {
-    if (event.key === "Enter" && !event.isComposing) {
-      event.preventDefault();
-      handlePlaceSearch();
-    }
-  });
 }
 
 function getAllPlaces() {
@@ -558,11 +415,11 @@ function setupPoemColumnHeight() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-  renderHeader();
+  renderSiteHeader(assetBasePath, { includeMenu: true });
   renderMenu();
   renderWorkPlaces();
-  renderFooter();
-  setupSearch();
+  renderSiteFooter();
+  attachSiteSearch(assetBasePath);
   setupWorkColumnResizer();
   setupPoemColumnHeight();
 

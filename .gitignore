@@ -1,0 +1,4 @@
+js/supabase-config.js
+supabase/.env.local
+supabase/.env.production
+supabase/.env.*.local

@@ -2,10 +2,14 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+    <meta
+      name="description"
+      content="Minigame trắc nghiệm địa danh trong các tác phẩm Ngữ văn THPT."
+    />
     <link rel="stylesheet" href="../css/style.css" />
+    <link rel="stylesheet" href="../css/game.css" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -13,45 +17,102 @@
       crossorigin="anonymous"
       referrerpolicy="no-referrer"
     />
-    <title>Game</title>
+    <title>Minigame địa danh | Dấu Chân Văn Học</title>
   </head>
   <body>
-    <span class="widgetbar">
-      <div class="widgets">
-        <img src="../webico/android-icon-36x36.png" alt="web_icon" style="border-radius: 10px;">
-        <span class="icon">
-          <a href="../index.html">
-            <i class="fa-solid fa-house" style="color: rgb(76, 60, 60)"></i>
-            <span class="icon-text">Trang chủ</span>
-          </a>
-          |
-          <a href="">
-            <i class="fa-solid fa-rotate" style="color: rgb(31, 37, 42)"></i>
-            <span class="icon-text">Làm mới</span>
-          </a>
-        </span>
-        <div id="menu"></div>
-      </div>
-    </span>
-    <div
-      style="
-        width: 100%;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        min-height: 635px;
-      "
-    >
-      <iframe
-        src="https://wayground.com/embed/quiz/6ab72a75e0974853d25a22e4"
-        title=" - Wayground"
-        style="flex: 1"
-        frameborder="0"
-        allowfullscreen
-      ></iframe
-      ><a href="https://wayground.com/admin?source=embedFrame" target="_blank"
-        >Explore more at Wayground.</a
+    <header id="header"></header>
+
+    <main class="game-page">
+      <header class="game-heading">
+        <p class="game-eyebrow">DẤU CHÂN VĂN HỌC · MINIGAME</p>
+        <h1>Địa danh trong trang văn</h1>
+        <p>
+          Thử xem bạn nhớ được bao nhiêu địa danh gắn với các tác phẩm Ngữ văn
+          THPT nhé!
+        </p>
+      </header>
+
+      <section id="intro-panel" class="game-card intro-panel">
+        <div class="game-symbol" aria-hidden="true">
+          <i class="fa-solid fa-map-location-dot"></i>
+        </div>
+        <h2>Sẵn sàng khám phá?</h2>
+        <p>
+          Trả lời 10 câu hỏi ngẫu nhiên. Mỗi câu có 15 giây và đáp án được lấy
+          từ danh mục tác phẩm, địa danh ngay trên website.
+        </p>
+        <div class="game-facts" aria-label="Thể lệ">
+          <span><i class="fa-solid fa-list-ol" aria-hidden="true"></i> 10 câu hỏi</span>
+          <span><i class="fa-regular fa-clock" aria-hidden="true"></i> 15 giây/câu</span>
+          <span><i class="fa-solid fa-star" aria-hidden="true"></i> Điểm thưởng tốc độ</span>
+        </div>
+        <button id="start-button" class="game-button" type="button">
+          <i class="fa-solid fa-play" aria-hidden="true"></i> Bắt đầu chơi
+        </button>
+      </section>
+
+      <section
+        id="quiz-panel"
+        class="game-card quiz-panel"
+        aria-labelledby="question-text"
+        hidden
       >
-    </div>
+        <div class="quiz-topline">
+          <p id="question-count" class="question-count"></p>
+          <p id="score-display" class="score-display"></p>
+        </div>
+        <div
+          class="progress-track"
+          role="progressbar"
+          aria-label="Tiến độ trò chơi"
+          aria-valuemin="0"
+          aria-valuemax="10"
+          aria-valuenow="0"
+        >
+          <span id="progress-bar"></span>
+        </div>
+        <div class="timer-row">
+          <span>Thời gian</span>
+          <span id="timer-display" class="timer-display" aria-live="off">15</span>
+        </div>
+        <h2 id="question-text" class="question-text"></h2>
+        <div id="answer-list" class="answer-list"></div>
+        <p id="answer-feedback" class="answer-feedback" aria-live="polite"></p>
+        <button id="next-button" class="game-button next-button" type="button" hidden>
+          Câu tiếp theo <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
+        </button>
+      </section>
+
+      <section
+        id="result-panel"
+        class="game-card result-panel"
+        aria-labelledby="result-title"
+        aria-live="polite"
+        hidden
+      >
+        <div class="game-symbol result-symbol" aria-hidden="true">
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+        <p class="game-eyebrow">HOÀN THÀNH MINIGAME</p>
+        <h2 id="result-title">Bạn đã hoàn thành!</h2>
+        <p id="final-score" class="final-score"></p>
+        <p id="result-message" class="result-message"></p>
+        <p id="best-score" class="best-score"></p>
+        <div class="result-actions">
+          <button id="restart-button" class="game-button" type="button">
+            <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Chơi lại
+          </button>
+          <a class="game-link" href="../index.html">Về trang chủ</a>
+        </div>
+      </section>
+
+      <p class="game-note">
+        Minigame hoạt động trực tiếp trên website, không cần đăng nhập hoặc dịch
+        vụ bên ngoài.
+      </p>
+    </main>
+    <footer id="footer"></footer>
+    <script type="module" src="../js/header_footer.js"></script>
+    <script type="module" src="../js/game.js"></script>
   </body>
 </html>

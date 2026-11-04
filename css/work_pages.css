@@ -6,7 +6,7 @@ body {
   margin: 0;
   background: #eeeae0;
   color: #333;
-  font-family: Arial, sans-serif;
+  font-family: "Code Pro", sans-serif;
 }
 
 .ngb-title-area {
@@ -24,7 +24,7 @@ body {
 .ngb-page-title {
   margin: 0;
   color: #2c4c3b;
-  font-family: "Playfair Display", serif;
+  font-family: "Code Pro", sans-serif;
   font-size: 3rem;
   text-decoration: none;
   text-transform: uppercase;
@@ -33,7 +33,7 @@ body {
 .ngb-author {
   margin: 10px 0 0;
   color: #9c603b;
-  font-family: "Playfair Display", serif;
+  font-family: "Code Pro", sans-serif;
   font-size: 1.2rem;
   font-style: italic;
   text-decoration: none;
