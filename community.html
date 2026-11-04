@@ -28,6 +28,26 @@
         <p>Chia sẻ cảm nhận và câu chuyện về những miền đất trong trang văn.</p>
       </header>
 
+      <nav class="community-nav" aria-label="Điều hướng cộng đồng">
+        <a href="#community-account">Tài khoản & quyền</a>
+        <a href="#community-feed">Bài đăng</a>
+      </nav>
+
+      <section
+        id="community-account"
+        class="account-area"
+        aria-labelledby="community-account-title"
+      >
+        <div class="area-heading">
+          <span class="area-icon" aria-hidden="true">
+            <i class="fa-solid fa-user-shield"></i>
+          </span>
+          <div>
+            <h2 id="community-account-title">Tài khoản & quyền truy cập</h2>
+            <p class="muted">Quản lý hồ sơ và xem quyền hiện tại của bạn.</p>
+          </div>
+        </div>
+
       <section id="auth-panel" class="panel auth-panel" aria-labelledby="auth-title">
         <h2 id="auth-title">Đăng nhập hoặc tạo tài khoản</h2>
         <p class="muted">
@@ -71,6 +91,8 @@
           />
           <h2>Xin chào!</h2>
           <p id="account-email" class="muted"></p>
+          <span id="account-role" class="role-badge" hidden></span>
+          <p id="account-permissions" class="account-permissions muted" hidden></p>
           <p id="account-ban-notice" class="status-message" role="status" hidden></p>
         </div>
         <div class="account-actions">
@@ -93,6 +115,23 @@
           </button>
         </div>
       </section>
+
+      </section>
+
+      <section
+        id="community-feed"
+        class="feed-area"
+        aria-labelledby="community-feed-title"
+      >
+        <div class="area-heading">
+          <span class="area-icon" aria-hidden="true">
+            <i class="fa-solid fa-comments"></i>
+          </span>
+          <div>
+            <h2 id="community-feed-title">Bảng tin cộng đồng</h2>
+            <p class="muted">Đọc bài viết, chia sẻ góc nhìn và bình luận.</p>
+          </div>
+        </div>
 
       <section id="post-panel" class="panel" hidden aria-labelledby="post-title">
         <h2 id="post-title">Bài viết và phân tích mới</h2>
@@ -207,9 +246,10 @@
         <p id="status-message" class="status-message" role="status" aria-live="polite"></p>
         <div id="posts-list" class="posts-list" aria-live="polite"></div>
       </section>
+      </section>
     </main>
     <span id="footer"></span>
     <script type="module" src="./js/header_footer.js"></script>
-    <script type="module" src="./js/community.js?v=2"></script>
+    <script type="module" src="./js/community.js?v=3"></script>
   </body>
 </html>

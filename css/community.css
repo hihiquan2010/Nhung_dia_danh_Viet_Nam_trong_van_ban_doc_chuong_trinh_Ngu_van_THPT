@@ -33,6 +33,74 @@
   letter-spacing: 0.12em;
 }
 
+.community-nav {
+  position: sticky;
+  top: 8px;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin: 0 auto 24px;
+  padding: 8px;
+  border: 1px solid #e4e0d8;
+  border-radius: 999px;
+  background: rgba(253, 251, 247, 0.96);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(8px);
+}
+
+.community-nav a {
+  padding: 10px 16px;
+  border-radius: 999px;
+  color: #2c4c3b;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.community-nav a:hover,
+.community-nav a:focus-visible {
+  background: #e7eee5;
+  outline: none;
+}
+
+.account-area,
+.feed-area {
+  scroll-margin-top: 82px;
+}
+
+.account-area {
+  margin-bottom: 36px;
+  padding-bottom: 26px;
+  border-bottom: 1px solid #dcd7cd;
+}
+
+.area-heading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.area-heading h2,
+.area-heading p {
+  margin: 0;
+}
+
+.area-heading p {
+  margin-top: 4px;
+}
+
+.area-icon {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  flex: 0 0 44px;
+  place-items: center;
+  border-radius: 12px;
+  background: #e7eee5;
+  color: #2c4c3b;
+}
+
 .panel,
 .post-card {
   padding: 22px;
@@ -103,6 +171,35 @@
 .account-summary h2,
 .account-summary p {
   margin: 0;
+}
+
+.role-badge {
+  display: inline-flex;
+  align-items: center;
+  width: fit-content;
+  padding: 5px 10px;
+  border: 1px solid #b9cbb9;
+  border-radius: 999px;
+  background: #e7eee5;
+  color: #2c4c3b;
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.role-badge[data-role="owner"] {
+  border-color: #dfc58c;
+  background: #fff3d4;
+  color: #705010;
+}
+
+.role-badge[data-role="moderator"] {
+  border-color: #b9c5e0;
+  background: #edf1fb;
+  color: #344a79;
+}
+
+.account-permissions {
+  max-width: 290px;
 }
 
 .account-actions {
@@ -287,14 +384,18 @@
 }
 
 .comment-form {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 10px;
   margin-top: 14px;
 }
 
-.comment-form input {
+.comment-form textarea {
   min-width: 0;
+  min-height: 48px;
+  max-height: 180px;
+  resize: vertical;
 }
 
 .comment-form button {
@@ -415,8 +516,19 @@
     flex-wrap: wrap;
   }
 
+  .community-nav {
+    top: 4px;
+    justify-content: stretch;
+  }
+
+  .community-nav a {
+    flex: 1;
+    padding: 9px 10px;
+    text-align: center;
+  }
+
   .comment-form {
-    align-items: stretch;
+    grid-template-columns: 1fr;
   }
 
   .moderation-actions {

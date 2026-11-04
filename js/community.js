@@ -32,6 +32,8 @@ const publishButton = document.getElementById("publish-button");
 const profileNameInput = document.getElementById("display-name");
 const avatarFileInput = document.getElementById("avatar-file");
 const avatarPreview = document.getElementById("avatar-preview");
+const accountRole = document.getElementById("account-role");
+const accountPermissions = document.getElementById("account-permissions");
 
 function showStatus(message, isError = false) {
   statusMessage.textContent = message;
@@ -69,11 +71,20 @@ function makeAvatar(supabase, profile, className = "post-avatar") {
   return image;
 }
 
-function appendComments(supabase, card, post, currentUser, showSignInPrompt) {
+function appendComments(
+  supabase,
+  card,
+  post,
+  currentUser,
+  commentAccess,
+  commentsUnavailable,
+) {
   const commentSection = document.createElement("section");
   commentSection.className = "post-comments";
   const heading = document.createElement("h4");
-  heading.textContent = `Bình luận (${post.post_comments.length})`;
+  heading.textContent = commentsUnavailable
+    ? "Bình luận chưa tải được"
+    : `Bình luận (${post.post_comments.length})`;
   commentSection.append(heading);
 
   const commentList = document.createElement("div");
@@ -95,29 +106,51 @@ function appendComments(supabase, card, post, currentUser, showSignInPrompt) {
     commentList.append(commentItem);
   }
   commentSection.append(commentList);
+  if (commentsUnavailable) {
+    const note = document.createElement("p");
+    note.className = "muted";
+    note.textContent = "Vui lòng tải lại trang để xem các bình luận.";
+    commentSection.append(note);
+  }
 
-  if (currentUser) {
+  if (commentAccess === "allowed" && currentUser) {
     const form = document.createElement("form");
     form.className = "comment-form";
-    const input = document.createElement("input");
+    const input = document.createElement("textarea");
     input.name = "content";
     input.required = true;
     input.maxLength = 2000;
+    input.rows = 2;
     input.setAttribute("aria-label", "Nội dung bình luận");
-    input.placeholder = "Viết bình luận...";
+    input.placeholder = "Chia sẻ suy nghĩ của bạn về bài viết...";
     const button = document.createElement("button");
     button.type = "submit";
-    button.textContent = "Gửi";
+    button.textContent = "Gửi bình luận";
     form.append(input, button);
     form.addEventListener("submit", (event) => {
-      void submitComment(event, form, button, post.id, supabase);
+      void submitComment(event, form, button, post.id);
     });
     commentSection.append(form);
-  } else if (showSignInPrompt) {
+  } else if (commentAccess === "signed-out") {
     const signInNote = document.createElement("p");
     signInNote.className = "muted";
-    signInNote.textContent = "Đăng nhập để tham gia bình luận.";
+    const link = document.createElement("a");
+    link.href = "#community-account";
+    link.textContent = "Đăng nhập";
+    signInNote.append(link, document.createTextNode(" để viết bình luận."));
     commentSection.append(signInNote);
+  } else if (commentAccess === "unverified") {
+    const unavailableNote = document.createElement("p");
+    unavailableNote.className = "muted";
+    unavailableNote.textContent =
+      "Chưa thể xác nhận quyền tài khoản. Hãy tải lại trang hoặc đăng nhập lại để bình luận.";
+    commentSection.append(unavailableNote);
+  } else if (commentAccess === "banned") {
+    const unavailableNote = document.createElement("p");
+    unavailableNote.className = "muted";
+    unavailableNote.textContent =
+      "Tài khoản đang bị hạn chế nên hiện không thể bình luận.";
+    commentSection.append(unavailableNote);
   }
   card.append(commentSection);
 }
@@ -175,6 +208,8 @@ function renderPosts(
   currentRole,
   onBan,
   currentUserIsBanned,
+  canComment,
+  commentsUnavailable,
 ) {
   postsList.replaceChildren();
 
@@ -228,12 +263,20 @@ function renderPosts(
     analysis.className = "post-analysis";
     analysis.textContent = post.analysis;
     card.append(analysis);
+    const commentAccess = !currentUser
+      ? "signed-out"
+      : currentUserIsBanned
+        ? "banned"
+        : canComment
+          ? "allowed"
+          : "unverified";
     appendComments(
       supabase,
       card,
       post,
-      currentRole && !currentUserIsBanned ? currentUser : null,
-      !currentUser,
+      currentUser,
+      commentAccess,
+      commentsUnavailable,
     );
     postsList.append(card);
   }
@@ -279,10 +322,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         "Cộng đồng đang gửi nhiều yêu cầu kiểm duyệt. Vui lòng thử lại sau một phút.",
       moderation_unavailable:
         "AI kiểm duyệt hiện không khả dụng. Bài chưa được lưu; vui lòng thử lại sau.",
-      database_unavailable: "Không thể lưu dữ liệu lúc này. Vui lòng thử lại.",
+      database_unavailable: "Dịch vụ lưu trữ tạm thời không khả dụng.",
       post_not_found: "Bài viết này không còn tồn tại.",
+      invalid_comment: "Bình luận không được để trống và tối đa 2.000 ký tự.",
       unauthorized: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
       account_banned: "Tài khoản đang bị cấm và không thể sử dụng cộng đồng.",
+      server_not_configured: "Dịch vụ cộng đồng chưa được cấu hình đầy đủ.",
+      role_not_configured: "Tài khoản chưa được thiết lập quyền cộng đồng.",
       forbidden: "Tài khoản không có quyền thực hiện thao tác này.",
       user_not_found: "Không tìm thấy tài khoản đã đăng ký.",
       user_email_not_confirmed: "Tài khoản cần xác nhận email trước khi phân quyền.",
@@ -296,7 +342,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       cannot_approve_own_proposal: "Bạn không thể tự duyệt đề xuất BAN của mình.",
       role_change_rejected: "Không thể thay đổi quyền của tài khoản này.",
       post_moderation_rejected: "Không thể thay đổi trạng thái bài viết.",
-      database_unavailable: "Dịch vụ lưu trữ tạm thời không khả dụng.",
     };
     const code = responseBody?.error;
     throw new Error(
@@ -379,10 +424,11 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
     if (postsError) {
       showStatus(`Không thể tải bài đăng: ${postsError.message}`, true);
-      return;
+      return { postsLoaded: false, commentsError: null };
     }
 
     let comments = [];
+    let commentsError = null;
     if (posts.length) {
       const { data, error } = await supabase
         .from("post_comments")
@@ -392,11 +438,8 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         .in("post_id", posts.map((post) => post.id))
         .order("created_at", { ascending: true });
 
-      if (error) {
-        showStatus(`Không thể tải bình luận: ${error.message}`, true);
-        return;
-      }
-      comments = data;
+      commentsError = error;
+      comments = data || [];
     }
 
     const commentsByPostId = new Map();
@@ -415,8 +458,20 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       currentRole,
       requestBan,
       currentUserIsBanned,
+      Boolean(currentRole) && !currentUserIsBanned,
+      Boolean(commentsError),
     );
-    showStatus(posts.length ? `Đang hiển thị ${posts.length} bài đăng gần nhất.` : "");
+    if (commentsError) {
+      showStatus(
+        `Bài đăng đã tải, nhưng chưa thể tải bình luận: ${commentsError.message}`,
+        true,
+      );
+    } else {
+      showStatus(
+        posts.length ? `Đang hiển thị ${posts.length} bài đăng gần nhất.` : "",
+      );
+    }
+    return { postsLoaded: true, commentsError };
   }
 
   async function loadModerationData() {
@@ -595,6 +650,31 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     banNotice.textContent = currentUserIsBanned
       ? "Tài khoản đang bị cấm; các chức năng cộng đồng đã bị khóa."
       : "";
+    const roleDetails = {
+      users: {
+        label: "Thành viên",
+        permissions: "Có thể đăng bài và bình luận sau khi đăng nhập.",
+      },
+      moderator: {
+        label: "Moderator",
+        permissions:
+          "Có thể kiểm duyệt bài viết và đề xuất BAN; cần Moderator khác duyệt lệnh BAN.",
+      },
+      owner: {
+        label: "Owner",
+        permissions:
+          "Có thể quản lý Moderator, kiểm duyệt, BAN trực tiếp và đăng thông báo.",
+      },
+    }[currentRole];
+    accountRole.hidden = !signedIn || !roleDetails;
+    accountPermissions.hidden = !signedIn || !roleDetails;
+    if (roleDetails) {
+      accountRole.textContent = roleDetails.label;
+      accountRole.dataset.role = currentRole;
+      accountPermissions.textContent = currentUserIsBanned
+        ? "Tài khoản đang bị cấm; quyền cộng đồng tạm khóa."
+        : roleDetails.permissions;
+    }
     if (signedIn) {
       document.getElementById("account-email").textContent =
         currentUser.email || "";
@@ -775,9 +855,20 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     setBusy(button, true, "Đang kiểm duyệt...");
     try {
       const content = new FormData(form).get("content").trim();
+      if (!content) {
+        throw new Error("Bình luận không được để trống.");
+      }
       await invokeCommunity("create-comment", { post_id: postId, content });
-      showStatus("Bình luận đã qua kiểm duyệt và được đăng.");
-      await loadPosts();
+      form.reset();
+      const refreshResult = await loadPosts();
+      if (refreshResult?.postsLoaded && !refreshResult.commentsError) {
+        showStatus("Bình luận đã qua kiểm duyệt và được đăng.");
+      } else {
+        showStatus(
+          "Bình luận đã được gửi, nhưng danh sách chưa thể làm mới. Hãy bấm Tải lại.",
+          true,
+        );
+      }
     } catch (error) {
       showStatus(`Bình luận chưa được đăng: ${error.message}`, true);
     } finally {
