@@ -1,9 +1,10 @@
 import { menuData } from "../js/data.js";
 import {
   attachSiteSearch,
+  refreshSiteChromeStylesheet,
   renderSiteFooter,
   renderSiteHeader,
-} from "../js/site_chrome.js";
+} from "../js/site_chrome.js?v=footer-redesign-20261111";
 
 const assetBasePath = "../";
 
@@ -415,6 +416,7 @@ function setupPoemColumnHeight() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  refreshSiteChromeStylesheet();
   renderSiteHeader(assetBasePath, { includeMenu: true });
   renderMenu();
   renderWorkPlaces();
