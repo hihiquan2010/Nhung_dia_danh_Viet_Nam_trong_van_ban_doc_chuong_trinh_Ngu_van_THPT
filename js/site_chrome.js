@@ -1,5 +1,16 @@
 import { buildPageMap, menuData } from "./data.js";
 
+export function refreshSiteChromeStylesheet() {
+  const stylesheet = Array.from(
+    document.querySelectorAll('link[rel="stylesheet"]'),
+  ).find((link) => new URL(link.href).pathname.endsWith("/css/style.css"));
+  if (!stylesheet) return;
+
+  const stylesheetUrl = new URL(stylesheet.href);
+  stylesheetUrl.searchParams.set("v", "footer-redesign-20261111");
+  stylesheet.href = stylesheetUrl.href;
+}
+
 export function renderSiteHeader(
   assetBasePath,
   { includeMenu = false } = {},
@@ -51,25 +62,56 @@ export function renderSiteFooter({ includeStats = false } = {}) {
   if (!footerContainer) return;
 
   footerContainer.innerHTML = `
-    <div class="site-footer">
-      <a class="site-back-to-top" href="#top">
-        <i class="fa-solid fa-up-long" aria-hidden="true"></i>
-        <b>Quay về đầu trang</b>
-      </a>
-      <div class="infoGroup">
-        <div class="site-footer-info">
-          <p>
-            <i class="fa-solid fa-school" aria-hidden="true"></i>
-            <b>Đơn vị: Trường THPT Bình Chánh</b>
-          </p>
-          <p>
-            <i class="fa-solid fa-user-group" aria-hidden="true"></i>
-            Nhóm thực hiện: Phạm Gia Uy 11A3 và Trần Thanh Duy 12A16
-          </p>
+    <footer class="site-footer">
+      <div class="site-footer-inner">
+        <div class="site-footer-heading">
+          <span class="site-footer-mark" aria-hidden="true">
+            <i class="fa-solid fa-book-open"></i>
+          </span>
+          <div>
+            <p class="site-footer-name">Dấu Chân Văn Học</p>
+            <p class="site-footer-tagline">Theo dấu những miền đất trong trang văn.</p>
+          </div>
         </div>
-        ${includeStats ? '<div id="histats_counter" aria-label="Lượt truy cập"></div>' : ""}
+        <div class="site-footer-content">
+        <div class="site-footer-info">
+          <div class="site-footer-detail">
+            <span class="site-footer-detail-icon" aria-hidden="true">
+              <i class="fa-solid fa-school"></i>
+            </span>
+            <p>
+              <span class="site-footer-label">Đơn vị</span>
+              <strong>Trường THPT Bình Chánh</strong>
+            </p>
+          </div>
+          <div class="site-footer-detail">
+            <span class="site-footer-detail-icon" aria-hidden="true">
+              <i class="fa-solid fa-user-group"></i>
+            </span>
+            <p>
+              <span class="site-footer-label">Nhóm thực hiện</span>
+              <strong>Phạm Gia Uy 11A3 và Trần Thanh Duy 12A16</strong>
+            </p>
+          </div>
+        </div>
+        ${
+          includeStats
+            ? `<section class="site-footer-stats" aria-label="Thống kê lượt truy cập">
+                <span class="site-footer-label">Lượt truy cập</span>
+                <div id="histats_counter" aria-label="Bộ đếm lượt truy cập"></div>
+              </section>`
+            : ""
+        }
+        </div>
+        <div class="site-footer-bottom">
+          <span class="site-footer-note">Cảm ơn bạn đã cùng khám phá.</span>
+          <a class="site-back-to-top" href="#top">
+            <span>Quay về đầu trang</span>
+            <i class="fa-solid fa-arrow-up" aria-hidden="true"></i>
+          </a>
+        </div>
       </div>
-    </div>
+    </footer>
   `;
 }
 

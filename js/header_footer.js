@@ -1,8 +1,9 @@
 import {
   attachSiteSearch,
+  refreshSiteChromeStylesheet,
   renderSiteFooter,
   renderSiteHeader,
-} from "./site_chrome.js";
+} from "./site_chrome.js?v=footer-redesign-20261111";
 
 function initHistats() {
   if (!document.getElementById("histats_counter")) return;
@@ -26,7 +27,7 @@ function initHeaderFooter() {
   const assetBasePath = window.location.pathname.includes("/html/")
     ? "../"
     : "./";
-
+  refreshSiteChromeStylesheet();
   renderSiteHeader(assetBasePath);
   renderSiteFooter({ includeStats: assetBasePath === "./" });
   attachSiteSearch(assetBasePath);
