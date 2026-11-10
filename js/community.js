@@ -3,6 +3,7 @@ import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
 
 const MEDIA_BUCKET = "community-media";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const SIGNED_IMAGE_TTL_SECONDS = 24 * 60 * 60;
 const IMAGE_EXTENSIONS = new Map([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],
@@ -34,10 +35,44 @@ const avatarFileInput = document.getElementById("avatar-file");
 const avatarPreview = document.getElementById("avatar-preview");
 const accountRole = document.getElementById("account-role");
 const accountPermissions = document.getElementById("account-permissions");
+const accountContent = document.getElementById("account-content");
+const accountContentList = document.getElementById("account-content-list");
+const publicProfileView = document.getElementById("public-profile-view");
+const publicProfileAvatar = document.getElementById("public-profile-avatar");
+const publicProfileName = document.getElementById("public-profile-name");
+const imageUrlCache = new Map();
 
 function showStatus(message, isError = false) {
   statusMessage.textContent = message;
   statusMessage.dataset.error = String(isError);
+}
+
+function userError(message) {
+  const error = new Error(message);
+  error.name = "CommunityUserError";
+  return error;
+}
+
+function showFailure(error, operation, guidance) {
+  console.error(`[Cộng đồng] ${operation}`, {
+    code: error?.code || error?.name || "unknown",
+    status: error?.status,
+    message: error?.message || String(error),
+  });
+  if (error?.name === "CommunityUserError") {
+    showStatus(error.message, true);
+    return;
+  }
+
+  const code = error?.code;
+  const message = code === "42P01" || String(code || "").startsWith("PGRST")
+    ? "Dữ liệu cộng đồng chưa được cập nhật. Vui lòng báo quản trị viên."
+    : code === "invalid_credentials"
+      ? "Email hoặc mật khẩu chưa chính xác. Hãy kiểm tra rồi thử lại."
+      : code === "email_not_confirmed"
+        ? "Bạn cần xác nhận email trong hộp thư trước khi đăng nhập."
+        : "Chưa thể hoàn tất thao tác. " + guidance;
+  showStatus(message, true);
 }
 
 function setBusy(button, busy, busyText) {
@@ -53,26 +88,63 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
-function publicImageUrl(supabase, path) {
-  return path
-    ? supabase.storage.from(MEDIA_BUCKET).getPublicUrl(path).data.publicUrl
-    : "";
+function normalizeImagePaths(value) {
+  if (!value) return [];
+  if (Array.isArray(value)) {
+    return value.filter((entry) => typeof entry === "string" && entry.trim()).map((entry) => entry.trim());
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) {
+        return parsed.filter((entry) => typeof entry === "string" && entry.trim()).map((entry) => entry.trim());
+      }
+    } catch {
+      return [trimmed];
+    }
+    return [trimmed];
+  }
+  return [];
 }
 
-function makeAvatar(supabase, profile, className = "post-avatar") {
+const MAX_POST_IMAGES = 10;
+
+async function signedImageUrl(supabase, path) {
+  if (!path) return "";
+  const cached = imageUrlCache.get(path);
+  if (cached && cached.expiresAt > Date.now()) return cached.url;
+
+  const { data, error } = await supabase.storage
+    .from(MEDIA_BUCKET)
+    .createSignedUrl(path, SIGNED_IMAGE_TTL_SECONDS);
+  if (error) {
+    console.error("[Cộng đồng] Không thể tạo liên kết ảnh an toàn.", {
+      code: error.name,
+      message: error.message,
+    });
+    throw error;
+  }
+  const url = data.signedUrl;
+  imageUrlCache.set(path, {
+    url,
+    expiresAt: Date.now() + (SIGNED_IMAGE_TTL_SECONDS - 60) * 1000,
+  });
+  return url;
+}
+
+function makeAvatar(profile, className = "post-avatar") {
   const image = document.createElement("img");
   image.className = className;
   image.alt = "";
   image.loading = "lazy";
-  image.hidden = !profile?.avatar_path;
-  if (profile?.avatar_path) {
-    image.src = publicImageUrl(supabase, profile.avatar_path);
-  }
+  image.hidden = !profile?.avatar_url;
+  if (profile?.avatar_url) image.src = profile.avatar_url;
   return image;
 }
 
 function appendComments(
-  supabase,
   card,
   post,
   currentUser,
@@ -84,7 +156,7 @@ function appendComments(
   const heading = document.createElement("h4");
   heading.textContent = commentsUnavailable
     ? "Bình luận chưa tải được"
-    : `Bình luận (${post.post_comments.length})`;
+    : `Bình luận (${post.post_comments.length + (post.pending_comments?.length || 0)})`;
   commentSection.append(heading);
 
   const commentList = document.createElement("div");
@@ -92,7 +164,7 @@ function appendComments(
   for (const comment of post.post_comments) {
     const commentItem = document.createElement("article");
     commentItem.className = "comment-item";
-    const avatar = makeAvatar(supabase, comment.profiles);
+    const avatar = makeAvatar(comment.profiles);
     const commentBody = document.createElement("div");
     commentBody.className = "comment-body";
     const author = document.createElement("p");
@@ -106,6 +178,18 @@ function appendComments(
     commentList.append(commentItem);
   }
   commentSection.append(commentList);
+  for (const comment of post.pending_comments || []) {
+    const commentItem = document.createElement("article");
+    commentItem.className = "comment-item pending-comment";
+    const pending = document.createElement("p");
+    pending.className = "muted";
+    pending.textContent = `Bình luận của bạn đang chờ AI kiểm duyệt · ${formatDate(comment.created_at)}`;
+    const content = document.createElement("p");
+    content.className = "comment-content";
+    content.textContent = comment.content;
+    commentItem.append(pending, content);
+    commentList.append(commentItem);
+  }
   if (commentsUnavailable) {
     const note = document.createElement("p");
     note.className = "muted";
@@ -202,7 +286,6 @@ function addBanRequestForm(container, targetUserId, onBan) {
 }
 
 function renderPosts(
-  supabase,
   posts,
   currentUser,
   currentRole,
@@ -210,13 +293,16 @@ function renderPosts(
   currentUserIsBanned,
   canComment,
   commentsUnavailable,
+  likeData = new Map(),
 ) {
   postsList.replaceChildren();
 
   if (!posts.length) {
     const emptyState = document.createElement("p");
     emptyState.className = "empty-state";
-    emptyState.textContent = "Chưa có bài đăng nào. Hãy chia sẻ điều đầu tiên!";
+    emptyState.textContent = new URLSearchParams(location.search).has("profile")
+      ? "Hồ sơ này chưa có bài viết nào được duyệt."
+      : "Chưa có bài đăng nào. Hãy chia sẻ điều đầu tiên!";
     postsList.append(emptyState);
     return;
   }
@@ -226,10 +312,14 @@ function renderPosts(
     card.className = "post-card";
     const authorRow = document.createElement("div");
     authorRow.className = "post-author";
-    authorRow.append(makeAvatar(supabase, post.profiles));
+    authorRow.append(makeAvatar(post.profiles));
     const meta = document.createElement("p");
     meta.className = "post-meta";
-    meta.textContent = `${post.profiles?.display_name || "Thành viên"} · ${formatDate(post.created_at)}`;
+    const profileLink = document.createElement("a");
+    profileLink.href = `?profile=${encodeURIComponent(post.author_id)}#community-feed`;
+    profileLink.textContent = post.profiles?.display_name || "Thành viên";
+    const metaText = document.createTextNode(` · ${formatDate(post.created_at)}`);
+    meta.append(profileLink, metaText);
     authorRow.append(meta);
     const title = document.createElement("h3");
     title.textContent = post.title;
@@ -250,19 +340,54 @@ function renderPosts(
       card.append(literaryWork);
     }
 
-    if (post.image_path) {
-      const image = document.createElement("img");
-      image.className = "post-image";
-      image.src = publicImageUrl(supabase, post.image_path);
-      image.alt = `Ảnh minh họa cho ${post.title}`;
-      image.loading = "lazy";
-      card.append(image);
+    const mediaUrls = normalizeImagePaths(post.image_paths ?? post.image_path)
+      .map((imagePath) => post.image_urls?.get?.(imagePath) || post.image_url || "")
+      .filter(Boolean);
+    if (mediaUrls.length) {
+      const gallery = document.createElement("div");
+      gallery.className = "post-gallery";
+      for (const imageUrl of mediaUrls) {
+        const image = document.createElement("img");
+        image.className = "post-image";
+        image.src = imageUrl;
+        image.alt = `Ảnh minh họa cho ${post.title}`;
+        image.loading = "lazy";
+        gallery.append(image);
+      }
+      card.append(gallery);
     }
 
     const analysis = document.createElement("p");
     analysis.className = "post-analysis";
     analysis.textContent = post.analysis;
+    card.id = `post-${post.id}`;
     card.append(analysis);
+    const actions = document.createElement("div");
+    actions.className = "post-actions";
+    const like = document.createElement("button");
+    like.type = "button";
+    like.className = "button-secondary post-like";
+    const likeInfo = likeData.get(post.id) || { likes_count: 0, liked_by_me: false };
+    like.textContent = `${likeInfo.liked_by_me ? "♥" : "♡"} ${likeInfo.likes_count}`;
+    like.setAttribute("aria-label", `${likeInfo.likes_count} lượt thích`);
+    like.disabled = !currentUser || currentUserIsBanned;
+    like.title = currentUser
+      ? "Thích hoặc bỏ thích bài viết"
+      : "Đăng nhập để thích bài viết";
+    like.addEventListener("click", async () => {
+      try {
+        await toggleLike(post.id, !likeInfo.liked_by_me);
+      } catch (error) {
+        showFailure(error, "Thay đổi lượt thích", "Hãy kiểm tra kết nối rồi thử lại.");
+      }
+    });
+    const share = document.createElement("button");
+    share.type = "button";
+    share.className = "button-secondary";
+    share.textContent = "Chia sẻ";
+    share.addEventListener("click", () => void sharePost(post));
+    actions.append(like, share);
+    card.append(actions);
     const commentAccess = !currentUser
       ? "signed-out"
       : currentUserIsBanned
@@ -271,7 +396,6 @@ function renderPosts(
           ? "allowed"
           : "unverified";
     appendComments(
-      supabase,
       card,
       post,
       currentUser,
@@ -294,6 +418,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   let currentProfile = null;
   let currentRole = null;
   let currentUserIsBanned = false;
+  let currentAccountContent = null;
   let authRevision = 0;
 
   async function invokeCommunity(action, payload) {
@@ -312,19 +437,22 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       }
     }
 
-    if (responseBody?.message) {
-      throw new Error(responseBody.message);
-    }
-
     const messages = {
       moderation_rejected: "Nội dung chưa phù hợp để đăng.",
       moderation_rate_limited:
-        "Cộng đồng đang gửi nhiều yêu cầu kiểm duyệt. Vui lòng thử lại sau một phút.",
+        "Hàng đợi đang xử lý nhiều nội dung. Bài của bạn vẫn được lưu; hãy thử lại sau một phút.",
       moderation_unavailable:
-        "AI kiểm duyệt hiện không khả dụng. Bài chưa được lưu; vui lòng thử lại sau.",
-      database_unavailable: "Dịch vụ lưu trữ tạm thời không khả dụng.",
+        "Nội dung đã được lưu riêng tư và đang chờ AI kiểm duyệt. Hãy thử tải lại sau ít phút.",
+      database_unavailable: "Chưa thể lưu dữ liệu. Hãy kiểm tra kết nối rồi thử lại.",
       post_not_found: "Bài viết này không còn tồn tại.",
       invalid_comment: "Bình luận không được để trống và tối đa 2.000 ký tự.",
+      invalid_title: "Tiêu đề phải có từ 1 đến 120 ký tự.",
+      invalid_literary_work: "Tác phẩm hoặc địa danh không được dài quá 180 ký tự.",
+      invalid_analysis: "Nội dung phân tích cần từ 10 đến 5.000 ký tự.",
+      invalid_queue_item: "Không tìm thấy nội dung cần kiểm duyệt. Hãy tải lại trang.",
+      invalid_like_request: "Chưa thể cập nhật lượt thích. Hãy tải lại trang.",
+      post_pending_ai: "Bài viết đang chờ AI kiểm duyệt; chưa thể thay đổi trạng thái.",
+      invalid_display_name: "Tên hiển thị phải có từ 1 đến 80 ký tự.",
       unauthorized: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
       account_banned: "Tài khoản đang bị cấm và không thể sử dụng cộng đồng.",
       server_not_configured: "Dịch vụ cộng đồng chưa được cấu hình đầy đủ.",
@@ -332,6 +460,8 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       forbidden: "Tài khoản không có quyền thực hiện thao tác này.",
       user_not_found: "Không tìm thấy tài khoản đã đăng ký.",
       user_email_not_confirmed: "Tài khoản cần xác nhận email trước khi phân quyền.",
+      user_already_exists: "Email này đã có tài khoản. Hãy đăng nhập hoặc dùng email khác.",
+      weak_password: "Mật khẩu chưa đủ mạnh. Hãy dùng ít nhất 8 ký tự.",
       ban_saved_auth_lock_failed:
         "Đã lưu lệnh cấm nhưng Supabase Auth chưa thể khóa phiên đăng nhập.",
       ban_decision_rejected:
@@ -344,21 +474,27 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       post_moderation_rejected: "Không thể thay đổi trạng thái bài viết.",
     };
     const code = responseBody?.error;
-    throw new Error(
+    console.error("[Cộng đồng] Yêu cầu dịch vụ thất bại.", {
+      action,
+      status: error.context?.status,
+      code: code || "unknown",
+      message: responseBody?.message || error.message,
+    });
+    throw userError(
       messages[code] ||
         (error.message.includes("Failed to fetch")
-          ? "Không thể kết nối dịch vụ cộng đồng. Vui lòng thử lại sau."
-          : error.message),
+          ? "Không thể kết nối dịch vụ cộng đồng. Hãy kiểm tra internet rồi thử lại."
+          : "Dịch vụ cộng đồng chưa thể hoàn tất thao tác. Hãy thử lại sau."),
     );
   }
 
   function validateImage(file) {
     if (!file) return;
     if (!IMAGE_EXTENSIONS.has(file.type)) {
-      throw new Error("Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.");
+      throw userError("Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.");
     }
     if (file.size > MAX_IMAGE_BYTES) {
-      throw new Error("Ảnh vượt quá giới hạn 5 MB.");
+      throw userError("Ảnh vượt quá giới hạn 5 MB.");
     }
   }
 
@@ -372,7 +508,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       contentType: file.type,
       upsert: false,
     });
-    if (error) throw new Error(`Không thể tải ảnh lên: ${error.message}`);
+    if (error) {
+      console.error("[Cộng đồng] Tải ảnh lên thất bại.", {
+        code: error.name,
+        message: error.message,
+      });
+      throw userError("Chưa thể tải ảnh lên. Hãy kiểm tra định dạng, kích thước và kết nối.");
+    }
     return path;
   }
 
@@ -384,6 +526,160 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         path,
         message: error.message,
       });
+    }
+  }
+
+  async function renderAccountContent(data) {
+    accountContent.hidden = !currentUser || currentUserIsBanned;
+    accountContentList.replaceChildren();
+    const items = [
+      ...(data.posts || []).map((post) => ({
+        type: "post",
+        id: post.id,
+        title: post.title,
+        content: post.analysis,
+        literary_work: post.literary_work,
+        image_path: post.image_path,
+        created_at: post.created_at,
+        status: post.status,
+      })),
+      ...(data.comments || []).map((comment) => ({
+        type: "comment",
+        id: comment.id,
+        title: comment.posts?.title
+          ? `Bình luận trong “${comment.posts.title}”`
+          : "Bình luận",
+        content: comment.content,
+        post_id: comment.post_id,
+        created_at: comment.created_at,
+        status: comment.status,
+      })),
+    ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+
+    if (!items.length) {
+      const empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = "Bạn chưa có bài viết hoặc bình luận nào.";
+      accountContentList.append(empty);
+      return;
+    }
+
+    for (const entry of items) {
+      const item = document.createElement("article");
+      item.className = "account-content-item";
+      const heading = document.createElement("h4");
+      heading.textContent = entry.title;
+      const status = document.createElement("span");
+      status.className = `content-status content-status-${entry.status}`;
+      status.textContent = entry.status === "pending" ? "Đang chờ AI" : "Đã duyệt";
+      const date = document.createElement("p");
+      date.className = "muted";
+      date.textContent = formatDate(entry.created_at);
+      item.append(heading, status, date);
+      if (entry.literary_work) {
+        const work = document.createElement("p");
+        work.className = "post-literary-work";
+        work.textContent = entry.literary_work;
+        item.append(work);
+      }
+      if (entry.content) {
+        const content = document.createElement("p");
+        content.className = "account-content-preview";
+        content.textContent = entry.content;
+        item.append(content);
+      }
+      const mediaPaths = normalizeImagePaths(entry.image_paths ?? entry.image_path);
+      if (mediaPaths.length) {
+        const gallery = document.createElement("div");
+        gallery.className = "post-gallery";
+        for (const path of mediaPaths) {
+          try {
+            const image = document.createElement("img");
+            image.className = "post-image";
+            image.src = await signedImageUrl(supabase, path);
+            image.alt = `Ảnh minh họa cho ${entry.title}`;
+            image.loading = "lazy";
+            gallery.append(image);
+          } catch (error) {
+            showFailure(error, "Tải ảnh bài viết của bạn", "Nội dung chữ vẫn xem được.");
+          }
+        }
+        item.append(gallery);
+      }
+      if (entry.status === "approved") {
+        const link = document.createElement("a");
+        link.href = entry.type === "post"
+          ? `?post=${encodeURIComponent(entry.id)}#post-${encodeURIComponent(entry.id)}`
+          : `?post=${encodeURIComponent(entry.post_id)}#post-${encodeURIComponent(entry.post_id)}`;
+        link.textContent = entry.type === "post" ? "Mở bài viết" : "Mở bài đã bình luận";
+        item.append(link);
+      }
+      accountContentList.append(item);
+    }
+  }
+
+  async function loadMyContent() {
+    if (!currentUser || currentUserIsBanned) {
+      accountContent.hidden = true;
+      currentAccountContent = { posts: [], comments: [], queue: [] };
+      return currentAccountContent;
+    }
+    const data = await invokeCommunity("get-my-content", {});
+    currentAccountContent = data;
+    await renderAccountContent(data);
+    return data;
+  }
+
+  async function processQueueItem(queueItem) {
+    try {
+      const result = await invokeCommunity("process-moderation", {
+        queue_id: queueItem.id,
+      });
+      await loadMyContent();
+      await loadPosts();
+      if (result.status === "approved") {
+        showStatus("Nội dung đã được AI duyệt và xuất hiện trên cộng đồng.");
+      } else if (result.status === "rejected") {
+        showStatus(
+          "Nội dung chưa phù hợp nên đã được xóa. Hãy chỉnh sửa lời lẽ theo hướng tôn trọng rồi đăng lại.",
+          true,
+        );
+      }
+      return true;
+    } catch (error) {
+      showFailure(error, "Kiểm duyệt nội dung", "Nội dung vẫn ở chế độ riêng tư; hãy tải lại sau ít phút.");
+      return false;
+    }
+  }
+
+  async function processPendingQueue(queue) {
+    for (const item of queue || []) {
+      if (item.status === "pending" || item.status === "processing") {
+        if (!(await processQueueItem(item))) break;
+      }
+    }
+  }
+
+  async function toggleLike(postId, liked) {
+    await invokeCommunity("toggle-like", { post_id: postId, liked });
+    await loadPosts();
+  }
+
+  async function sharePost(post) {
+    const url = new URL(location.href);
+    url.search = "";
+    url.searchParams.set("post", post.id);
+    url.hash = `post-${post.id}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: post.title, url: url.href });
+      } else {
+        await navigator.clipboard.writeText(url.href);
+        showStatus("Đã sao chép liên kết bài viết.");
+      }
+    } catch (error) {
+      if (error?.name === "AbortError") return;
+      showFailure(error, "Chia sẻ bài viết", "Hãy sao chép địa chỉ trang từ thanh trình duyệt.");
     }
   }
 
@@ -405,26 +701,86 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     profileNameInput.value = data?.display_name || "";
     avatarPreview.hidden = !data?.avatar_path;
     if (data?.avatar_path) {
-      avatarPreview.src = publicImageUrl(supabase, data.avatar_path);
+    avatarPreview.src = await signedImageUrl(supabase, data.avatar_path);
     } else {
       avatarPreview.removeAttribute("src");
     }
   }
 
   async function loadPosts() {
-    showStatus("Đang tải bài đăng...");
-    const { data: posts, error: postsError } = await supabase
+    const searchParams = new URLSearchParams(location.search);
+    const profileId = searchParams.get("profile");
+    const sharedPostId = searchParams.get("post");
+    const isProfilePage = Boolean(profileId);
+    let viewedProfileAvatarPath = null;
+    let sharedPostLoadError = null;
+    let sharedPostMissing = false;
+    publicProfileView.hidden = !isProfilePage;
+    publicProfileAvatar.hidden = true;
+    postPanel.hidden = isProfilePage || !currentUser || !currentRole || currentUserIsBanned;
+    const postsTitle = document.getElementById("posts-title");
+    postsTitle.textContent = isProfilePage ? "Bài viết đã duyệt" : "Bài đăng cộng đồng";
+    if (isProfilePage) {
+      document.getElementById("community-feed-title").textContent = "Trang cá nhân";
+      if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(profileId)) {
+        publicProfileName.textContent = "Không tìm thấy hồ sơ.";
+        postsList.replaceChildren();
+        return { postsLoaded: false, commentsError: null };
+      }
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("id, display_name, avatar_path")
+        .eq("id", profileId)
+        .maybeSingle();
+      if (profileError || !profile) {
+        if (profileError) showFailure(profileError, "Tải hồ sơ", "Hãy tải lại trang sau ít phút.");
+        publicProfileName.textContent = "Không tìm thấy hồ sơ.";
+        postsList.replaceChildren();
+        return { postsLoaded: false, commentsError: null };
+      }
+      publicProfileName.textContent = profile.display_name || "Thành viên";
+      publicProfileAvatar.hidden = !profile.avatar_path;
+      viewedProfileAvatarPath = profile.avatar_path;
+    } else {
+      document.getElementById("community-feed-title").textContent = "Bảng tin cộng đồng";
+    }
+
+    let postsQuery = supabase
       .from("posts")
       .select(
-        "id, author_id, title, literary_work, analysis, image_path, created_at, profiles(display_name, avatar_path)",
+        "id, author_id, title, literary_work, analysis, image_path, image_paths, created_at, profiles(display_name, avatar_path)",
       )
       .eq("status", "approved")
       .order("created_at", { ascending: false })
       .limit(50);
+    if (isProfilePage) postsQuery = postsQuery.eq("author_id", profileId);
+    const { data: posts, error: postsError } = await postsQuery;
 
     if (postsError) {
-      showStatus(`Không thể tải bài đăng: ${postsError.message}`, true);
+      showFailure(postsError, "Tải bài đăng", "Hãy kiểm tra kết nối rồi thử tải lại.");
       return { postsLoaded: false, commentsError: null };
+    }
+    if (
+      !isProfilePage &&
+      sharedPostId &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(sharedPostId) &&
+      !posts.some((post) => post.id === sharedPostId)
+    ) {
+      const { data: sharedPost, error } = await supabase
+        .from("posts")
+        .select(
+          "id, author_id, title, literary_work, analysis, image_path, image_paths, created_at, profiles(display_name, avatar_path)",
+        )
+        .eq("id", sharedPostId)
+        .eq("status", "approved")
+        .maybeSingle();
+      if (error) {
+        sharedPostLoadError = error;
+      } else if (sharedPost) {
+        posts.push(sharedPost);
+      } else {
+        sharedPostMissing = true;
+      }
     }
 
     let comments = [];
@@ -442,30 +798,113 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       comments = data || [];
     }
 
+    const imagePaths = [
+      viewedProfileAvatarPath,
+      ...posts.flatMap((post) => normalizeImagePaths(post.image_paths ?? post.image_path)),
+      ...posts.map((post) => post.profiles?.avatar_path),
+      ...comments.map((comment) => comment.profiles?.avatar_path),
+    ].filter(Boolean);
+    const imageUrls = new Map();
+    let imageLoadError = null;
+    await Promise.all([...new Set(imagePaths)].map(async (path) => {
+      try {
+        imageUrls.set(path, await signedImageUrl(supabase, path));
+      } catch (error) {
+        if (!imageLoadError) imageLoadError = error;
+      }
+    }));
+    if (viewedProfileAvatarPath && imageUrls.has(viewedProfileAvatarPath)) {
+      publicProfileAvatar.src = imageUrls.get(viewedProfileAvatarPath);
+      publicProfileAvatar.hidden = false;
+    }
+
+    const likeData = new Map();
+    let likesError = null;
+    if (posts.length) {
+      const { data: likes, error: rpcLikesError } = await supabase.rpc(
+        "get_community_post_likes",
+        { p_post_ids: posts.map((post) => post.id) },
+      );
+      if (rpcLikesError) {
+        likesError = rpcLikesError;
+        console.error("[Cộng đồng] Không thể tải lượt thích.", {
+          code: rpcLikesError.code,
+          message: rpcLikesError.message,
+        });
+      } else {
+        for (const item of likes || []) likeData.set(item.post_id, item);
+      }
+    }
+
+    const pendingComments = currentUser && !isProfilePage
+      ? (currentAccountContent?.comments || []).filter(
+        (comment) => comment.status === "pending",
+      )
+      : [];
     const commentsByPostId = new Map();
     for (const comment of comments) {
       const postComments = commentsByPostId.get(comment.post_id) || [];
-      postComments.push(comment);
+      postComments.push({
+        ...comment,
+        profiles: comment.profiles
+          ? {
+            ...comment.profiles,
+            avatar_url: imageUrls.get(comment.profiles.avatar_path) || "",
+          }
+          : null,
+      });
       commentsByPostId.set(comment.post_id, postComments);
     }
+    const pendingCommentsByPostId = new Map();
+    for (const comment of pendingComments) {
+      const postComments = pendingCommentsByPostId.get(comment.post_id) || [];
+      postComments.push(comment);
+      pendingCommentsByPostId.set(comment.post_id, postComments);
+    }
     renderPosts(
-      supabase,
-      posts.map((post) => ({
-        ...post,
-        post_comments: commentsByPostId.get(post.id) || [],
-      })),
+      posts.map((post) => {
+        const mediaPaths = normalizeImagePaths(post.image_paths ?? post.image_path);
+        return {
+          ...post,
+          image_paths: mediaPaths,
+          image_urls: new Map(mediaPaths.map((path) => [path, imageUrls.get(path) || ""])),
+          image_url: imageUrls.get(mediaPaths[0]) || "",
+          profiles: post.profiles
+            ? {
+              ...post.profiles,
+              avatar_url: imageUrls.get(post.profiles.avatar_path) || "",
+            }
+            : null,
+          post_comments: commentsByPostId.get(post.id) || [],
+          pending_comments: pendingCommentsByPostId.get(post.id) || [],
+        };
+      }),
       currentUser,
       currentRole,
       requestBan,
       currentUserIsBanned,
       Boolean(currentRole) && !currentUserIsBanned,
       Boolean(commentsError),
+      likeData,
     );
+    if (sharedPostId) {
+      requestAnimationFrame(() => {
+        document.getElementById(`post-${sharedPostId}`)?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    }
     if (commentsError) {
-      showStatus(
-        `Bài đăng đã tải, nhưng chưa thể tải bình luận: ${commentsError.message}`,
-        true,
-      );
+      showFailure(commentsError, "Tải bình luận", "Bài viết vẫn xem được; hãy thử tải lại.");
+    } else if (likesError) {
+      showFailure(likesError, "Tải lượt thích", "Bài viết vẫn xem được; hãy thử tải lại.");
+    } else if (imageLoadError) {
+      showFailure(imageLoadError, "Tải ảnh cộng đồng", "Phần chữ vẫn xem được; hãy tải lại sau.");
+    } else if (sharedPostLoadError) {
+      showFailure(sharedPostLoadError, "Tải bài viết được chia sẻ", "Hãy mở lại liên kết sau ít phút.");
+    } else if (sharedPostMissing) {
+      showStatus("Bài viết không còn tồn tại hoặc chưa được duyệt.", true);
     } else {
       showStatus(
         posts.length ? `Đang hiển thị ${posts.length} bài đăng gần nhất.` : "",
@@ -516,7 +955,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
           await loadPosts();
           await loadModerationData();
         } catch (error) {
-          showStatus(`Không thể kiểm duyệt bài: ${error.message}`, true);
+          showFailure(error, "Kiểm duyệt bài viết", "Hãy tải lại danh sách rồi thử lại.");
         }
       });
       actions.append(reason, button);
@@ -560,7 +999,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
             showStatus(approve ? "Đã duyệt lệnh BAN." : "Đã từ chối đề xuất.");
             await loadModerationData();
           } catch (error) {
-            showStatus(`Không thể xử lý đề xuất: ${error.message}`, true);
+            showFailure(error, "Xử lý đề xuất BAN", "Hãy tải lại danh sách rồi thử lại.");
           }
         });
         actions.append(button);
@@ -609,7 +1048,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
             showStatus("Đã gỡ thông báo khỏi trang chủ.");
             await loadModerationData();
           } catch (error) {
-            showStatus(`Không thể gỡ thông báo: ${error.message}`, true);
+            showFailure(error, "Gỡ thông báo", "Hãy thử lại sau ít phút.");
           }
         });
         item.append(button);
@@ -628,7 +1067,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       );
       await loadModerationData();
     } catch (error) {
-      showStatus(`Không thể cấm tài khoản: ${error.message}`, true);
+      showFailure(error, "Cấm tài khoản", "Hãy kiểm tra lý do và thử lại.");
     }
   }
 
@@ -637,6 +1076,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     const signedIn = Boolean(currentUser);
     authPanel.hidden = signedIn;
     accountPanel.hidden = !signedIn;
+    accountContent.hidden = !signedIn || currentUserIsBanned;
     postPanel.hidden = !signedIn || !currentRole || currentUserIsBanned;
     profileForm.hidden = !signedIn || !currentRole || currentUserIsBanned;
     moderationPanel.hidden =
@@ -683,11 +1123,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
   async function handleSession(session) {
     const revision = ++authRevision;
+    currentAccountContent = null;
     currentRole = null;
     currentUserIsBanned = false;
     updateAccount(session);
     if (!session) {
       currentProfile = null;
+      currentAccountContent = null;
       await loadPosts();
       return;
     }
@@ -701,7 +1143,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       currentUserIsBanned = false;
       updateAccount(session);
       await loadPosts();
-      showStatus(`Không thể xác thực quyền tài khoản: ${error.message}`, true);
+      showFailure(error, "Xác thực quyền tài khoản", "Hãy tải lại trang hoặc đăng nhập lại.");
       return;
     }
 
@@ -710,7 +1152,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     currentUserIsBanned = access.banned;
     updateAccount(session);
     let accessStatus = "";
-    let profileStatus = "";
+    let profileError = null;
+    let accountContentError = null;
+    let accountContentData = null;
     if (currentUserIsBanned) {
       accessStatus = access.ban_expires_at
         ? `Tài khoản đang bị cấm đến ${formatDate(access.ban_expires_at)}.`
@@ -719,13 +1163,24 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       try {
         await loadProfile();
       } catch (error) {
-        profileStatus = `Không thể tải hồ sơ: ${error.message}`;
+        profileError = error;
+      }
+      try {
+        accountContentData = await loadMyContent();
+      } catch (error) {
+        accountContentError = error;
       }
     }
 
     await loadPosts();
     if (accessStatus) showStatus(accessStatus, true);
-    else if (profileStatus) showStatus(profileStatus, true);
+    else if (profileError) showFailure(profileError, "Tải hồ sơ", "Hãy thử tải lại trang.");
+    else if (accountContentError) {
+      showFailure(accountContentError, "Tải nội dung cá nhân", "Hãy đăng nhập lại rồi thử tải lại.");
+    }
+    if (accountContentData?.queue?.length) {
+      void processPendingQueue(accountContentData.queue);
+    }
     if (
       !currentUserIsBanned &&
       (currentRole === "moderator" || currentRole === "owner")
@@ -733,7 +1188,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       try {
         await loadModerationData();
       } catch (error) {
-        showStatus(`Không thể tải công cụ kiểm duyệt: ${error.message}`, true);
+        showFailure(error, "Tải công cụ kiểm duyệt", "Hãy thử tải lại trang.");
       }
     }
   }
@@ -751,7 +1206,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       authForm.reset();
       showStatus("Đăng nhập thành công.");
     } catch (error) {
-      showStatus(`Không thể đăng nhập: ${error.message}`, true);
+      showFailure(error, "Đăng nhập", "Hãy kiểm tra thông tin và thử lại.");
     } finally {
       setBusy(signInButton, false);
     }
@@ -764,7 +1219,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     try {
       const formData = new FormData(authForm);
       if (formData.get("password").length < 8) {
-        throw new Error("Mật khẩu phải có ít nhất 8 ký tự.");
+        throw userError("Mật khẩu phải có ít nhất 8 ký tự.");
       }
       const { data, error } = await supabase.auth.signUp({
         email: formData.get("email").trim(),
@@ -778,7 +1233,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
           : "Đã tạo tài khoản. Hãy xác nhận email để đăng nhập.",
       );
     } catch (error) {
-      showStatus(`Không thể tạo tài khoản: ${error.message}`, true);
+      showFailure(error, "Tạo tài khoản", "Hãy kiểm tra email và thử lại.");
     } finally {
       setBusy(signUpButton, false);
     }
@@ -791,30 +1246,32 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     try {
       const displayName = profileNameInput.value.trim();
       if (!displayName || displayName.length > 80) {
-        throw new Error("Tên hiển thị phải có từ 1 đến 80 ký tự.");
+        throw userError("Tên hiển thị phải có từ 1 đến 80 ký tự.");
       }
 
       const file = avatarFileInput.files[0];
       uploadedPath = await uploadImage(file, currentUser.id, "avatars");
       const avatarPath = uploadedPath || currentProfile?.avatar_path || null;
+      const previousAvatarPath = currentProfile?.avatar_path;
+      const replacedAvatarPath = uploadedPath;
       await invokeCommunity("update-profile", {
         display_name: displayName,
         avatar_path: avatarPath,
       });
 
-      const previousAvatarPath = currentProfile?.avatar_path;
+      uploadedPath = null;
       currentProfile = { display_name: displayName, avatar_path: avatarPath };
       avatarFileInput.value = "";
       avatarPreview.hidden = !avatarPath;
-      if (avatarPath) avatarPreview.src = publicImageUrl(supabase, avatarPath);
-      if (uploadedPath && previousAvatarPath) {
+      if (avatarPath) avatarPreview.src = await signedImageUrl(supabase, avatarPath);
+      if (replacedAvatarPath && previousAvatarPath) {
         await removeUploadedImage(previousAvatarPath);
       }
       showStatus("Đã lưu hồ sơ sau khi kiểm duyệt.");
       await loadPosts();
     } catch (error) {
       await removeUploadedImage(uploadedPath);
-      showStatus(`Không thể lưu hồ sơ: ${error.message}`, true);
+      showFailure(error, "Lưu hồ sơ", "Hãy kiểm tra dữ liệu, ảnh đại diện và thử lại.");
     } finally {
       setBusy(saveProfileButton, false);
     }
@@ -822,29 +1279,47 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
   async function publishPost(event) {
     event.preventDefault();
-    setBusy(publishButton, true, "Đang tải ảnh và kiểm duyệt...");
-    let uploadedPath = null;
+    setBusy(publishButton, true, "Đang gửi vào hàng chờ...");
+    let uploadedPaths = [];
     try {
       const formData = new FormData(postForm);
       const title = formData.get("title").trim();
       const literaryWork = formData.get("literary_work").trim();
       const analysis = formData.get("analysis").trim();
-      const file = formData.get("image");
+      const files = Array.from(formData.getAll("image")).filter(
+        (file) => file instanceof File && file.size > 0,
+      );
+      if (!title || title.length > 120) {
+        throw userError("Tiêu đề phải có từ 1 đến 120 ký tự.");
+      }
+      if (literaryWork.length > 180) {
+        throw userError("Tác phẩm hoặc địa danh không được dài quá 180 ký tự.");
+      }
+      if (analysis.length < 10 || analysis.length > 5000) {
+        throw userError("Nội dung phân tích cần từ 10 đến 5.000 ký tự.");
+      }
+      if (files.length > MAX_POST_IMAGES) {
+        throw userError(`Bạn có thể đăng tối đa ${MAX_POST_IMAGES} ảnh trong một bài.`);
+      }
 
-      uploadedPath = await uploadImage(file, currentUser.id, "posts");
+      uploadedPaths = await uploadImages(files, currentUser.id, "posts");
       await invokeCommunity("create-post", {
         title,
         literary_work: literaryWork,
         analysis,
-        image_path: uploadedPath,
+        image_path: uploadedPaths[0] || null,
+        image_paths: uploadedPaths,
       });
 
+      uploadedPaths = [];
       postForm.reset();
-      showStatus("Bài viết đã qua kiểm duyệt và được đăng.");
+      showStatus("Bài viết đã được gửi vào hàng chờ; hiện chỉ bạn nhìn thấy.");
+      const accountData = await loadMyContent();
       await loadPosts();
+      void processPendingQueue(accountData.queue);
     } catch (error) {
-      await removeUploadedImage(uploadedPath);
-      showStatus(`Bài viết chưa được đăng: ${error.message}`, true);
+      await Promise.all(uploadedPaths.map((path) => removeUploadedImage(path)));
+      showFailure(error, "Đăng bài", "Hãy kiểm tra nội dung và ảnh rồi thử lại.");
     } finally {
       setBusy(publishButton, false);
     }
@@ -852,25 +1327,20 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
   async function submitComment(event, form, button, postId) {
     event.preventDefault();
-    setBusy(button, true, "Đang kiểm duyệt...");
+    setBusy(button, true, "Đang gửi...");
     try {
       const content = new FormData(form).get("content").trim();
-      if (!content) {
-        throw new Error("Bình luận không được để trống.");
+      if (!content || content.length > 2000) {
+        throw userError("Bình luận không được để trống và tối đa 2.000 ký tự.");
       }
       await invokeCommunity("create-comment", { post_id: postId, content });
       form.reset();
-      const refreshResult = await loadPosts();
-      if (refreshResult?.postsLoaded && !refreshResult.commentsError) {
-        showStatus("Bình luận đã qua kiểm duyệt và được đăng.");
-      } else {
-        showStatus(
-          "Bình luận đã được gửi, nhưng danh sách chưa thể làm mới. Hãy bấm Tải lại.",
-          true,
-        );
-      }
+      showStatus("Bình luận đã được gửi vào hàng chờ; hiện chỉ bạn nhìn thấy.");
+      const accountData = await loadMyContent();
+      await loadPosts();
+      void processPendingQueue(accountData.queue);
     } catch (error) {
-      showStatus(`Bình luận chưa được đăng: ${error.message}`, true);
+      showFailure(error, "Đăng bình luận", "Hãy kiểm tra nội dung và thử lại.");
     } finally {
       setBusy(button, false);
     }
@@ -889,7 +1359,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       showStatus(makeModerator ? "Đã thêm Moderator." : "Đã gỡ quyền Moderator.");
       await loadModerationData();
     } catch (error) {
-      showStatus(`Không thể thay đổi Moderator: ${error.message}`, true);
+      showFailure(error, "Thay đổi Moderator", "Hãy kiểm tra email tài khoản rồi thử lại.");
     }
   }
 
@@ -908,14 +1378,22 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       showStatus("Đã đăng thông báo trên trang chủ.");
       await loadModerationData();
     } catch (error) {
-      showStatus(`Không thể đăng thông báo: ${error.message}`, true);
+      showFailure(error, "Đăng thông báo", "Hãy kiểm tra tiêu đề và nội dung rồi thử lại.");
     }
   }
 
-  document.getElementById("refresh-button").addEventListener("click", loadPosts);
+  document.getElementById("refresh-button").addEventListener("click", async () => {
+    try {
+      const data = await loadMyContent();
+      await loadPosts();
+      await processPendingQueue(data.queue);
+    } catch (error) {
+      showFailure(error, "Tải lại cộng đồng", "Hãy đăng nhập lại hoặc thử lại sau.");
+    }
+  });
   document.getElementById("sign-out-button").addEventListener("click", async () => {
     const { error } = await supabase.auth.signOut();
-    if (error) showStatus(`Không thể đăng xuất: ${error.message}`, true);
+    if (error) showFailure(error, "Đăng xuất", "Hãy tải lại trang rồi thử lại.");
   });
   authForm.addEventListener("submit", signIn);
   signUpButton.addEventListener("click", signUp);
@@ -936,7 +1414,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   const { data: sessionData, error: sessionError } =
     await supabase.auth.getSession();
   if (sessionError) {
-    showStatus(`Không thể kiểm tra phiên đăng nhập: ${sessionError.message}`, true);
+    showFailure(sessionError, "Kiểm tra phiên đăng nhập", "Hãy tải lại trang.");
   } else {
     await handleSession(sessionData.session);
   }
