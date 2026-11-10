@@ -4,7 +4,7 @@ import {
   refreshSiteChromeStylesheet,
   renderSiteFooter,
   renderSiteHeader,
-} from "../js/site_chrome.js?v=footer-redesign-20261111";
+} from "../js/site_chrome.js?v=footer-landmark-20261111";
 
 const assetBasePath = "../";
 

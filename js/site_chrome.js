@@ -60,9 +60,10 @@ export function renderSiteHeader(
 export function renderSiteFooter({ includeStats = false } = {}) {
   const footerContainer = document.getElementById("footer");
   if (!footerContainer) return;
+  const footerTagName = footerContainer.tagName === "FOOTER" ? "div" : "footer";
 
   footerContainer.innerHTML = `
-    <footer class="site-footer">
+    <${footerTagName} class="site-footer">
       <div class="site-footer-inner">
         <div class="site-footer-heading">
           <span class="site-footer-mark" aria-hidden="true">
@@ -111,7 +112,7 @@ export function renderSiteFooter({ includeStats = false } = {}) {
           </a>
         </div>
       </div>
-    </footer>
+    </${footerTagName}>
   `;
 }
 
