@@ -3,8 +3,8 @@
 /* ── Base ─────────────────────────────────── */
 .community {
   box-sizing: border-box;
-  width: min(100% - 32px, 1060px);
-  margin: 36px auto 64px;
+  width: min(100% - 40px, 1200px);
+  margin: 48px auto 76px;
   color: #292b27;
   font-family: "Code Pro", sans-serif;
 }
@@ -15,67 +15,96 @@
 
 /* ── Hero header ───────────────────────────── */
 .community-heading {
-  margin-bottom: 32px;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-bottom: 26px;
+  padding: clamp(36px, 7vw, 72px) 24px;
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at 86% 16%, rgba(245, 214, 159, 0.52), transparent 34%),
+    radial-gradient(ellipse at 8% 100%, rgba(184, 209, 184, 0.5), transparent 40%),
+    linear-gradient(128deg, #f8f3e8 0%, #f1f5ed 54%, #f8f1e4 100%);
+  box-shadow: 0 18px 48px rgba(44, 60, 44, 0.09);
   text-align: center;
 }
 
+.community-heading::after {
+  position: absolute;
+  z-index: -1;
+  right: 9%;
+  bottom: -96px;
+  width: 220px;
+  height: 220px;
+  border: 1px solid rgba(82, 119, 94, 0.16);
+  border-radius: 50%;
+  box-shadow: 0 0 0 22px rgba(82, 119, 94, 0.035), 0 0 0 48px rgba(82, 119, 94, 0.025);
+  content: "";
+}
+
 .community-heading h1 {
-  margin: 8px 0;
+  margin: 10px 0;
   color: #2c4c3b;
   font-family: "Code Pro", sans-serif;
-  font-size: clamp(2rem, 6vw, 3rem);
+  font-size: clamp(2.4rem, 6vw, 4.1rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
 }
 
 .community-heading p {
-  line-height: 1.6;
-  color: #555;
+  max-width: 580px;
+  margin: 0 auto;
+  color: #536354;
+  font-size: clamp(1rem, 2vw, 1.12rem);
+  line-height: 1.75;
 }
 
 .community-heading .eyebrow {
-  color: #9c603b;
+  color: #996440;
   font-size: 0.82rem;
   font-weight: 700;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
 }
 
 /* ── Sticky nav ────────────────────────────── */
 .community-nav {
   position: sticky;
-  top: 8px;
+  top: 12px;
   z-index: 10;
   display: flex;
   justify-content: center;
-  gap: 6px;
-  margin: 0 auto 32px;
-  padding: 6px;
-  border: 1px solid #e4e0d8;
+  gap: 8px;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0 auto 28px;
+  padding: 7px;
+  border: 1px solid rgba(220, 220, 207, 0.9);
   border-radius: 999px;
-  background: rgba(253, 251, 247, 0.96);
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  background: rgba(255, 255, 252, 0.94);
+  box-shadow: 0 10px 28px rgba(42, 59, 43, 0.1);
   backdrop-filter: blur(10px);
-  max-width: 400px;
 }
 
 .community-nav a {
   display: flex;
   align-items: center;
-  gap: 7px;
-  flex: 1;
+  gap: 9px;
   justify-content: center;
-  padding: 10px 20px;
+  min-width: 148px;
+  padding: 11px 20px;
   border-radius: 999px;
   color: #2c4c3b;
   font-size: 0.93rem;
   font-weight: 700;
   text-decoration: none;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.18s, color 0.18s, transform 0.18s;
 }
 
 .community-nav a:first-child:hover,
 .community-nav a:first-child:focus-visible {
   background: #e7eee5;
-  outline: none;
 }
 
 .community-nav a:last-child {
@@ -85,37 +114,44 @@
 .community-nav a:last-child:hover,
 .community-nav a:last-child:focus-visible {
   background: #e8edf8;
-  outline: none;
+}
+
+.community-nav a:hover,
+.community-nav a:focus-visible {
+  outline: 2px solid transparent;
+  transform: translateY(-1px);
 }
 
 /* ── Two-column layout ─────────────────────── */
 .community-layout {
   display: grid;
-  grid-template-columns: 320px 1fr;
-  gap: 28px;
+  grid-template-columns: minmax(270px, 0.78fr) minmax(0, 1.7fr);
+  gap: clamp(22px, 3vw, 40px);
   align-items: start;
 }
 
 .account-area,
 .feed-area {
-  scroll-margin-top: 82px;
+  scroll-margin-top: 96px;
 }
 
 /* ── Account sidebar ───────────────────────── */
 .account-area {
   position: sticky;
-  top: 72px;
-  background: linear-gradient(160deg, #f4f9f5 0%, #fdfbf7 100%);
-  border: 2px solid #c5dbc9;
-  border-radius: 18px;
-  padding: 24px 20px;
-  box-shadow: 0 6px 24px rgba(44, 76, 59, 0.08);
+  top: 82px;
+  padding: 22px;
+  border: 1px solid #d6e2d4;
+  border-radius: 22px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(226, 238, 222, 0.8), transparent 42%),
+    linear-gradient(160deg, #f8fbf6 0%, #fffdf8 100%);
+  box-shadow: 0 12px 32px rgba(44, 76, 59, 0.075);
 }
 
 .account-area .area-heading {
-  padding-bottom: 16px;
+  padding-bottom: 18px;
   border-bottom: 1px solid #d5e5d8;
-  margin-bottom: 20px;
+  margin-bottom: 18px;
 }
 
 .account-area .area-heading h2 {
@@ -142,6 +178,13 @@
 .feed-area .area-icon {
   background: #e3eaf9;
   color: #2a3f6b;
+}
+
+.feed-area .panel,
+.feed-area .post-card {
+  border-color: #e7e5df;
+  border-radius: 18px;
+  box-shadow: 0 8px 26px rgba(44, 56, 61, 0.055);
 }
 
 /* ── Section icons ─────────────────────────── */
@@ -181,6 +224,52 @@
   background: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
   margin-bottom: 16px;
+}
+
+.account-setup-note {
+  position: relative;
+  overflow: hidden;
+  padding: 24px 20px 20px;
+  border: 1px solid #e1d6c3;
+  border-radius: 16px;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(244, 224, 188, 0.62), transparent 44%),
+    linear-gradient(145deg, #fffaf0, #f8f6ec);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.8);
+}
+
+.account-setup-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 16px;
+  place-items: center;
+  border-radius: 13px;
+  background: #f0e2c9;
+  color: #89603b;
+}
+
+.account-setup-note h3 {
+  margin: 0 0 8px;
+  color: #35523d;
+  font-size: 1.05rem;
+}
+
+.account-setup-note p {
+  margin: 0;
+  color: #62685d;
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.account-setup-caption {
+  display: block;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(137, 96, 59, 0.16);
+  color: #8a7254;
+  font-size: 0.75rem;
+  font-style: italic;
 }
 
 /* Auth panel ── accent green left border */
@@ -231,6 +320,11 @@
   resize: vertical;
 }
 
+.community textarea {
+  min-height: 150px;
+  line-height: 1.65;
+}
+
 .community input:focus,
 .community textarea:focus {
   border-color: #52775e;
@@ -242,6 +336,97 @@
 .community input[type="file"] {
   padding: 8px;
   background: #f5f4f0;
+}
+
+.community input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 8px 12px;
+  border: 1px solid #d5d9cd;
+  border-radius: 7px;
+  background: #fff;
+  color: #35523d;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+}
+
+.community input[type="file"]::file-selector-button:hover {
+  background: #edf3eb;
+}
+
+.field-meta {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 6px;
+  color: #777a72;
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.field-meta span:last-child {
+  flex: 0 0 auto;
+  color: #687869;
+  font-variant-numeric: tabular-nums;
+}
+
+.optional-label {
+  color: #8a8b83;
+  font-size: 0.82em;
+  font-weight: 400;
+}
+
+.upload-hint {
+  margin: 8px 0 0;
+  color: #72766d;
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.image-selection {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.image-selection[hidden] {
+  display: none;
+}
+
+.image-selection-item {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #e3e1d9;
+  border-radius: 10px;
+  background: #f7f6f1;
+}
+
+.image-selection-item img {
+  display: block;
+  width: 100%;
+  height: 88px;
+  object-fit: cover;
+}
+
+.image-selection-item figcaption {
+  padding: 5px 7px;
+  color: #5e655c;
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.image-selection-message {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #6a6c65;
+  font-size: 0.82rem;
+}
+
+.image-selection-message[data-error="true"] {
+  color: #a32626;
 }
 
 /* ── Buttons ───────────────────────────────── */
@@ -310,6 +495,29 @@
 #publish-button:hover,
 #publish-button:focus-visible {
   background: #2d4690;
+}
+
+#post-panel {
+  padding: clamp(20px, 3vw, 30px);
+  border: 1px solid #d9e1f4;
+  border-left: 4px solid #3b5bac;
+  background:
+    radial-gradient(ellipse at 100% 0%, rgba(232, 237, 248, 0.62), transparent 38%),
+    #fff;
+}
+
+#post-panel h2 {
+  margin-bottom: 20px;
+}
+
+#post-form > label:first-child {
+  margin-top: 0;
+}
+
+#publish-button {
+  margin-top: 4px;
+  padding-inline: 24px;
+  box-shadow: 0 6px 16px rgba(59, 91, 172, 0.2);
 }
 
 /* ── Account panel layout ──────────────────── */
@@ -517,6 +725,21 @@
   border-radius: 10px;
   background: #f0eee8;
   object-fit: contain;
+}
+
+.post-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
+  gap: 12px;
+  margin: 12px 0 18px;
+}
+
+.post-gallery .post-image {
+  display: block;
+  height: 240px;
+  margin: 0;
+  border: 1px solid #e8e5de;
+  object-fit: cover;
 }
 
 .post-analysis {
@@ -807,16 +1030,49 @@
 
   .account-area {
     position: static;
-    border-radius: 14px;
-    margin-bottom: 28px;
+    margin-bottom: 4px;
   }
 }
 
 /* ── Responsive: mobile ────────────────────── */
 @media (max-width: 520px) {
   .community {
-    width: min(100% - 20px, 1060px);
-    margin-top: 20px;
+    width: min(100% - 24px, 1200px);
+    margin-top: 18px;
+    margin-bottom: 48px;
+  }
+
+  .community-heading {
+    margin-bottom: 18px;
+    padding: 34px 18px;
+    border-radius: 20px;
+  }
+
+  .community-heading h1 {
+    font-size: clamp(2.2rem, 12vw, 3rem);
+  }
+
+  .community-nav {
+    top: 5px;
+    width: 100%;
+    justify-content: stretch;
+    margin-bottom: 22px;
+  }
+
+  .community-nav a {
+    flex: 1;
+    min-width: 0;
+    padding: 10px 12px;
+    font-size: 0.88rem;
+  }
+
+  .community-layout {
+    gap: 22px;
+  }
+
+  .account-area {
+    padding: 18px;
+    border-radius: 18px;
   }
 
   .panel,
@@ -848,19 +1104,6 @@
     flex-wrap: wrap;
   }
 
-  .community-nav {
-    top: 4px;
-    max-width: none;
-    justify-content: stretch;
-  }
-
-  .community-nav a {
-    flex: 1;
-    padding: 9px 10px;
-    text-align: center;
-    font-size: 0.88rem;
-  }
-
   .comment-form {
     grid-template-columns: 1fr;
   }
@@ -878,5 +1121,9 @@
 
   .section-heading {
     align-items: flex-start;
+  }
+
+  .post-gallery .post-image {
+    height: 220px;
   }
 }

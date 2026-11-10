@@ -29,10 +29,17 @@
       </header>
 
       <nav class="community-nav" aria-label="Điều hướng cộng đồng">
-        <a href="#community-account">Tài khoản & quyền</a>
-        <a href="#community-feed">Bài đăng</a>
+        <a href="#community-account">
+          <i class="fa-regular fa-user" aria-hidden="true"></i>
+          Tài khoản
+        </a>
+        <a href="#community-feed">
+          <i class="fa-regular fa-comments" aria-hidden="true"></i>
+          Bài đăng
+        </a>
       </nav>
 
+      <div class="community-layout">
       <section
         id="community-account"
         class="account-area"
@@ -47,6 +54,18 @@
             <p class="muted">Quản lý hồ sơ và xem quyền hiện tại của bạn.</p>
           </div>
         </div>
+
+        <aside id="account-setup-note" class="account-setup-note" hidden>
+          <span class="account-setup-mark" aria-hidden="true">
+            <i class="fa-solid fa-feather-pointed"></i>
+          </span>
+          <h3>Góc viết của bạn</h3>
+          <p>
+            Đăng nhập để chăm chút hồ sơ, cập nhật ảnh đại diện và theo dõi bài
+            viết đang chờ duyệt.
+          </p>
+          <span class="account-setup-caption">Một góc nhỏ dành cho những câu chuyện của bạn</span>
+        </aside>
 
         <section
           id="auth-panel"
@@ -207,6 +226,10 @@
               maxlength="120"
               placeholder="Bạn muốn chia sẻ điều gì?"
             />
+            <div class="field-meta">
+              <span>Một tiêu đề ngắn giúp mọi người dễ tìm bài viết.</span>
+              <span id="post-title-count">0/120</span>
+            </div>
             <label for="literary-work"
               >Tác phẩm / địa danh (không bắt buộc)</label
             >
@@ -226,8 +249,12 @@
               rows="6"
               placeholder="Viết nội dung phân tích (10–5.000 ký tự)..."
             ></textarea>
+            <div class="field-meta">
+              <span>Tối thiểu 10 ký tự · tối đa 5.000 ký tự.</span>
+              <span id="post-analysis-count">0/5000</span>
+            </div>
             <label for="post-image"
-              >Ảnh minh họa (JPG, PNG, WebP; tối đa 5 MB mỗi ảnh, có thể chọn nhiều ảnh)</label
+              >Ảnh minh họa <span class="optional-label">· không bắt buộc</span></label
             >
             <input
               id="post-image"
@@ -236,6 +263,15 @@
               accept="image/jpeg,image/png,image/webp"
               multiple
             />
+            <p class="upload-hint">
+              JPG, PNG hoặc WebP · tối đa 10 ảnh · 5 MB mỗi ảnh
+            </p>
+            <div
+              id="post-image-preview"
+              class="image-selection"
+              aria-live="polite"
+              hidden
+            ></div>
             <p class="muted moderation-note">
               Bài viết và bình luận được kiểm tra đầu vào rồi lưu riêng tư ở
               trạng thái chờ Gemini kiểm duyệt. Chỉ nội dung phù hợp mới được
@@ -338,6 +374,7 @@
           <div id="posts-list" class="posts-list" aria-live="polite"></div>
         </section>
       </section>
+      </div>
     </main>
     <span id="footer"></span>
     <script type="module" src="./js/header_footer.js"></script>

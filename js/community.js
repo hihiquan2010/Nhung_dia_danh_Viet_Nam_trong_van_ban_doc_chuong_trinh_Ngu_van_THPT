@@ -33,6 +33,8 @@ const publishButton = document.getElementById("publish-button");
 const profileNameInput = document.getElementById("display-name");
 const avatarFileInput = document.getElementById("avatar-file");
 const avatarPreview = document.getElementById("avatar-preview");
+const postImageInput = document.getElementById("post-image");
+const postImagePreview = document.getElementById("post-image-preview");
 const accountRole = document.getElementById("account-role");
 const accountPermissions = document.getElementById("account-permissions");
 const accountContent = document.getElementById("account-content");
@@ -110,6 +112,63 @@ function normalizeImagePaths(value) {
 }
 
 const MAX_POST_IMAGES = 10;
+
+function updateCharacterCount(inputId, counterId) {
+  const input = document.getElementById(inputId);
+  const counter = document.getElementById(counterId);
+  counter.textContent = `${input.value.length}/${input.maxLength}`;
+}
+
+let selectedImageObjectUrls = [];
+
+function renderPostImagePreview() {
+  selectedImageObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+  selectedImageObjectUrls = [];
+  postImagePreview.replaceChildren();
+
+  const files = Array.from(postImageInput.files || []).filter((file) => file.size > 0);
+  if (!files.length) {
+    postImagePreview.hidden = true;
+    return;
+  }
+
+  postImagePreview.hidden = false;
+  const message = document.createElement("p");
+  message.className = "image-selection-message";
+  const oversizedImage = files.find((file) => file.size > MAX_IMAGE_BYTES);
+  if (files.length > MAX_POST_IMAGES) {
+    message.textContent = `Đã chọn ${files.length} ảnh. Hãy chọn tối đa ${MAX_POST_IMAGES} ảnh.`;
+    message.dataset.error = "true";
+  } else if (oversizedImage) {
+    message.textContent = `Ảnh “${oversizedImage.name}” vượt quá giới hạn 5 MB.`;
+    message.dataset.error = "true";
+  } else {
+    message.textContent = `${files.length} ảnh đã chọn · ảnh đầu tiên sẽ làm ảnh bìa.`;
+  }
+  postImagePreview.append(message);
+
+  files.slice(0, MAX_POST_IMAGES).forEach((file, index) => {
+    const url = URL.createObjectURL(file);
+    selectedImageObjectUrls.push(url);
+    const figure = document.createElement("figure");
+    figure.className = "image-selection-item";
+    const image = document.createElement("img");
+    image.src = url;
+    image.alt = `Ảnh ${index + 1} đã chọn`;
+    const caption = document.createElement("figcaption");
+    caption.textContent = index === 0 ? "Ảnh bìa" : `Ảnh ${index + 1}`;
+    figure.append(image, caption);
+    postImagePreview.append(figure);
+  });
+}
+
+document.getElementById("post-title-input").addEventListener("input", () => {
+  updateCharacterCount("post-title-input", "post-title-count");
+});
+document.getElementById("post-analysis").addEventListener("input", () => {
+  updateCharacterCount("post-analysis", "post-analysis-count");
+});
+postImageInput.addEventListener("change", renderPostImagePreview);
 
 async function signedImageUrl(supabase, path) {
   if (!path) return "";
@@ -408,6 +467,7 @@ function renderPosts(
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   authPanel.hidden = true;
+  document.getElementById("account-setup-note").hidden = false;
   showStatus(
     "Cộng đồng chưa được cấu hình. Hãy chạy bash scripts/setup-local.sh để nhập cấu hình Supabase vào máy này.",
     true,
@@ -1313,6 +1373,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
       uploadedPaths = [];
       postForm.reset();
+      updateCharacterCount("post-title-input", "post-title-count");
+      updateCharacterCount("post-analysis", "post-analysis-count");
+      renderPostImagePreview();
       showStatus("Bài viết đã được gửi vào hàng chờ; hiện chỉ bạn nhìn thấy.");
       const accountData = await loadMyContent();
       await loadPosts();
