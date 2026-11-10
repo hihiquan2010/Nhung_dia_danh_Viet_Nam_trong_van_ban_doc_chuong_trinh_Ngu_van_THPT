@@ -3,7 +3,7 @@ import {
   refreshSiteChromeStylesheet,
   renderSiteFooter,
   renderSiteHeader,
-} from "./site_chrome.js?v=footer-redesign-20261111";
+} from "./site_chrome.js?v=footer-landmark-20261111";
 
 function initHistats() {
   if (!document.getElementById("histats_counter")) return;
