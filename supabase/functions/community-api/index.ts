@@ -44,6 +44,21 @@ function optionalOwnedPath(value: unknown, userId: string, folder: string) {
   return value;
 }
 
+function normalizeOwnedPaths(value: unknown, userId: string, folder: string): string[] {
+  const candidates = Array.isArray(value) ? value : value === null || value === undefined || value === ""
+    ? []
+    : [value];
+  const uniquePaths: string[] = [];
+  for (const candidate of candidates) {
+    if (typeof candidate !== "string" || candidate.trim() === "") continue;
+    const normalized = optionalOwnedPath(candidate.trim(), userId, folder);
+    if (normalized && !uniquePaths.includes(normalized)) {
+      uniquePaths.push(normalized);
+    }
+  }
+  return uniquePaths;
+}
+
 function isUuid(value: unknown): value is string {
   return typeof value === "string" &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
@@ -290,6 +305,251 @@ async function handleRequest(request: Request): Promise<Response> {
     return jsonResponse({ error: "role_not_configured" }, 503);
   }
 
+  if (action === "get-my-content") {
+    const { data: posts, error: postsError } = await adminClient
+      .from("posts")
+      .select("id, title, literary_work, analysis, image_path, image_paths, created_at, status")
+      .eq("author_id", userId)
+      .in("status", ["pending", "approved"])
+      .order("created_at", { ascending: false })
+      .limit(50);
+    const { data: comments, error: commentsError } = await adminClient
+      .from("post_comments")
+      .select("id, post_id, content, created_at, status, posts(title)")
+      .eq("author_id", userId)
+      .in("status", ["pending", "approved"])
+      .order("created_at", { ascending: false })
+      .limit(100);
+    const { data: queue, error: queueError } = await adminClient
+      .from("community_moderation_queue")
+      .select("id, entity_type, entity_id, status, attempt_count, next_attempt_at")
+      .eq("user_id", userId)
+      .in("status", ["pending", "processing"])
+      .order("created_at", { ascending: true })
+      .limit(20);
+    if (postsError || commentsError || queueError) {
+      console.error("Could not load personal community content.", {
+        posts: postsError?.message,
+        comments: commentsError?.message,
+        queue: queueError?.message,
+      });
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    return jsonResponse({ posts, comments, queue });
+  }
+
+  if (action === "create-post") {
+    const title = text(body.title);
+    const literaryWork = text(body.literary_work);
+    const analysis = text(body.analysis);
+    let imagePaths: string[] = [];
+    try {
+      imagePaths = normalizeOwnedPaths(body.image_paths ?? body.image_path, userId, "posts");
+    } catch {
+      return jsonResponse({ error: "invalid_image_path" }, 400);
+    }
+    if (imagePaths.length > 10) {
+      return jsonResponse({ error: "invalid_image_path" }, 400);
+    }
+    if (!title || title.length > MAX_TITLE_LENGTH) {
+      return jsonResponse({ error: "invalid_title" }, 400);
+    }
+    if (literaryWork.length > MAX_WORK_LENGTH) {
+      return jsonResponse({ error: "invalid_literary_work" }, 400);
+    }
+    if (analysis.length < 10 || analysis.length > MAX_ANALYSIS_LENGTH) {
+      return jsonResponse({ error: "invalid_analysis" }, 400);
+    }
+
+    const { data, error } = await adminClient.rpc("enqueue_community_post", {
+      p_actor_id: userId,
+      p_title: title,
+      p_literary_work: literaryWork,
+      p_analysis: analysis,
+      p_image_path: imagePaths[0] ?? null,
+      p_image_paths: imagePaths.length ? imagePaths : null,
+    });
+    if (error) {
+      console.error("Could not enqueue post moderation.", error.message);
+      return jsonResponse(
+        { error: error.message.includes("account_banned") ? "account_banned" : "database_unavailable" },
+        error.message.includes("account_banned") ? 403 : 503,
+      );
+    }
+    const queued = data?.[0];
+    if (!queued?.queue_id || !queued?.post_id) {
+      console.error("Post moderation enqueue returned no identifiers.", { userId });
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    return jsonResponse({
+      status: "pending",
+      queue_id: queued.queue_id,
+      entity_id: queued.post_id,
+    }, 202);
+  }
+
+  if (action === "create-comment") {
+    const postId = body.post_id;
+    const content = text(body.content);
+    if (!isUuid(postId) || !content || content.length > MAX_COMMENT_LENGTH) {
+      return jsonResponse({ error: "invalid_comment" }, 400);
+    }
+
+    const { data, error } = await adminClient.rpc("enqueue_community_comment", {
+      p_actor_id: userId,
+      p_post_id: postId,
+      p_content: content,
+    });
+    if (error) {
+      console.error("Could not enqueue comment moderation.", error.message);
+      const errorCode = error.message.includes("post_not_found")
+        ? "post_not_found"
+        : error.message.includes("account_banned")
+          ? "account_banned"
+          : "database_unavailable";
+      return jsonResponse({ error: errorCode }, errorCode === "account_banned" ? 403 : 503);
+    }
+    const queued = data?.[0];
+    if (!queued?.queue_id || !queued?.comment_id) {
+      console.error("Comment moderation enqueue returned no identifiers.", { userId });
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    return jsonResponse({
+      status: "pending",
+      queue_id: queued.queue_id,
+      entity_id: queued.comment_id,
+    }, 202);
+  }
+
+  if (action === "process-moderation") {
+    const queueId = body.queue_id;
+    if (!isUuid(queueId)) {
+      return jsonResponse({ error: "invalid_queue_item" }, 400);
+    }
+
+    const { data: claimed, error: claimError } = await adminClient.rpc(
+      "claim_community_moderation",
+      { p_actor_id: userId, p_queue_id: queueId },
+    );
+    if (claimError) {
+      console.error("Could not claim moderation queue item.", claimError.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    if (!claimed?.id) {
+      return jsonResponse({ status: "already_processing" });
+    }
+
+    const { data: hasSlot, error: quotaError } = await adminClient.rpc(
+      "consume_community_moderation_slot",
+      { p_user_id: userId },
+    );
+    if (quotaError || !hasSlot) {
+      const { error: retryError } = await adminClient.rpc(
+        "retry_community_moderation",
+        { p_actor_id: userId, p_queue_id: queueId },
+      );
+      if (retryError) {
+        console.error("Could not return a rate-limited item to the queue.", retryError.message);
+      }
+      if (quotaError) {
+        console.error("Could not reserve a moderation quota slot.", quotaError.message);
+        return jsonResponse({ error: "moderation_unavailable" }, 503);
+      }
+      return jsonResponse({ error: "moderation_rate_limited" }, 429);
+    }
+
+    try {
+      const verdict = await moderateText(geminiApiKey, claimed.content_to_moderate);
+      let rejectedImagePaths: string[] = [];
+      if (!verdict.allowed && claimed.entity_type === "post") {
+        const { data: post, error: postError } = await adminClient
+          .from("posts")
+          .select("image_path, image_paths")
+          .eq("id", claimed.entity_id)
+          .maybeSingle();
+        if (postError) {
+          console.error("Could not load rejected post image path.", postError.message);
+        } else {
+          rejectedImagePaths = normalizeOwnedPaths(post?.image_paths ?? post?.image_path, userId, "posts");
+        }
+      }
+      const { error: finishError } = await adminClient.rpc(
+        "finish_community_moderation",
+        {
+          p_actor_id: userId,
+          p_queue_id: queueId,
+          p_allowed: verdict.allowed,
+        },
+      );
+      if (finishError) {
+        console.error("Could not finalize moderation decision.", finishError.message);
+        return jsonResponse({ error: "moderation_unavailable" }, 503);
+      }
+      if (rejectedImagePaths.length) {
+        const { error: removeError } = await adminClient.storage
+          .from(MEDIA_BUCKET)
+          .remove(rejectedImagePaths);
+        if (removeError) {
+          console.error("Could not remove rejected post images.", {
+            queueId,
+            message: removeError.message,
+          });
+        }
+      }
+      return jsonResponse({
+        status: verdict.allowed ? "approved" : "rejected",
+        reason: verdict.reason,
+      });
+    } catch (error) {
+      const { error: retryError } = await adminClient.rpc(
+        "retry_community_moderation",
+        { p_actor_id: userId, p_queue_id: queueId },
+      );
+      if (retryError) {
+        console.error("Could not return a failed moderation item to the queue.", retryError.message);
+      }
+      console.error("Queued content moderation failed.", {
+        queueId,
+        message: error instanceof Error ? error.message : "unknown error",
+      });
+      return jsonResponse({ error: "moderation_unavailable" }, 503);
+    }
+  }
+
+  if (action === "toggle-like") {
+    const postId = body.post_id;
+    const liked = body.liked;
+    if (!isUuid(postId) || typeof liked !== "boolean") {
+      return jsonResponse({ error: "invalid_like_request" }, 400);
+    }
+    const { data: post, error: postError } = await adminClient
+      .from("posts")
+      .select("id")
+      .eq("id", postId)
+      .eq("status", "approved")
+      .maybeSingle();
+    if (postError) {
+      console.error("Could not verify post before changing like.", postError.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    if (!post) return jsonResponse({ error: "post_not_found" }, 404);
+
+    const result = liked
+      ? await adminClient.from("community_post_likes").upsert(
+        { post_id: postId, user_id: userId },
+        { onConflict: "post_id,user_id", ignoreDuplicates: true },
+      )
+      : await adminClient.from("community_post_likes")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_id", userId);
+    if (result.error) {
+      console.error("Could not update post like.", result.error.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    return jsonResponse({ ok: true, liked });
+  }
+
   if (action === "get-moderation-data") {
     if (actorRole !== "moderator" && actorRole !== "owner") {
       return jsonResponse({ error: "forbidden" }, 403);
@@ -299,6 +559,7 @@ async function handleRequest(request: Request): Promise<Response> {
       .select(
         "id, author_id, title, literary_work, analysis, image_path, status, created_at, profiles(display_name, avatar_path)",
       )
+      .in("status", ["approved", "rejected"])
       .order("created_at", { ascending: false })
       .limit(100);
     const { data: proposals, error: proposalsError } = await adminClient
@@ -502,6 +763,18 @@ async function handleRequest(request: Request): Promise<Response> {
     if (!isUuid(postId) || !["approved", "rejected"].includes(status) || reason.length > 1000) {
       return jsonResponse({ error: "invalid_post_moderation" }, 400);
     }
+    const { data: post, error: postError } = await adminClient
+      .from("posts")
+      .select("status")
+      .eq("id", postId)
+      .maybeSingle();
+    if (postError) {
+      console.error("Could not verify post before moderator action.", postError.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    if (post?.status === "pending") {
+      return jsonResponse({ error: "post_pending_ai" }, 409);
+    }
     const { error } = await adminClient.rpc("moderate_community_post", {
       p_actor_id: userId,
       p_post_id: postId,
@@ -568,60 +841,15 @@ async function handleRequest(request: Request): Promise<Response> {
   let contentToModerate: string;
 
   try {
-    if (action === "create-post") {
-      const title = text(body.title);
-      const literaryWork = text(body.literary_work);
-      const analysis = text(body.analysis);
-      optionalOwnedPath(body.image_path, userId, "posts");
-
-      if (!title || title.length > MAX_TITLE_LENGTH) {
-        return jsonResponse({ error: "invalid_title" }, 400);
-      }
-      if (literaryWork.length > MAX_WORK_LENGTH) {
-        return jsonResponse({ error: "invalid_literary_work" }, 400);
-      }
-      if (analysis.length < 10 || analysis.length > MAX_ANALYSIS_LENGTH) {
-        return jsonResponse({ error: "invalid_analysis" }, 400);
-      }
-      contentToModerate = [
-        `Tiêu đề: ${title}`,
-        literaryWork ? `Tác phẩm/địa danh: ${literaryWork}` : "",
-        `Nội dung phân tích: ${analysis}`,
-      ].filter(Boolean).join("\n");
-    } else if (action === "create-comment") {
-      const postId = text(body.post_id);
-      const content = text(body.content);
-      if (
-        !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-          .test(postId) ||
-        !content ||
-        content.length > MAX_COMMENT_LENGTH
-      ) {
-        return jsonResponse({ error: "invalid_comment" }, 400);
-      }
-
-      const { data: post, error: postError } = await adminClient
-        .from("posts")
-        .select("id")
-        .eq("id", postId)
-        .eq("status", "approved")
-        .maybeSingle();
-      if (postError) {
-        console.error("Could not verify target post.", postError.message);
-        return jsonResponse({ error: "database_unavailable" }, 503);
-      }
-      if (!post) return jsonResponse({ error: "post_not_found" }, 404);
-      contentToModerate = content;
-    } else if (action === "update-profile") {
-      const displayName = text(body.display_name);
-      optionalOwnedPath(body.avatar_path, userId, "avatars");
-      if (!displayName || displayName.length > MAX_AVATAR_NAME_LENGTH) {
-        return jsonResponse({ error: "invalid_display_name" }, 400);
-      }
-      contentToModerate = `Tên hiển thị công khai: ${displayName}`;
-    } else {
+    if (action !== "update-profile") {
       return jsonResponse({ error: "unsupported_action" }, 400);
     }
+    const displayName = text(body.display_name);
+    optionalOwnedPath(body.avatar_path, userId, "avatars");
+    if (!displayName || displayName.length > MAX_AVATAR_NAME_LENGTH) {
+      return jsonResponse({ error: "invalid_display_name" }, 400);
+    }
+    contentToModerate = `Tên hiển thị công khai: ${displayName}`;
 
     const { data: hasSlot, error: quotaError } = await adminClient.rpc(
       "consume_community_moderation_slot",
@@ -641,49 +869,6 @@ async function handleRequest(request: Request): Promise<Response> {
         error: "moderation_rejected",
         message: verdict.reason || "Nội dung chưa phù hợp để đăng.",
       }, 422);
-    }
-
-    if (action === "create-post") {
-      const title = text(body.title);
-      const literaryWork = text(body.literary_work);
-      const analysis = text(body.analysis);
-      const imagePath = optionalOwnedPath(body.image_path, userId, "posts");
-      const { data: post, error } = await adminClient
-        .from("posts")
-        .insert({
-          author_id: userId,
-          title,
-          literary_work: literaryWork,
-          analysis,
-          content: analysis,
-          image_path: imagePath,
-          status: "approved",
-        })
-        .select("id")
-        .single();
-
-      if (error) {
-        console.error("Could not save moderated post.", error.message);
-        return jsonResponse({ error: "database_unavailable" }, 503);
-      }
-      return jsonResponse({ id: post.id });
-    }
-
-    if (action === "create-comment") {
-      const { data: comment, error } = await adminClient
-        .from("post_comments")
-        .insert({
-          post_id: text(body.post_id),
-          author_id: userId,
-          content: text(body.content),
-        })
-        .select("id")
-        .single();
-      if (error) {
-        console.error("Could not save moderated comment.", error.message);
-        return jsonResponse({ error: "database_unavailable" }, 503);
-      }
-      return jsonResponse({ id: comment.id });
     }
 
     const { error: profileError } = await adminClient.from("profiles").upsert(
