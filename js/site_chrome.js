@@ -1,14 +1,26 @@
 import { buildPageMap, menuData } from "./data.js";
 
 export function refreshSiteChromeStylesheet() {
-  const stylesheet = Array.from(
+  const stylesheets = Array.from(
     document.querySelectorAll('link[rel="stylesheet"]'),
-  ).find((link) => new URL(link.href).pathname.endsWith("/css/style.css"));
+  );
+  const stylesheet = stylesheets.find((link) =>
+    new URL(link.href).pathname.endsWith("/css/style.css"),
+  );
   if (!stylesheet) return;
 
   const stylesheetUrl = new URL(stylesheet.href);
   stylesheetUrl.searchParams.set("v", "footer-redesign-20261111");
   stylesheet.href = stylesheetUrl.href;
+
+  const animationStylesheet = stylesheets.find((link) =>
+    new URL(link.href).pathname.endsWith("/html/anim.css"),
+  );
+  if (!animationStylesheet) return;
+
+  const animationUrl = new URL(animationStylesheet.href);
+  animationUrl.searchParams.set("v", "responsive-layout-20261111");
+  animationStylesheet.href = animationUrl.href;
 }
 
 export function renderSiteHeader(
