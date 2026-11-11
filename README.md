@@ -14,19 +14,25 @@ Trang web giúp bạn đọc tìm hiểu các địa danh bằng bản đồ s�
 | Ảnh và tệp | Supabase Storage | Bucket `community-media` lưu ảnh bài viết/avatar; database chỉ lưu đường dẫn. Giới hạn hiện đặt 5 MB/ảnh, chỉ JPEG/PNG/WebP. |
 | Kiểm duyệt | Gemini API qua Supabase Edge Function | Kiểm duyệt tiêu đề, tác phẩm, phân tích, bình luận và tên hiển thị trước khi ghi database. Chỉ gửi văn bản cần kiểm duyệt tới Gemini, không gửi ảnh. |
 
-Trang [Cộng đồng](./community.html) hiển thị 50 bài viết mới nhất cùng bình luận.
+Trang [Cộng đồng](./community.html) hiển thị 50 bài viết mới nhất cùng bình luận;
+trang [Tài khoản](./account.html) quản lý hồ sơ, quyền truy cập, bài viết và bình
+luận của thành viên.
 Quyền ghi trực tiếp từ trình duyệt bị thu hồi; chỉ Edge Function mới ghi bài/bình luận
 sau khi xác thực tài khoản và Gemini duyệt. Nếu AI lỗi, trả kết quả không hợp lệ
 hoặc hết quota, nội dung bị từ chối và không lưu (fail closed). Server giới hạn tối
 đa 10 lượt kiểm duyệt/phút toàn hệ thống và 3 lượt/phút/tài khoản để giảm nguy cơ
 cạn quota.
 
-Trang cộng đồng chia riêng khu vực tài khoản và bảng tin; biểu mẫu đăng bài chỉ
-mở khi người dùng chọn “Viết bài”. Chủ bài có thể xóa bài của mình, kể cả khi bài
+Tài khoản và bản tin là hai trang riêng, có liên kết trên header. Nếu người dùng
+chưa đăng nhập, thao tác tim/bình luận sẽ chuyển tới trang tài khoản rồi quay lại bài
+đang xem sau khi đăng nhập. Biểu mẫu đăng bài chỉ mở khi người dùng chọn “Viết bài”.
+Chủ bài có thể xóa bài của mình, kể cả khi bài
 đang chờ duyệt; quyền sở hữu được xác nhận ở Edge Function và PostgreSQL. Bài đăng
 hỗ trợ hashtag địa danh, tỉ lệ ảnh, gắn thẻ thành viên (thông báo chỉ phát sau khi
 bài được duyệt), bộ đếm tim/bình luận/chia sẻ, lọc bài theo hashtag và gợi ý bài
-được ghim hoặc có tương tác cao. Owner có thể ghim bài; vai trò tác giả hiển thị
+được ghim hoặc có tương tác cao. Mục khám phá địa danh gợi ý các địa điểm liên
+quan đến nội dung và tương tác, đồng thời cho phép tìm theo địa danh/tác phẩm.
+Owner có thể ghim bài; vai trò tác giả hiển thị
 cạnh tên trên từng bài.
 
 Header, tìm kiếm và footer được dùng chung từ `js/site_chrome.js` trên trang chủ,
@@ -45,7 +51,7 @@ bằng tài khoản quản trị project rồi chạy
 `bash scripts/setup-owner.sh <supabase-project-ref>` để cấp Owner đầu tiên cho
 một tài khoản đã đăng ký và xác nhận email. Script hỏi email trực tiếp trong
 terminal và không ghi email vào mã nguồn. Chỉ một Owner ban đầu được tạo; các
-Moderator được quản lý sau đó trong giao diện Cộng đồng.
+Moderator được quản lý sau đó trong trang Tài khoản.
 
 ### Chạy cộng đồng trên máy này
 

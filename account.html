@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Quản lý tài khoản, quyền truy cập, bài viết và bình luận của bạn."
+    />
+    <link rel="stylesheet" href="./css/style.css" />
+    <link rel="stylesheet" href="./css/community.css?v=account-community-places-20261111" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+      integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <title>Tài khoản | Dấu Chân Văn Học</title>
+  </head>
+  <body data-view="account">
+    <span id="header"></span>
+    <main class="community">
+      <header class="community-heading">
+        <p class="eyebrow">DẤU CHÂN VĂN HỌC</p>
+        <h1>Tài khoản</h1>
+        <p>Quản lý hồ sơ, quyền truy cập và những đóng góp của bạn.</p>
+      </header>
+
+      <nav class="community-nav" aria-label="Điều hướng cộng đồng">
+        <a href="./account.html" aria-current="page">
+          <i class="fa-regular fa-user" aria-hidden="true"></i>
+          Tài khoản
+        </a>
+        <a href="./community.html">
+          <i class="fa-regular fa-comments" aria-hidden="true"></i>
+          Cộng đồng
+        </a>
+      </nav>
+
+      <div class="community-layout account-page-layout">
+        <section
+          id="community-account"
+          class="account-area"
+          aria-labelledby="community-account-title"
+        >
+          <div class="area-heading">
+            <span class="area-icon" aria-hidden="true">
+              <i class="fa-solid fa-user-shield"></i>
+            </span>
+            <div>
+              <h2 id="community-account-title">Tài khoản & quyền truy cập</h2>
+              <p class="muted">Quản lý hồ sơ và xem quyền hiện tại của bạn.</p>
+            </div>
+          </div>
+
+          <aside id="account-setup-note" class="account-setup-note" hidden>
+            <span class="account-setup-mark" aria-hidden="true">
+              <i class="fa-solid fa-feather-pointed"></i>
+            </span>
+            <h3>Góc viết của bạn</h3>
+            <p>
+              Đăng nhập để chăm chút hồ sơ, cập nhật ảnh đại diện và theo dõi bài
+              viết đang chờ duyệt.
+            </p>
+            <span class="account-setup-caption">Một góc nhỏ dành cho những câu chuyện của bạn</span>
+          </aside>
+
+          <section
+            id="auth-panel"
+            class="panel auth-panel"
+            aria-labelledby="auth-title"
+          >
+            <h2 id="auth-title">Đăng nhập hoặc tạo tài khoản</h2>
+            <p class="muted">
+              Tài khoản sử dụng email và mật khẩu (ít nhất 8 ký tự khi tạo mới).
+              Nếu bật xác nhận email, hãy kiểm tra hộp thư sau khi đăng ký.
+            </p>
+            <form id="auth-form">
+              <label for="email">Email</label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                required
+                maxlength="254"
+              />
+              <label for="password">Mật khẩu</label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autocomplete="current-password"
+                required
+              />
+              <div class="button-row">
+                <button type="submit" id="sign-in-button">Đăng nhập</button>
+                <button
+                  type="button"
+                  class="button-secondary"
+                  id="sign-up-button"
+                >
+                  Tạo tài khoản
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section id="account-panel" class="panel account-panel" hidden>
+            <div class="account-summary">
+              <img
+                id="avatar-preview"
+                class="avatar-preview"
+                alt="Ảnh đại diện"
+                hidden
+              />
+              <h2>Xin chào!</h2>
+              <p id="account-email" class="muted"></p>
+              <span id="account-role" class="role-badge" hidden></span>
+              <p
+                id="account-permissions"
+                class="account-permissions muted"
+                hidden
+              ></p>
+              <p
+                id="account-ban-notice"
+                class="status-message"
+                role="status"
+                hidden
+              ></p>
+            </div>
+            <div class="account-actions">
+              <form id="profile-form" class="profile-form">
+                <label for="display-name">Tên hiển thị</label>
+                <input
+                  id="display-name"
+                  name="display_name"
+                  required
+                  maxlength="80"
+                />
+                <label for="avatar-file"
+                  >Ảnh đại diện (JPG, PNG, WebP; tối đa 5 MB)</label
+                >
+                <input
+                  id="avatar-file"
+                  name="avatar"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                />
+                <button
+                  type="submit"
+                  class="button-secondary"
+                  id="save-profile-button"
+                >
+                  Lưu hồ sơ
+                </button>
+              </form>
+              <button type="button" class="button-secondary" id="sign-out-button">
+                Đăng xuất
+              </button>
+            </div>
+          </section>
+
+          <section
+            id="account-content"
+            class="panel"
+            hidden
+            aria-labelledby="account-content-title"
+          >
+            <h3 id="account-content-title">Bài viết và bình luận của tôi</h3>
+            <p class="muted">
+              Nội dung đang chờ AI chỉ hiển thị trong tài khoản của bạn. Nội dung
+              đạt yêu cầu mới xuất hiện trên bảng tin cộng đồng.
+            </p>
+            <div id="account-content-list" class="account-content-list"></div>
+          </section>
+
+          <section id="account-notifications" class="panel" hidden>
+            <h3>Thông báo của bạn</h3>
+            <div id="notification-list" class="notification-list"></div>
+          </section>
+
+          <section
+            id="moderation-panel"
+            class="panel"
+            hidden
+            aria-labelledby="moderation-title"
+          >
+            <h2 id="moderation-title">Công cụ Moderator</h2>
+            <p class="muted">
+              Moderator có thể ẩn/khôi phục bài viết và đề xuất cấm tài khoản
+              users. Đề xuất cấm cần một Moderator khác xác nhận.
+            </p>
+            <div id="moderation-posts" class="moderation-list"></div>
+            <h3>Đề xuất cấm đang chờ</h3>
+            <div id="ban-proposals" class="moderation-list"></div>
+          </section>
+
+          <section
+            id="owner-panel"
+            class="panel"
+            hidden
+            aria-labelledby="owner-title"
+          >
+            <h2 id="owner-title">Công cụ Owner</h2>
+            <form id="moderator-form">
+              <label for="moderator-email">Email tài khoản đã xác nhận</label>
+              <input
+                id="moderator-email"
+                name="email"
+                type="email"
+                required
+                maxlength="254"
+                autocomplete="off"
+              />
+              <div class="button-row">
+                <button type="submit">Thêm Moderator</button>
+                <button
+                  type="button"
+                  class="button-secondary"
+                  id="remove-moderator-button"
+                >
+                  Gỡ Moderator
+                </button>
+              </div>
+            </form>
+            <h3>Danh sách Moderator</h3>
+            <div id="moderator-list" class="moderation-list"></div>
+
+            <form id="announcement-form">
+              <h3>Đăng thông báo trang chủ</h3>
+              <label for="announcement-title">Tiêu đề</label>
+              <input
+                id="announcement-title"
+                name="title"
+                required
+                maxlength="160"
+              />
+              <label for="announcement-body">Nội dung</label>
+              <textarea
+                id="announcement-body"
+                name="body"
+                required
+                maxlength="4000"
+                rows="4"
+              ></textarea>
+              <label for="announcement-ends-at">Tự ẩn sau (không bắt buộc)</label>
+              <input
+                id="announcement-ends-at"
+                name="ends_at"
+                type="datetime-local"
+              />
+              <button type="submit">Đăng thông báo</button>
+            </form>
+            <h3>Thông báo đã đăng</h3>
+            <div id="announcement-list" class="moderation-list"></div>
+          </section>
+
+          <section class="posts-section" aria-label="Trạng thái tài khoản">
+            <div class="section-heading">
+              <h2>Hoạt động tài khoản</h2>
+              <button type="button" class="button-secondary" id="refresh-button">
+                <i class="fa-solid fa-rotate" aria-hidden="true"></i> Tải lại
+              </button>
+            </div>
+            <p
+              id="status-message"
+              class="status-message"
+              role="status"
+              aria-live="polite"
+            ></p>
+          </section>
+        </section>
+      </div>
+    </main>
+    <span id="footer"></span>
+    <script type="module" src="./js/header_footer.js?v=community-account-nav-20261111"></script>
+    <script type="module" src="./js/community.js?v=6"></script>
+  </body>
+</html>
