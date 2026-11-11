@@ -1047,6 +1047,46 @@ body[data-view="community"] #owner-panel {
   color: #a32626;
 }
 
+.post-share-panel {
+  display: grid;
+  flex: 1 0 100%;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #e1ddd3;
+  border-radius: 10px;
+  background: #fbfaf7;
+}
+
+.post-share-panel[hidden] {
+  display: none;
+}
+
+.post-share-panel label {
+  color: #536354;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.post-share-link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.post-share-link-row input {
+  width: 100%;
+  min-width: 0;
+  padding: 9px 10px;
+  border: 1px solid #d8d4cb;
+  border-radius: 8px;
+  background: #fff;
+  color: #333;
+}
+
+.post-share-native {
+  justify-self: start;
+}
+
 /* ── Comments ──────────────────────────────── */
 .post-comments {
   padding-top: 16px;
@@ -1361,6 +1401,14 @@ body[data-view="community"] #owner-panel {
     min-width: 0;
     padding: 10px 8px;
     font-size: 0.88rem;
+  }
+
+  .post-share-link-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .post-share-link-row button {
+    width: 100%;
   }
 
   .community-layout {

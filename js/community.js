@@ -665,7 +665,10 @@ function renderPosts(
       like.setAttribute("aria-label", `${nextCount} lượt thích`);
       showActionStatus(actionStatus, "Đang cập nhật lượt thích...");
       try {
-        await toggleLike(post.id, nextLiked);
+        const result = await toggleLike(post.id, nextLiked);
+        if (result.postsLoaded) {
+          showStatus(nextLiked ? "Đã thả tim bài viết." : "Đã bỏ thích bài viết.");
+        }
       } catch (error) {
         showActionStatus(
           actionStatus,
@@ -685,14 +688,58 @@ function renderPosts(
     });
     const share = document.createElement("button");
     share.type = "button";
-    share.className = "button-secondary";
+    share.className = "button-secondary post-share";
     share.textContent = `Chia sẻ · ${metadata.shares_count}`;
+    share.setAttribute("aria-expanded", "false");
     const actionStatus = document.createElement("span");
     actionStatus.className = "post-action-status";
     actionStatus.setAttribute("role", "status");
     actionStatus.setAttribute("aria-live", "polite");
-    share.addEventListener("click", () => void sharePost(post, actionStatus));
-    actions.append(like, share);
+    const sharePanel = document.createElement("div");
+    sharePanel.className = "post-share-panel";
+    sharePanel.id = `post-share-${post.id}`;
+    sharePanel.hidden = true;
+    share.setAttribute("aria-controls", sharePanel.id);
+    const shareLabel = document.createElement("label");
+    shareLabel.htmlFor = `post-share-link-${post.id}`;
+    shareLabel.textContent = "Liên kết bài viết";
+    const shareLink = document.createElement("input");
+    shareLink.id = shareLabel.htmlFor;
+    shareLink.type = "url";
+    shareLink.readOnly = true;
+    shareLink.value = createPostShareUrl(post);
+    shareLink.setAttribute("aria-label", "Liên kết bài viết");
+    const shareLinkRow = document.createElement("div");
+    shareLinkRow.className = "post-share-link-row";
+    const copyShareLink = document.createElement("button");
+    copyShareLink.type = "button";
+    copyShareLink.className = "button-secondary";
+    copyShareLink.textContent = "Sao chép liên kết";
+    copyShareLink.addEventListener("click", () =>
+      void copyPostShareLink(post, share, shareLink, actionStatus),
+    );
+    shareLinkRow.append(shareLink, copyShareLink);
+    const nativeShare = document.createElement("button");
+    nativeShare.type = "button";
+    nativeShare.className = "button-secondary post-share-native";
+    nativeShare.textContent = "Chia sẻ qua ứng dụng";
+    nativeShare.hidden = typeof navigator.share !== "function";
+    nativeShare.addEventListener("click", () =>
+      void sharePost(post, share, shareLink, actionStatus),
+    );
+    sharePanel.append(shareLabel, shareLinkRow, nativeShare);
+    share.addEventListener("click", () => {
+      const opening = sharePanel.hidden;
+      sharePanel.hidden = !opening;
+      share.setAttribute("aria-expanded", String(opening));
+      if (opening) {
+        shareLink.value = createPostShareUrl(post);
+        showActionStatus(actionStatus, "Sao chép liên kết hoặc chia sẻ qua ứng dụng.");
+      } else {
+        showActionStatus(actionStatus, "");
+      }
+    });
+    actions.append(like, share, sharePanel);
     if (currentUser && currentUser.id === post.author_id && !currentUserIsBanned) {
       const remove = document.createElement("button");
       remove.type = "button";
@@ -1021,7 +1068,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
   async function toggleLike(postId, liked) {
     await invokeCommunity("toggle-like", { post_id: postId, liked });
-    await loadPosts();
+    return await loadPosts();
   }
 
   async function deletePost(post) {
@@ -1045,68 +1092,84 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     }
   }
 
-  async function sharePost(post, feedback) {
-    const url = new URL(location.href);
-    url.search = "";
+  function createPostShareUrl(post) {
+    const url = new URL("./community.html", location.href);
     url.searchParams.set("post", post.id);
     url.hash = `post-${post.id}`;
-    let completed = false;
-    showActionStatus(feedback, "Đang mở chia sẻ...");
+    return url.href;
+  }
+
+  async function recordPostShare(post, shareButton, feedback) {
+    if (!currentUser || currentUserIsBanned) return;
     try {
-      if (navigator.share) {
-        await navigator.share({ title: post.title, url: url.href });
-        completed = true;
-        showActionStatus(feedback, "Đã chia sẻ liên kết bài viết.");
-      } else if (navigator.clipboard?.writeText) {
-        await navigator.clipboard.writeText(url.href);
-        completed = true;
-        showActionStatus(feedback, "Đã sao chép liên kết bài viết.");
-      } else {
-        completed = window.prompt("Sao chép liên kết bài viết:", url.href) !== null;
-        if (completed) showActionStatus(feedback, "Liên kết đã sẵn sàng để chia sẻ.");
+      const result = await invokeCommunity("record-share", { post_id: post.id });
+      if (result?.recorded) {
+        const count = Number(shareButton.textContent.match(/\d+$/)?.[0] || 0);
+        shareButton.textContent = `Chia sẻ · ${count + 1}`;
       }
+      showActionStatus(feedback, "Đã chia sẻ liên kết bài viết.");
+    } catch (error) {
+      showActionStatus(
+        feedback,
+        "Liên kết vẫn dùng được nhưng chưa lưu được lượt chia sẻ.",
+        true,
+      );
+      showFailure(error, "Lưu lượt chia sẻ", "Liên kết vẫn đã được chia sẻ.");
+    }
+  }
+
+  async function copyPostShareLink(post, shareButton, input, feedback) {
+    input.value = createPostShareUrl(post);
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(input.value);
+      } else {
+        input.focus();
+        input.select();
+        if (typeof document.execCommand !== "function" || !document.execCommand("copy")) {
+          showActionStatus(
+            feedback,
+            "Liên kết đã sẵn sàng. Hãy chọn ô liên kết rồi nhấn Ctrl+C để sao chép.",
+          );
+          return;
+        }
+      }
+    } catch {
+      input.focus();
+      input.select();
+      showActionStatus(
+        feedback,
+        "Không thể tự sao chép. Liên kết đã được chọn; hãy nhấn Ctrl+C hoặc dùng menu Sao chép.",
+        true,
+      );
+      return;
+    }
+
+    showActionStatus(feedback, "Đã sao chép liên kết bài viết.");
+    await recordPostShare(post, shareButton, feedback);
+  }
+
+  async function sharePost(post, shareButton, input, feedback) {
+    const url = createPostShareUrl(post);
+    try {
+      await navigator.share({ title: post.title, url });
     } catch (error) {
       if (error?.name === "AbortError") {
         showActionStatus(feedback, "");
         return;
       }
-      try {
-        completed = window.prompt("Sao chép liên kết bài viết:", url.href) !== null;
-        if (completed) showActionStatus(feedback, "Liên kết đã sẵn sàng để chia sẻ.");
-      } catch (fallbackError) {
-        showActionStatus(
-          feedback,
-          "Chưa thể chia sẻ. Hãy sao chép liên kết từ thanh địa chỉ.",
-          true,
-        );
-        showFailure(
-          fallbackError,
-          "Chia sẻ bài viết",
-          "Hãy sao chép địa chỉ trang từ thanh trình duyệt.",
-        );
-        return;
-      }
-    }
-
-    if (!completed) {
-      showActionStatus(feedback, "");
+      input.focus();
+      input.select();
+      showActionStatus(
+        feedback,
+        "Chia sẻ qua ứng dụng không thành công. Liên kết đã được chọn để sao chép.",
+        true,
+      );
       return;
     }
-    if (currentUser && !currentUserIsBanned) {
-      try {
-        await invokeCommunity("record-share", { post_id: post.id });
-        await loadPosts();
-        showStatus("Đã chia sẻ liên kết bài viết.");
-      } catch (error) {
-        showActionStatus(feedback, "Đã chia sẻ nhưng chưa lưu được lượt chia sẻ.", true);
-        showFailure(error, "Lưu lượt chia sẻ", "Liên kết vẫn đã được chia sẻ.");
-      }
-    } else if (currentUserIsBanned) {
-      showActionStatus(feedback, "Đã chia sẻ; tài khoản đang bị hạn chế nên không lưu lượt.");
-    } else {
-      showActionStatus(feedback, "Đã chia sẻ. Đăng nhập để lưu lượt chia sẻ.");
-      showStatus("Đã chia sẻ liên kết. Đăng nhập để lưu lượt chia sẻ.");
-    }
+
+    showActionStatus(feedback, "Đã chia sẻ liên kết bài viết.");
+    await recordPostShare(post, shareButton, feedback);
   }
 
   function renderSelectedMentions() {
@@ -1937,15 +2000,55 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     }
   }
 
+  function appendPendingComment(postId, content, commentId) {
+    const commentSection = document
+      .getElementById(`post-${postId}`)
+      ?.querySelector(".post-comments");
+    const commentList = commentSection?.querySelector(".comment-list");
+    if (!commentList) return;
+    if (
+      commentId &&
+      Array.from(commentList.children).some(
+        (item) => item.dataset.commentId === commentId,
+      )
+    ) {
+      return;
+    }
+
+    const item = document.createElement("article");
+    item.className = "comment-item pending-comment";
+    if (commentId) item.dataset.commentId = commentId;
+    const status = document.createElement("p");
+    status.className = "muted";
+    status.textContent =
+      `Bình luận của bạn đang chờ AI kiểm duyệt · ${formatDate(new Date().toISOString())}`;
+    const body = document.createElement("p");
+    body.className = "comment-content";
+    body.textContent = content;
+    item.append(status, body);
+    commentList.append(item);
+
+    const heading = commentSection.querySelector("h4");
+    const count = heading?.textContent.match(/\((\d+)\)/);
+    if (heading && count) {
+      heading.textContent = `Bình luận (${Number(count[1]) + 1})`;
+    }
+  }
+
   async function submitComment(event, form, button, postId, feedback) {
     event.preventDefault();
     setBusy(button, true, "Đang gửi...");
     try {
-      const content = new FormData(form).get("content").trim();
+      const value = new FormData(form).get("content");
+      const content = typeof value === "string" ? value.trim() : "";
       if (!content || content.length > 2000) {
         throw userError("Bình luận không được để trống và tối đa 2.000 ký tự.");
       }
-      await invokeCommunity("create-comment", { post_id: postId, content });
+      const result = await invokeCommunity("create-comment", {
+        post_id: postId,
+        content,
+      });
+      appendPendingComment(postId, content, result?.entity_id);
     } catch (error) {
       showActionStatus(
         feedback,
