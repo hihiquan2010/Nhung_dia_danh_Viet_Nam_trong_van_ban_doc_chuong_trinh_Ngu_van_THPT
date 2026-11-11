@@ -209,7 +209,7 @@ async function handleRequest(request: Request): Promise<Response> {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
   const geminiApiKey = Deno.env.get("GEMINI_API_KEY");
 
-  if (!supabaseUrl || !anonKey || !serviceRoleKey || !geminiApiKey) {
+  if (!supabaseUrl || !anonKey || !serviceRoleKey) {
     console.error("Community API is missing required server environment values.");
     return jsonResponse({ error: "server_not_configured" }, 503);
   }
@@ -305,6 +305,11 @@ async function handleRequest(request: Request): Promise<Response> {
   if (!actorRole) {
     console.error("Authenticated account has no community role.", { userId });
     return jsonResponse({ error: "role_not_configured" }, 503);
+  }
+
+  if (action === "process-moderation" && !geminiApiKey) {
+    console.error("Community moderation is missing its Gemini API key.");
+    return jsonResponse({ error: "moderation_unavailable" }, 503);
   }
 
   if (action === "get-my-content") {
@@ -564,17 +569,19 @@ async function handleRequest(request: Request): Promise<Response> {
       return jsonResponse({ error: "database_unavailable" }, 503);
     }
     if (!post) return jsonResponse({ error: "post_not_found" }, 404);
-    const { error } = await adminClient
+    const { data: share, error } = await adminClient
       .from("community_post_shares")
       .upsert(
         { post_id: postId, user_id: userId },
         { onConflict: "post_id,user_id", ignoreDuplicates: true },
-      );
+      )
+      .select("post_id")
+      .maybeSingle();
     if (error) {
       console.error("Could not record community post share.", error.message);
       return jsonResponse({ error: "database_unavailable" }, 503);
     }
-    return jsonResponse({ ok: true });
+    return jsonResponse({ ok: true, recorded: Boolean(share) });
   }
 
   if (action === "pin-post") {
