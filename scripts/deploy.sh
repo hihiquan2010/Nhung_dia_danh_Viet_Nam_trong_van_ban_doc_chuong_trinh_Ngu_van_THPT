@@ -131,6 +131,9 @@ git add \
   supabase/migrations/20261103000000_community.sql \
   supabase/migrations/20261104000000_community_data_and_storage.sql \
   supabase/migrations/20261104210000_community_roles_moderation.sql \
+  supabase/migrations/20261105220000_community_queue_likes_profiles.sql \
+  supabase/migrations/20261106000000_community_multiple_post_images.sql \
+  supabase/migrations/20261107000000_community_social_features.sql \
   css/game.css \
   css/recommendGroup.css \
   css/titleFont.css \

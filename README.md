@@ -21,6 +21,14 @@ hoặc hết quota, nội dung bị từ chối và không lưu (fail closed). S
 đa 10 lượt kiểm duyệt/phút toàn hệ thống và 3 lượt/phút/tài khoản để giảm nguy cơ
 cạn quota.
 
+Trang cộng đồng chia riêng khu vực tài khoản và bảng tin; biểu mẫu đăng bài chỉ
+mở khi người dùng chọn “Viết bài”. Chủ bài có thể xóa bài của mình, kể cả khi bài
+đang chờ duyệt; quyền sở hữu được xác nhận ở Edge Function và PostgreSQL. Bài đăng
+hỗ trợ hashtag địa danh, tỉ lệ ảnh, gắn thẻ thành viên (thông báo chỉ phát sau khi
+bài được duyệt), bộ đếm tim/bình luận/chia sẻ, lọc bài theo hashtag và gợi ý bài
+được ghim hoặc có tương tác cao. Owner có thể ghim bài; vai trò tác giả hiển thị
+cạnh tên trên từng bài.
+
 Header, tìm kiếm và footer được dùng chung từ `js/site_chrome.js` trên trang chủ,
 cộng đồng, minigame và các trang địa danh.
 
