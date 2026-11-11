@@ -4,7 +4,7 @@ import {
   refreshSiteChromeStylesheet,
   renderSiteFooter,
   renderSiteHeader,
-} from "../js/site_chrome.js?v=community-account-nav-20261111";
+} from "../js/site_chrome.js?v=responsive-layout-20261111";
 
 const assetBasePath = "../";
 
