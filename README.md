@@ -5,7 +5,7 @@ Trang web giúp bạn đọc tìm hiểu các địa danh bằng bản đồ s�
 <img src="./HuongDan.png" alt="Hình ảnh Các Bước Sử Dụng" />
 <strong> CẬP NHẬT <br/> QUÝ THẦY CÔ VÀ CÁC BẠN CÓ THỂ TRUY CẬP https://diadanhvanhoc.com/ để xem</strong>
 
-<strong> Dưới đây là các tính năng do AI tạo: </strong>
+<strong> Dưới đây là các tính năng do AI hỗ trợ: </strong>
 
 ## Phân chia dữ liệu và dịch vụ
 
