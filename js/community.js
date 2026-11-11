@@ -369,6 +369,7 @@ function appendComments(
   currentUser,
   commentAccess,
   commentsUnavailable,
+  onSubmitComment,
 ) {
   const commentSection = document.createElement("section");
   commentSection.className = "post-comments";
@@ -435,7 +436,7 @@ function appendComments(
     feedback.setAttribute("aria-live", "polite");
     form.append(input, button);
     form.addEventListener("submit", (event) => {
-      void submitComment(event, form, button, post.id, feedback);
+      void onSubmitComment(event, form, button, post.id, feedback);
     });
     commentSection.append(form, feedback);
   } else if (commentAccess === "signed-out") {
@@ -508,6 +509,13 @@ function addBanRequestForm(container, targetUserId, onBan) {
   container.append(form);
 }
 
+function createPostShareUrl(post) {
+  const url = new URL("./community.html", location.href);
+  url.searchParams.set("post", post.id);
+  url.hash = `post-${post.id}`;
+  return url.href;
+}
+
 function renderPosts(
   posts,
   currentUser,
@@ -518,6 +526,7 @@ function renderPosts(
   commentsUnavailable,
   likeData = new Map(),
   postMetadata = new Map(),
+  handlers,
 ) {
   postsList.replaceChildren();
   featuredPosts.replaceChildren();
@@ -665,7 +674,7 @@ function renderPosts(
       like.setAttribute("aria-label", `${nextCount} lượt thích`);
       showActionStatus(actionStatus, "Đang cập nhật lượt thích...");
       try {
-        const result = await toggleLike(post.id, nextLiked);
+        const result = await handlers.toggleLike(post.id, nextLiked);
         if (result.postsLoaded) {
           showStatus(nextLiked ? "Đã thả tim bài viết." : "Đã bỏ thích bài viết.");
         }
@@ -716,7 +725,7 @@ function renderPosts(
     copyShareLink.className = "button-secondary";
     copyShareLink.textContent = "Sao chép liên kết";
     copyShareLink.addEventListener("click", () =>
-      void copyPostShareLink(post, share, shareLink, actionStatus),
+      void handlers.copyPostShareLink(post, share, shareLink, actionStatus),
     );
     shareLinkRow.append(shareLink, copyShareLink);
     const nativeShare = document.createElement("button");
@@ -725,7 +734,7 @@ function renderPosts(
     nativeShare.textContent = "Chia sẻ qua ứng dụng";
     nativeShare.hidden = typeof navigator.share !== "function";
     nativeShare.addEventListener("click", () =>
-      void sharePost(post, share, shareLink, actionStatus),
+      void handlers.sharePost(post, share, shareLink, actionStatus),
     );
     sharePanel.append(shareLabel, shareLinkRow, nativeShare);
     share.addEventListener("click", () => {
@@ -745,7 +754,7 @@ function renderPosts(
       remove.type = "button";
       remove.className = "button-secondary post-delete";
       remove.textContent = "Xóa bài của tôi";
-      remove.addEventListener("click", () => void deletePost(post));
+      remove.addEventListener("click", () => void handlers.deletePost(post));
       actions.append(remove);
     }
     if (currentRole === "owner" && !currentUserIsBanned) {
@@ -753,7 +762,9 @@ function renderPosts(
       pin.type = "button";
       pin.className = "button-secondary";
       pin.textContent = metadata.is_pinned ? "Bỏ ghim" : "Ghim bài";
-      pin.addEventListener("click", () => void setPostPinned(post.id, !metadata.is_pinned));
+      pin.addEventListener("click", () =>
+        void handlers.setPostPinned(post.id, !metadata.is_pinned),
+      );
       actions.append(pin);
     }
     actions.append(actionStatus);
@@ -771,6 +782,7 @@ function renderPosts(
       currentUser,
       commentAccess,
       commentsUnavailable,
+      handlers.submitComment,
     );
     postsList.append(card);
 
@@ -1090,13 +1102,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     } catch (error) {
       showFailure(error, "Ghim bài viết", "Chỉ Owner mới có thể ghim bài viết.");
     }
-  }
-
-  function createPostShareUrl(post) {
-    const url = new URL("./community.html", location.href);
-    url.searchParams.set("post", post.id);
-    url.hash = `post-${post.id}`;
-    return url.href;
   }
 
   async function recordPostShare(post, shareButton, feedback) {
@@ -1490,6 +1495,14 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       Boolean(commentsError),
       likeData,
       postMetadata,
+      {
+        toggleLike,
+        copyPostShareLink,
+        sharePost,
+        deletePost,
+        setPostPinned,
+        submitComment,
+      },
     );
     if (sharedPostId) {
       requestAnimationFrame(() => {
