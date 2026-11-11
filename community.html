@@ -176,6 +176,11 @@
           </p>
           <div id="account-content-list" class="account-content-list"></div>
         </section>
+
+        <section id="account-notifications" class="panel" hidden>
+          <h3>Thông báo của bạn</h3>
+          <div id="notification-list" class="notification-list"></div>
+        </section>
       </section>
 
       <section
@@ -208,6 +213,9 @@
             <h2 id="community-feed-title">Bảng tin cộng đồng</h2>
             <p class="muted">Đọc bài viết, chia sẻ góc nhìn và bình luận.</p>
           </div>
+          <button type="button" id="open-post-button" hidden>
+            <i class="fa-solid fa-pen" aria-hidden="true"></i> Viết bài
+          </button>
         </div>
 
         <section
@@ -216,7 +224,12 @@
           hidden
           aria-labelledby="post-title"
         >
-          <h2 id="post-title">Bài viết và phân tích mới</h2>
+          <div class="section-heading">
+            <h2 id="post-title">Bài viết và phân tích mới</h2>
+            <button type="button" class="button-secondary" id="close-post-button">
+              Đóng
+            </button>
+          </div>
           <form id="post-form">
             <label for="post-title-input">Tiêu đề</label>
             <input
@@ -239,6 +252,20 @@
               maxlength="180"
               placeholder="Ví dụ: Tây Tiến — Mường Lát"
             />
+            <label for="location-tags">Hashtag địa danh (cách nhau bằng dấu phẩy)</label>
+            <input
+              id="location-tags"
+              name="location_tags"
+              maxlength="335"
+              placeholder="Ví dụ: #MườngLát, #TâyBắc"
+            />
+            <label for="image-ratio">Tỉ lệ khung hình ảnh</label>
+            <select id="image-ratio" name="image_ratio">
+              <option value="natural">Giữ nguyên tỉ lệ ảnh</option>
+              <option value="square">Vuông 1:1</option>
+              <option value="landscape">Ngang 4:3</option>
+              <option value="portrait">Dọc 3:4</option>
+            </select>
             <label for="post-analysis">Nội dung phân tích</label>
             <textarea
               id="post-analysis"
@@ -272,6 +299,19 @@
               aria-live="polite"
               hidden
             ></div>
+            <label for="mention-search">Gắn thẻ thành viên</label>
+            <input
+              id="mention-search"
+              type="search"
+              autocomplete="off"
+              placeholder="Tìm theo tên hiển thị..."
+              aria-describedby="mention-help"
+            />
+            <p id="mention-help" class="upload-hint">
+              Người được gắn thẻ sẽ nhận thông báo sau khi bài viết được duyệt.
+            </p>
+            <div id="mention-results" class="mention-results" role="listbox" hidden></div>
+            <div id="selected-mentions" class="selected-mentions" aria-live="polite"></div>
             <p class="muted moderation-note">
               Bài viết và bình luận được kiểm tra đầu vào rồi lưu riêng tư ở
               trạng thái chờ Gemini kiểm duyệt. Chỉ nội dung phù hợp mới được
@@ -365,6 +405,8 @@
               <i class="fa-solid fa-rotate"></i> Tải lại
             </button>
           </div>
+          <div id="featured-posts" class="featured-posts" hidden></div>
+          <p id="active-tag-filter" class="active-tag-filter" hidden></p>
           <p
             id="status-message"
             class="status-message"
@@ -378,6 +420,6 @@
     </main>
     <span id="footer"></span>
     <script type="module" src="./js/header_footer.js"></script>
-    <script type="module" src="./js/community.js?v=4"></script>
+    <script type="module" src="./js/community.js?v=5"></script>
   </body>
 </html>

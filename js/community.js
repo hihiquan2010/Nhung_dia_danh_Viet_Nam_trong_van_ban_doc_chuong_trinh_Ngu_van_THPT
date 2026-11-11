@@ -30,6 +30,7 @@ const signInButton = document.getElementById("sign-in-button");
 const signUpButton = document.getElementById("sign-up-button");
 const saveProfileButton = document.getElementById("save-profile-button");
 const publishButton = document.getElementById("publish-button");
+const postTitleInput = document.getElementById("post-title-input");
 const profileNameInput = document.getElementById("display-name");
 const avatarFileInput = document.getElementById("avatar-file");
 const avatarPreview = document.getElementById("avatar-preview");
@@ -39,10 +40,24 @@ const accountRole = document.getElementById("account-role");
 const accountPermissions = document.getElementById("account-permissions");
 const accountContent = document.getElementById("account-content");
 const accountContentList = document.getElementById("account-content-list");
+const accountNotifications = document.getElementById("account-notifications");
+const notificationList = document.getElementById("notification-list");
 const publicProfileView = document.getElementById("public-profile-view");
 const publicProfileAvatar = document.getElementById("public-profile-avatar");
 const publicProfileName = document.getElementById("public-profile-name");
+const openPostButton = document.getElementById("open-post-button");
+const closePostButton = document.getElementById("close-post-button");
+const imageRatioInput = document.getElementById("image-ratio");
+const mentionSearchInput = document.getElementById("mention-search");
+const mentionResults = document.getElementById("mention-results");
+const selectedMentions = document.getElementById("selected-mentions");
+const featuredPosts = document.getElementById("featured-posts");
+const activeTagFilter = document.getElementById("active-tag-filter");
 const imageUrlCache = new Map();
+const selectedMentionUsers = new Map();
+let mentionSearchTimer = null;
+let mentionSearchRevision = 0;
+let composerOpen = false;
 
 function showStatus(message, isError = false) {
   statusMessage.textContent = message;
@@ -155,6 +170,16 @@ function renderPostImagePreview() {
     const image = document.createElement("img");
     image.src = url;
     image.alt = `Ảnh ${index + 1} đã chọn`;
+    image.dataset.ratio = imageRatioInput.value;
+    if (imageRatioInput.value !== "natural") {
+      image.style.height = "auto";
+      image.style.aspectRatio = {
+        square: "1 / 1",
+        landscape: "4 / 3",
+        portrait: "3 / 4",
+      }[imageRatioInput.value];
+      image.style.objectFit = "cover";
+    }
     const caption = document.createElement("figcaption");
     caption.textContent = index === 0 ? "Ảnh bìa" : `Ảnh ${index + 1}`;
     figure.append(image, caption);
@@ -169,6 +194,7 @@ document.getElementById("post-analysis").addEventListener("input", () => {
   updateCharacterCount("post-analysis", "post-analysis-count");
 });
 postImageInput.addEventListener("change", renderPostImagePreview);
+imageRatioInput.addEventListener("change", renderPostImagePreview);
 
 async function signedImageUrl(supabase, path) {
   if (!path) return "";
@@ -353,8 +379,12 @@ function renderPosts(
   canComment,
   commentsUnavailable,
   likeData = new Map(),
+  postMetadata = new Map(),
 ) {
   postsList.replaceChildren();
+  featuredPosts.replaceChildren();
+  featuredPosts.hidden = true;
+  const featuredEntries = [];
 
   if (!posts.length) {
     const emptyState = document.createElement("p");
@@ -367,6 +397,13 @@ function renderPosts(
   }
 
   for (const post of posts) {
+    const metadata = postMetadata.get(post.id) || {
+      author_role: "users",
+      likes_count: 0,
+      comments_count: post.post_comments?.length || 0,
+      shares_count: 0,
+      is_pinned: false,
+    };
     const card = document.createElement("article");
     card.className = "post-card";
     const authorRow = document.createElement("div");
@@ -378,8 +415,21 @@ function renderPosts(
     profileLink.href = `?profile=${encodeURIComponent(post.author_id)}#community-feed`;
     profileLink.textContent = post.profiles?.display_name || "Thành viên";
     const metaText = document.createTextNode(` · ${formatDate(post.created_at)}`);
-    meta.append(profileLink, metaText);
+    const roleBadge = document.createElement("span");
+    roleBadge.className = `post-role post-role-${metadata.author_role}`;
+    roleBadge.textContent = {
+      owner: "Owner",
+      moderator: "Moderator",
+      users: "Member",
+    }[metadata.author_role] || "Member";
+    meta.append(profileLink, metaText, document.createTextNode(" "), roleBadge);
     authorRow.append(meta);
+    if (metadata.is_pinned) {
+      const pinned = document.createElement("span");
+      pinned.className = "pinned-badge";
+      pinned.textContent = "Được ghim";
+      authorRow.append(pinned);
+    }
     const title = document.createElement("h3");
     title.textContent = post.title;
     card.append(authorRow, title);
@@ -398,6 +448,17 @@ function renderPosts(
       literaryWork.textContent = post.literary_work;
       card.append(literaryWork);
     }
+    if (post.location_tags?.length) {
+      const tags = document.createElement("div");
+      tags.className = "post-tags";
+      for (const tag of post.location_tags) {
+        const tagLink = document.createElement("a");
+        tagLink.href = `?tag=${encodeURIComponent(tag)}#community-feed`;
+        tagLink.textContent = tag;
+        tags.append(tagLink);
+      }
+      card.append(tags);
+    }
 
     const mediaUrls = normalizeImagePaths(post.image_paths ?? post.image_path)
       .map((imagePath) => post.image_urls?.get?.(imagePath) || post.image_url || "")
@@ -411,6 +472,15 @@ function renderPosts(
         image.src = imageUrl;
         image.alt = `Ảnh minh họa cho ${post.title}`;
         image.loading = "lazy";
+        image.dataset.ratio = post.image_ratio || "natural";
+        image.style.height = "auto";
+        const aspectRatio = {
+          square: "1 / 1",
+          landscape: "4 / 3",
+          portrait: "3 / 4",
+        }[post.image_ratio];
+        if (aspectRatio) image.style.aspectRatio = aspectRatio;
+        else image.style.objectFit = "contain";
         gallery.append(image);
       }
       card.append(gallery);
@@ -426,7 +496,7 @@ function renderPosts(
     const like = document.createElement("button");
     like.type = "button";
     like.className = "button-secondary post-like";
-    const likeInfo = likeData.get(post.id) || { likes_count: 0, liked_by_me: false };
+    const likeInfo = likeData.get(post.id) || { likes_count: metadata.likes_count, liked_by_me: false };
     like.textContent = `${likeInfo.liked_by_me ? "♥" : "♡"} ${likeInfo.likes_count}`;
     like.setAttribute("aria-label", `${likeInfo.likes_count} lượt thích`);
     like.disabled = !currentUser || currentUserIsBanned;
@@ -443,9 +513,25 @@ function renderPosts(
     const share = document.createElement("button");
     share.type = "button";
     share.className = "button-secondary";
-    share.textContent = "Chia sẻ";
+    share.textContent = `Chia sẻ · ${metadata.shares_count}`;
     share.addEventListener("click", () => void sharePost(post));
     actions.append(like, share);
+    if (currentUser && currentUser.id === post.author_id && !currentUserIsBanned) {
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "button-secondary post-delete";
+      remove.textContent = "Xóa bài của tôi";
+      remove.addEventListener("click", () => void deletePost(post));
+      actions.append(remove);
+    }
+    if (currentRole === "owner" && !currentUserIsBanned) {
+      const pin = document.createElement("button");
+      pin.type = "button";
+      pin.className = "button-secondary";
+      pin.textContent = metadata.is_pinned ? "Bỏ ghim" : "Ghim bài";
+      pin.addEventListener("click", () => void setPostPinned(post.id, !metadata.is_pinned));
+      actions.append(pin);
+    }
     card.append(actions);
     const commentAccess = !currentUser
       ? "signed-out"
@@ -462,7 +548,29 @@ function renderPosts(
       commentsUnavailable,
     );
     postsList.append(card);
+
+    if (metadata.is_pinned || metadata.likes_count + metadata.comments_count * 2 + metadata.shares_count * 3 >= 5) {
+      const featured = document.createElement("a");
+      featured.className = "featured-post";
+      featured.href = `?post=${encodeURIComponent(post.id)}#post-${encodeURIComponent(post.id)}`;
+      const featuredTitle = document.createElement("strong");
+      featuredTitle.textContent = metadata.is_pinned ? `📌 ${post.title}` : post.title;
+      const featuredSummary = document.createElement("span");
+      featuredSummary.textContent =
+        `${metadata.likes_count} tim · ${metadata.comments_count} bình luận · ${metadata.shares_count} chia sẻ`;
+      featured.append(featuredTitle, featuredSummary);
+      featuredEntries.push({
+        element: featured,
+        pinned: metadata.is_pinned,
+        score: metadata.likes_count + metadata.comments_count * 2 + metadata.shares_count * 3,
+      });
+    }
   }
+  featuredEntries
+    .sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.score - a.score)
+    .slice(0, 5)
+    .forEach((entry) => featuredPosts.append(entry.element));
+  featuredPosts.hidden = featuredPosts.childElementCount === 0;
 }
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -504,14 +612,18 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       moderation_unavailable:
         "Nội dung đã được lưu riêng tư và đang chờ AI kiểm duyệt. Hãy thử tải lại sau ít phút.",
       database_unavailable: "Chưa thể lưu dữ liệu. Hãy kiểm tra kết nối rồi thử lại.",
-      post_not_found: "Bài viết này không còn tồn tại.",
       invalid_comment: "Bình luận không được để trống và tối đa 2.000 ký tự.",
       invalid_title: "Tiêu đề phải có từ 1 đến 120 ký tự.",
       invalid_literary_work: "Tác phẩm hoặc địa danh không được dài quá 180 ký tự.",
       invalid_analysis: "Nội dung phân tích cần từ 10 đến 5.000 ký tự.",
       invalid_queue_item: "Không tìm thấy nội dung cần kiểm duyệt. Hãy tải lại trang.",
       invalid_like_request: "Chưa thể cập nhật lượt thích. Hãy tải lại trang.",
+      invalid_location_tags: "Hashtag địa danh chưa hợp lệ (tối đa 8 thẻ).",
+      invalid_image_ratio: "Tỉ lệ ảnh đã chọn không hợp lệ.",
+      invalid_mentions: "Không thể gắn thẻ tài khoản này. Hãy tải lại danh sách thành viên.",
+      invalid_notifications: "Danh sách thông báo không hợp lệ.",
       post_pending_ai: "Bài viết đang chờ AI kiểm duyệt; chưa thể thay đổi trạng thái.",
+      post_not_found: "Bài viết này không còn tồn tại.",
       invalid_display_name: "Tên hiển thị phải có từ 1 đến 80 ký tự.",
       unauthorized: "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
       account_banned: "Tài khoản đang bị cấm và không thể sử dụng cộng đồng.",
@@ -674,6 +786,14 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         link.textContent = entry.type === "post" ? "Mở bài viết" : "Mở bài đã bình luận";
         item.append(link);
       }
+      if (entry.type === "post") {
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "button-secondary post-delete";
+        remove.textContent = "Xóa bài của tôi";
+        remove.addEventListener("click", () => void deletePost({ id: entry.id, title: entry.title }));
+        item.append(remove);
+      }
       accountContentList.append(item);
     }
   }
@@ -725,6 +845,27 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     await loadPosts();
   }
 
+  async function deletePost(post) {
+    if (!window.confirm(`Xóa bài “${post.title}” của bạn? Thao tác này không thể hoàn tác.`)) return;
+    try {
+      await invokeCommunity("delete-post", { post_id: post.id });
+      showStatus("Đã xóa bài viết của bạn.");
+      await Promise.all([loadMyContent(), loadPosts()]);
+    } catch (error) {
+      showFailure(error, "Xóa bài viết", "Chỉ có thể xóa bài đăng của chính bạn.");
+    }
+  }
+
+  async function setPostPinned(postId, pinned) {
+    try {
+      await invokeCommunity("pin-post", { post_id: postId, pinned });
+      showStatus(pinned ? "Đã ghim bài viết." : "Đã bỏ ghim bài viết.");
+      await loadPosts();
+    } catch (error) {
+      showFailure(error, "Ghim bài viết", "Chỉ Owner mới có thể ghim bài viết.");
+    }
+  }
+
   async function sharePost(post) {
     const url = new URL(location.href);
     url.search = "";
@@ -737,9 +878,97 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         await navigator.clipboard.writeText(url.href);
         showStatus("Đã sao chép liên kết bài viết.");
       }
+      if (currentUser && !currentUserIsBanned) {
+        await invokeCommunity("record-share", { post_id: post.id });
+        await loadPosts();
+      }
     } catch (error) {
       if (error?.name === "AbortError") return;
       showFailure(error, "Chia sẻ bài viết", "Hãy sao chép địa chỉ trang từ thanh trình duyệt.");
+    }
+  }
+
+  function renderSelectedMentions() {
+    selectedMentions.replaceChildren();
+    for (const user of selectedMentionUsers.values()) {
+      const chip = document.createElement("span");
+      chip.className = "mention-chip";
+      const name = document.createElement("span");
+      name.textContent = `@${user.display_name}`;
+      const remove = document.createElement("button");
+      remove.type = "button";
+      remove.textContent = "×";
+      remove.setAttribute("aria-label", `Bỏ gắn thẻ ${user.display_name}`);
+      remove.addEventListener("click", () => {
+        selectedMentionUsers.delete(user.id);
+        renderSelectedMentions();
+      });
+      chip.append(name, remove);
+      selectedMentions.append(chip);
+    }
+  }
+
+  async function searchMentionUsers(query) {
+    const revision = ++mentionSearchRevision;
+    mentionResults.replaceChildren();
+    mentionResults.hidden = true;
+    if (query.trim().length < 2) {
+      return;
+    }
+    try {
+      const result = await invokeCommunity("search-users", { query });
+      if (revision !== mentionSearchRevision) return;
+      mentionResults.replaceChildren();
+      for (const user of result.users || []) {
+        if (selectedMentionUsers.has(user.id)) continue;
+        const option = document.createElement("button");
+        option.type = "button";
+        option.setAttribute("role", "option");
+        option.textContent = user.display_name;
+        option.addEventListener("click", () => {
+          if (selectedMentionUsers.size >= 10) {
+            showStatus("Mỗi bài viết có thể gắn thẻ tối đa 10 tài khoản.", true);
+            return;
+          }
+          selectedMentionUsers.set(user.id, user);
+          mentionSearchInput.value = "";
+          mentionResults.hidden = true;
+          renderSelectedMentions();
+        });
+        mentionResults.append(option);
+      }
+      mentionResults.hidden = mentionResults.childElementCount === 0;
+    } catch (error) {
+      if (revision !== mentionSearchRevision) return;
+      mentionResults.hidden = true;
+      showFailure(error, "Tìm thành viên", "Hãy thử lại sau ít phút.");
+    }
+  }
+
+  async function loadNotifications() {
+    if (!currentUser || currentUserIsBanned) {
+      accountNotifications.hidden = true;
+      return;
+    }
+    const { notifications } = await invokeCommunity("get-notifications", {});
+    notificationList.replaceChildren();
+    accountNotifications.hidden = false;
+    if (!notifications?.length) {
+      notificationList.textContent = "Bạn chưa có thông báo mới.";
+      return;
+    }
+    const unreadIds = notifications.filter((item) => !item.read_at).map((item) => item.id);
+    for (const notification of notifications) {
+      const item = document.createElement("a");
+      item.className = `notification-item${notification.read_at ? "" : " notification-unread"}`;
+      item.href = `?post=${encodeURIComponent(notification.post_id)}#post-${encodeURIComponent(notification.post_id)}`;
+      item.textContent =
+        `${notification.actor_name} đã gắn thẻ bạn trong “${notification.post_title}” · ` +
+        formatDate(notification.created_at);
+      notificationList.append(item);
+    }
+    if (unreadIds.length) {
+      await invokeCommunity("mark-notifications-read", { notification_ids: unreadIds });
     }
   }
 
@@ -778,6 +1007,8 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     publicProfileView.hidden = !isProfilePage;
     publicProfileAvatar.hidden = true;
     postPanel.hidden = isProfilePage || !currentUser || !currentRole || currentUserIsBanned;
+    openPostButton.hidden = isProfilePage || !currentUser || !currentRole || currentUserIsBanned;
+    postPanel.hidden = postPanel.hidden || !composerOpen;
     const postsTitle = document.getElementById("posts-title");
     postsTitle.textContent = isProfilePage ? "Bài viết đã duyệt" : "Bài đăng cộng đồng";
     if (isProfilePage) {
@@ -808,12 +1039,24 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     let postsQuery = supabase
       .from("posts")
       .select(
-        "id, author_id, title, literary_work, analysis, image_path, image_paths, created_at, profiles(display_name, avatar_path)",
+        "id, author_id, title, literary_work, analysis, image_path, image_paths, location_tags, image_ratio, is_pinned, created_at, profiles(display_name, avatar_path)",
       )
       .eq("status", "approved")
+      .order("is_pinned", { ascending: false })
       .order("created_at", { ascending: false })
       .limit(50);
     if (isProfilePage) postsQuery = postsQuery.eq("author_id", profileId);
+    const tagFilter = searchParams.get("tag");
+    activeTagFilter.hidden = !tagFilter || isProfilePage;
+    activeTagFilter.replaceChildren();
+    if (tagFilter && !isProfilePage) {
+      activeTagFilter.textContent = `Bài viết có hashtag ${tagFilter} · `;
+      const clearTagFilter = document.createElement("a");
+      clearTagFilter.href = "?#community-feed";
+      clearTagFilter.textContent = "Xóa bộ lọc";
+      activeTagFilter.append(clearTagFilter);
+      postsQuery = postsQuery.contains("location_tags", [tagFilter]);
+    }
     const { data: posts, error: postsError } = await postsQuery;
 
     if (postsError) {
@@ -829,7 +1072,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       const { data: sharedPost, error } = await supabase
         .from("posts")
         .select(
-          "id, author_id, title, literary_work, analysis, image_path, image_paths, created_at, profiles(display_name, avatar_path)",
+          "id, author_id, title, literary_work, analysis, image_path, image_paths, location_tags, image_ratio, is_pinned, created_at, profiles(display_name, avatar_path)",
         )
         .eq("id", sharedPostId)
         .eq("status", "approved")
@@ -880,19 +1123,23 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
     const likeData = new Map();
     let likesError = null;
+    const postMetadata = new Map();
     if (posts.length) {
-      const { data: likes, error: rpcLikesError } = await supabase.rpc(
-        "get_community_post_likes",
-        { p_post_ids: posts.map((post) => post.id) },
-      );
-      if (rpcLikesError) {
-        likesError = rpcLikesError;
+      const postIds = posts.map((post) => post.id);
+      const [{ data: likes, error: rpcLikesError }, { data: metadata, error: metadataError }] =
+        await Promise.all([
+          supabase.rpc("get_community_post_likes", { p_post_ids: postIds }),
+          supabase.rpc("get_community_post_metadata", { p_post_ids: postIds }),
+        ]);
+      if (rpcLikesError || metadataError) {
+        likesError = rpcLikesError || metadataError;
         console.error("[Cộng đồng] Không thể tải lượt thích.", {
-          code: rpcLikesError.code,
-          message: rpcLikesError.message,
+          code: likesError.code,
+          message: likesError.message,
         });
       } else {
         for (const item of likes || []) likeData.set(item.post_id, item);
+        for (const item of metadata || []) postMetadata.set(item.post_id, item);
       }
     }
 
@@ -927,6 +1174,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         return {
           ...post,
           image_paths: mediaPaths,
+          location_tags: post.location_tags || [],
           image_urls: new Map(mediaPaths.map((path) => [path, imageUrls.get(path) || ""])),
           image_url: imageUrls.get(mediaPaths[0]) || "",
           profiles: post.profiles
@@ -946,6 +1194,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       Boolean(currentRole) && !currentUserIsBanned,
       Boolean(commentsError),
       likeData,
+      postMetadata,
     );
     if (sharedPostId) {
       requestAnimationFrame(() => {
@@ -1137,7 +1386,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     authPanel.hidden = signedIn;
     accountPanel.hidden = !signedIn;
     accountContent.hidden = !signedIn || currentUserIsBanned;
-    postPanel.hidden = !signedIn || !currentRole || currentUserIsBanned;
+    accountNotifications.hidden = !signedIn || !currentRole || currentUserIsBanned;
+    openPostButton.hidden = !signedIn || !currentRole || currentUserIsBanned;
+    postPanel.hidden = openPostButton.hidden || !composerOpen;
     profileForm.hidden = !signedIn || !currentRole || currentUserIsBanned;
     moderationPanel.hidden =
       !signedIn ||
@@ -1214,6 +1465,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     let accessStatus = "";
     let profileError = null;
     let accountContentError = null;
+    let notificationError = null;
     let accountContentData = null;
     if (currentUserIsBanned) {
       accessStatus = access.ban_expires_at
@@ -1230,6 +1482,11 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       } catch (error) {
         accountContentError = error;
       }
+      try {
+        await loadNotifications();
+      } catch (error) {
+        notificationError = error;
+      }
     }
 
     await loadPosts();
@@ -1237,6 +1494,8 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     else if (profileError) showFailure(profileError, "Tải hồ sơ", "Hãy thử tải lại trang.");
     else if (accountContentError) {
       showFailure(accountContentError, "Tải nội dung cá nhân", "Hãy đăng nhập lại rồi thử tải lại.");
+    } else if (notificationError) {
+      showFailure(notificationError, "Tải thông báo", "Hãy tải lại trang sau ít phút.");
     }
     if (accountContentData?.queue?.length) {
       void processPendingQueue(accountContentData.queue);
@@ -1346,6 +1605,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       const title = formData.get("title").trim();
       const literaryWork = formData.get("literary_work").trim();
       const analysis = formData.get("analysis").trim();
+      const locationTags = formData.get("location_tags")
+        .split(",")
+        .map((tag) => tag.trim())
+        .filter(Boolean)
+        .map((tag) => `#${tag.replace(/^#+/, "").replace(/\s+/g, "")}`);
+      const uniqueLocationTags = [...new Set(locationTags)];
+      const imageRatio = formData.get("image_ratio");
       const files = Array.from(formData.getAll("image")).filter(
         (file) => file instanceof File && file.size > 0,
       );
@@ -1361,6 +1627,12 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       if (files.length > MAX_POST_IMAGES) {
         throw userError(`Bạn có thể đăng tối đa ${MAX_POST_IMAGES} ảnh trong một bài.`);
       }
+      if (
+        uniqueLocationTags.length > 8 ||
+        uniqueLocationTags.some((tag) => tag.length < 2 || tag.length > 41)
+      ) {
+        throw userError("Bạn có thể thêm tối đa 8 hashtag địa danh, mỗi thẻ tối đa 40 ký tự.");
+      }
 
       uploadedPaths = await uploadImages(files, currentUser.id, "posts");
       await invokeCommunity("create-post", {
@@ -1369,15 +1641,25 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         analysis,
         image_path: uploadedPaths[0] || null,
         image_paths: uploadedPaths,
+        location_tags: uniqueLocationTags,
+        image_ratio: imageRatio,
+        mention_user_ids: [...selectedMentionUsers.keys()],
       });
 
       uploadedPaths = [];
       postForm.reset();
+      selectedMentionUsers.clear();
+      renderSelectedMentions();
+      mentionResults.hidden = true;
+      composerOpen = false;
+      postPanel.hidden = true;
+      openPostButton.hidden = false;
       updateCharacterCount("post-title-input", "post-title-count");
       updateCharacterCount("post-analysis", "post-analysis-count");
       renderPostImagePreview();
       showStatus("Bài viết đã được gửi vào hàng chờ; hiện chỉ bạn nhìn thấy.");
       const accountData = await loadMyContent();
+      await loadNotifications();
       await loadPosts();
       void processPendingQueue(accountData.queue);
     } catch (error) {
@@ -1449,6 +1731,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     try {
       const data = await loadMyContent();
       await loadPosts();
+      await loadNotifications();
       await processPendingQueue(data.queue);
     } catch (error) {
       showFailure(error, "Tải lại cộng đồng", "Hãy đăng nhập lại hoặc thử lại sau.");
@@ -1457,6 +1740,27 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   document.getElementById("sign-out-button").addEventListener("click", async () => {
     const { error } = await supabase.auth.signOut();
     if (error) showFailure(error, "Đăng xuất", "Hãy tải lại trang rồi thử lại.");
+  });
+  openPostButton.addEventListener("click", () => {
+    composerOpen = true;
+    postPanel.hidden = false;
+    postTitleInput.focus();
+    postPanel.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+  closePostButton.addEventListener("click", () => {
+    composerOpen = false;
+    postPanel.hidden = true;
+    openPostButton.focus();
+  });
+  mentionSearchInput.addEventListener("input", () => {
+    clearTimeout(mentionSearchTimer);
+    const query = mentionSearchInput.value;
+    mentionSearchTimer = setTimeout(() => void searchMentionUsers(query), 250);
+  });
+  document.addEventListener("click", (event) => {
+    if (!mentionResults.contains(event.target) && event.target !== mentionSearchInput) {
+      mentionResults.hidden = true;
+    }
   });
   authForm.addEventListener("submit", signIn);
   signUpButton.addEventListener("click", signUp);

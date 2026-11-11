@@ -12,6 +12,8 @@ const MAX_WORK_LENGTH = 180;
 const MAX_ANALYSIS_LENGTH = 5_000;
 const MAX_COMMENT_LENGTH = 2_000;
 const MAX_AVATAR_NAME_LENGTH = 80;
+const MAX_LOCATION_TAGS = 8;
+const MAX_MENTIONS = 10;
 const MEDIA_BUCKET = "community-media";
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.5-flash-lite";
 
@@ -338,10 +340,96 @@ async function handleRequest(request: Request): Promise<Response> {
     return jsonResponse({ posts, comments, queue });
   }
 
+  if (action === "get-notifications") {
+    const { data: notifications, error } = await adminClient
+      .from("community_notifications")
+      .select("id, actor_id, post_id, created_at, read_at")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) {
+      console.error("Could not load community notifications.", error.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+
+    const postIds = [...new Set(notifications.map((item) => item.post_id))];
+    const actorIds = [...new Set(notifications.map((item) => item.actor_id))];
+    const [{ data: posts, error: postsError }, { data: profiles, error: profilesError }] =
+      await Promise.all([
+        postIds.length
+          ? adminClient.from("posts").select("id, title").in("id", postIds)
+          : Promise.resolve({ data: [], error: null }),
+        actorIds.length
+          ? adminClient.from("profiles").select("id, display_name").in("id", actorIds)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+    if (postsError || profilesError) {
+      console.error("Could not load notification details.", {
+        posts: postsError?.message,
+        profiles: profilesError?.message,
+      });
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    const postsById = new Map((posts || []).map((post) => [post.id, post.title]));
+    const profilesById = new Map(
+      (profiles || []).map((profile) => [profile.id, profile.display_name]),
+    );
+    return jsonResponse({
+      notifications: notifications.map((item) => ({
+        ...item,
+        post_title: postsById.get(item.post_id) || "bài viết",
+        actor_name: profilesById.get(item.actor_id) || "Thành viên",
+      })),
+    });
+  }
+
+  if (action === "mark-notifications-read") {
+    const notificationIds = body.notification_ids;
+    if (
+      !Array.isArray(notificationIds) ||
+      notificationIds.length > 50 ||
+      notificationIds.some((id) => !isUuid(id))
+    ) {
+      return jsonResponse({ error: "invalid_notifications" }, 400);
+    }
+    if (!notificationIds.length) return jsonResponse({ ok: true });
+    const { error } = await adminClient
+      .from("community_notifications")
+      .update({ read_at: new Date().toISOString() })
+      .eq("user_id", userId)
+      .is("read_at", null)
+      .in("id", notificationIds);
+    if (error) {
+      console.error("Could not mark notifications as read.", error.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    return jsonResponse({ ok: true });
+  }
+
+  if (action === "search-users") {
+    const query = text(body.query).replace(/[%_*]/g, "").slice(0, 60);
+    if (query.length < 2) return jsonResponse({ users: [] });
+    const { data: users, error } = await adminClient
+      .from("profiles")
+      .select("id, display_name")
+      .ilike("display_name", `${query}%`)
+      .neq("id", userId)
+      .order("display_name", { ascending: true })
+      .limit(8);
+    if (error) {
+      console.error("Could not search community members.", error.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    return jsonResponse({ users });
+  }
+
   if (action === "create-post") {
     const title = text(body.title);
     const literaryWork = text(body.literary_work);
     const analysis = text(body.analysis);
+    const imageRatio = text(body.image_ratio);
+    const locationTags = body.location_tags;
+    const mentionUserIds = body.mention_user_ids;
     let imagePaths: string[] = [];
     try {
       imagePaths = normalizeOwnedPaths(body.image_paths ?? body.image_path, userId, "posts");
@@ -360,20 +448,53 @@ async function handleRequest(request: Request): Promise<Response> {
     if (analysis.length < 10 || analysis.length > MAX_ANALYSIS_LENGTH) {
       return jsonResponse({ error: "invalid_analysis" }, 400);
     }
+    if (
+      !Array.isArray(locationTags) ||
+      locationTags.length > MAX_LOCATION_TAGS ||
+      locationTags.some((tag) =>
+        typeof tag !== "string" ||
+        tag.length < 2 ||
+        tag.length > 41 ||
+        !tag.startsWith("#") ||
+        /[\s,]/.test(tag)
+      )
+    ) {
+      return jsonResponse({ error: "invalid_location_tags" }, 400);
+    }
+    if (!["natural", "square", "landscape", "portrait"].includes(imageRatio)) {
+      return jsonResponse({ error: "invalid_image_ratio" }, 400);
+    }
+    if (
+      !Array.isArray(mentionUserIds) ||
+      mentionUserIds.length > MAX_MENTIONS ||
+      mentionUserIds.some((id) => !isUuid(id)) ||
+      new Set(mentionUserIds).size !== mentionUserIds.length
+    ) {
+      return jsonResponse({ error: "invalid_mentions" }, 400);
+    }
 
-    const { data, error } = await adminClient.rpc("enqueue_community_post", {
+    const { data, error } = await adminClient.rpc("enqueue_community_post_with_metadata", {
       p_actor_id: userId,
       p_title: title,
       p_literary_work: literaryWork,
       p_analysis: analysis,
       p_image_path: imagePaths[0] ?? null,
       p_image_paths: imagePaths.length ? imagePaths : null,
+      p_location_tags: locationTags,
+      p_image_ratio: imageRatio,
+      p_mention_user_ids: mentionUserIds,
     });
     if (error) {
       console.error("Could not enqueue post moderation.", error.message);
+      if (error.message.includes("account_banned")) {
+        return jsonResponse({ error: "account_banned" }, 403);
+      }
+      if (error.message.includes("invalid_mentions")) {
+        return jsonResponse({ error: "invalid_mentions" }, 400);
+      }
       return jsonResponse(
-        { error: error.message.includes("account_banned") ? "account_banned" : "database_unavailable" },
-        error.message.includes("account_banned") ? 403 : 503,
+        { error: "database_unavailable" },
+        503,
       );
     }
     const queued = data?.[0];
@@ -386,6 +507,96 @@ async function handleRequest(request: Request): Promise<Response> {
       queue_id: queued.queue_id,
       entity_id: queued.post_id,
     }, 202);
+  }
+
+  if (action === "delete-post") {
+    const postId = body.post_id;
+    if (!isUuid(postId)) return jsonResponse({ error: "invalid_post" }, 400);
+    const { data: post, error: postError } = await adminClient
+      .from("posts")
+      .select("author_id, image_path, image_paths")
+      .eq("id", postId)
+      .maybeSingle();
+    if (postError) {
+      console.error("Could not verify post before deletion.", postError.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    if (!post) return jsonResponse({ error: "post_not_found" }, 404);
+    if (post.author_id !== userId) return jsonResponse({ error: "forbidden" }, 403);
+
+    const { data: imagePaths, error } = await adminClient.rpc("delete_community_post", {
+      p_actor_id: userId,
+      p_post_id: postId,
+    });
+    if (error) {
+      console.error("Could not delete the user's own post.", error.message);
+      return jsonResponse(
+        { error: error.message.includes("forbidden") ? "forbidden" : "database_unavailable" },
+        error.message.includes("forbidden") ? 403 : 503,
+      );
+    }
+    const paths = normalizeOwnedPaths(imagePaths ?? post.image_paths ?? post.image_path, userId, "posts");
+    if (paths.length) {
+      const { error: removeError } = await adminClient.storage
+        .from(MEDIA_BUCKET)
+        .remove(paths);
+      if (removeError) {
+        console.error("Post was deleted but its media cleanup failed.", {
+          postId,
+          message: removeError.message,
+        });
+      }
+    }
+    return jsonResponse({ ok: true });
+  }
+
+  if (action === "record-share") {
+    const postId = body.post_id;
+    if (!isUuid(postId)) return jsonResponse({ error: "invalid_post" }, 400);
+    const { data: post, error: postError } = await adminClient
+      .from("posts")
+      .select("id")
+      .eq("id", postId)
+      .eq("status", "approved")
+      .maybeSingle();
+    if (postError) {
+      console.error("Could not verify post before recording a share.", postError.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    if (!post) return jsonResponse({ error: "post_not_found" }, 404);
+    const { error } = await adminClient
+      .from("community_post_shares")
+      .upsert(
+        { post_id: postId, user_id: userId },
+        { onConflict: "post_id,user_id", ignoreDuplicates: true },
+      );
+    if (error) {
+      console.error("Could not record community post share.", error.message);
+      return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    return jsonResponse({ ok: true });
+  }
+
+  if (action === "pin-post") {
+    if (actorRole !== "owner") return jsonResponse({ error: "forbidden" }, 403);
+    const postId = body.post_id;
+    const pinned = body.pinned;
+    if (!isUuid(postId) || typeof pinned !== "boolean") {
+      return jsonResponse({ error: "invalid_post_pin" }, 400);
+    }
+    const { error } = await adminClient.rpc("set_community_post_pin", {
+      p_actor_id: userId,
+      p_post_id: postId,
+      p_pinned: pinned,
+    });
+    if (error) {
+      console.error("Could not change post pin status.", error.message);
+      return jsonResponse(
+        { error: error.message.includes("insufficient_role") ? "forbidden" : "post_not_found" },
+        error.message.includes("insufficient_role") ? 403 : 404,
+      );
+    }
+    return jsonResponse({ ok: true, pinned });
   }
 
   if (action === "create-comment") {
