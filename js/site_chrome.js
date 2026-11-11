@@ -17,6 +17,8 @@ export function renderSiteHeader(
 ) {
   const headerContainer = document.getElementById("header");
   if (!headerContainer) return;
+  const isAccountPage = window.location.pathname.endsWith("/account.html");
+  const isCommunityPage = window.location.pathname.endsWith("/community.html");
 
   headerContainer.innerHTML = `
     <div id="top" class="widgetbar site-header">
@@ -37,7 +39,11 @@ export function renderSiteHeader(
             <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
             <span class="icon-text">Trò chơi</span>
           </a>
-          <a href="${assetBasePath}community.html">
+          <a href="${assetBasePath}account.html"${isAccountPage ? ' aria-current="page"' : ""}>
+            <i class="fa-regular fa-user" aria-hidden="true"></i>
+            <span class="icon-text">Tài khoản</span>
+          </a>
+          <a href="${assetBasePath}community.html"${isCommunityPage ? ' aria-current="page"' : ""}>
             <i class="fa-solid fa-comments" aria-hidden="true"></i>
             <span class="icon-text">Cộng đồng</span>
           </a>

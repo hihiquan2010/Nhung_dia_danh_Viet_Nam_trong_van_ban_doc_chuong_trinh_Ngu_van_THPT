@@ -9,7 +9,7 @@
       content="Đăng nhập và chia sẻ bài viết về văn học, địa danh Việt Nam."
     />
     <link rel="stylesheet" href="./css/style.css" />
-    <link rel="stylesheet" href="./css/community.css" />
+    <link rel="stylesheet" href="./css/community.css?v=account-community-places-20261111" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -19,7 +19,7 @@
     />
     <title>Cộng đồng | Dấu Chân Văn Học</title>
   </head>
-  <body>
+  <body data-view="community">
     <span id="header"></span>
     <main class="community">
       <header class="community-heading">
@@ -29,13 +29,13 @@
       </header>
 
       <nav class="community-nav" aria-label="Điều hướng cộng đồng">
-        <a href="#community-account">
+        <a href="./account.html">
           <i class="fa-regular fa-user" aria-hidden="true"></i>
           Tài khoản
         </a>
-        <a href="#community-feed">
+        <a href="./community.html" aria-current="page">
           <i class="fa-regular fa-comments" aria-hidden="true"></i>
-          Bài đăng
+          Cộng đồng
         </a>
       </nav>
 
@@ -43,6 +43,7 @@
       <section
         id="community-account"
         class="account-area"
+        hidden
         aria-labelledby="community-account-title"
       >
         <div class="area-heading">
@@ -323,6 +324,29 @@
         </section>
 
         <section
+          id="place-discovery"
+          class="place-discovery panel"
+          aria-labelledby="place-discovery-title"
+        >
+          <div class="section-heading">
+            <div>
+              <h2 id="place-discovery-title">Địa danh bạn có thể khám phá</h2>
+              <p class="muted">
+                Gợi ý dựa trên địa danh được nhắc đến và nội dung đang được quan tâm.
+              </p>
+            </div>
+          </div>
+          <label for="place-search">Tìm địa danh hoặc tác phẩm</label>
+          <input
+            id="place-search"
+            type="search"
+            autocomplete="off"
+            placeholder="Ví dụ: Bạch Đằng, Vợ nhặt..."
+          />
+          <div id="place-suggestions" class="place-suggestions" aria-live="polite"></div>
+        </section>
+
+        <section
           id="moderation-panel"
           class="panel"
           hidden
@@ -419,7 +443,7 @@
       </div>
     </main>
     <span id="footer"></span>
-    <script type="module" src="./js/header_footer.js"></script>
-    <script type="module" src="./js/community.js?v=5"></script>
+    <script type="module" src="./js/header_footer.js?v=community-account-nav-20261111"></script>
+    <script type="module" src="./js/community.js?v=6"></script>
   </body>
 </html>
