@@ -103,7 +103,8 @@ begin
   end if;
   if cardinality(v_mentions) > 10
     or cardinality(v_mentions) <> (
-      select count(distinct value)::integer from unnest(v_mentions) as value
+      select count(distinct mentioned.user_id)::integer
+      from unnest(v_mentions) as mentioned(user_id)
     ) then
     raise exception 'invalid_mentions' using errcode = '22023';
   end if;
@@ -220,7 +221,7 @@ security definer
 set search_path = ''
 as $$
   select post.id,
-    coalesce(role.role, 'users'),
+  coalesce(user_role.role, 'users'),
     (select count(*) from public.community_post_likes likes
       where likes.post_id = post.id),
     (select count(*) from public.post_comments comments
@@ -229,7 +230,8 @@ as $$
       where shares.post_id = post.id),
     post.is_pinned
   from public.posts post
-  left join public.community_user_roles role on role.user_id = post.author_id
+  left join public.community_user_roles as user_role
+    on user_role.user_id = post.author_id
   where post.id = any(coalesce(p_post_ids, '{}'::uuid[]))
     and post.status = 'approved'
     and coalesce(cardinality(p_post_ids), 0) <= 100
