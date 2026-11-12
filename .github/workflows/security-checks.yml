@@ -85,10 +85,17 @@ jobs:
         with:
           version: 3.1.0
 
-      - name: Start local Supabase
+      - name: Start local PostgreSQL
         run: |
-          if ! supabase start >"$RUNNER_TEMP/supabase-start.log" 2>&1; then
-            echo "::error::Local Supabase failed to start. Output was withheld to avoid logging generated local keys."
+          if ! supabase db start >"$RUNNER_TEMP/supabase-db-start.log" 2>&1; then
+            echo "::error::Local PostgreSQL failed to start. Raw output was withheld to avoid logging local connection credentials."
+            exit 1
+          fi
+
+      - name: Apply migrations to local database
+        run: |
+          if ! supabase migration up >"$RUNNER_TEMP/supabase-migration-up.log" 2>&1; then
+            echo "::error::Applying migrations to local PostgreSQL failed. Raw output was withheld to avoid logging SQL values."
             exit 1
           fi
 
@@ -123,7 +130,7 @@ jobs:
             echo
             echo "- Secret scanning covers repository history; values are redacted in scanner output."
             echo "- Semgrep scans code for known security patterns and reports rule IDs and locations only."
-            echo "- Supabase lint runs against a disposable local stack; no production credentials or deployment are used."
+            echo "- Supabase lint runs against disposable local PostgreSQL after applying repository migrations; no production credentials or deployment are used."
             echo "- A public Supabase anon/publishable key is intended for client use; this workflow cannot prove that RLS policies are correctly configured on the hosted project."
             echo "- Static scans cannot guarantee the absence of all XSS, leaked secrets, runtime issues, or insecure production configuration."
           } >>"$GITHUB_STEP_SUMMARY"
