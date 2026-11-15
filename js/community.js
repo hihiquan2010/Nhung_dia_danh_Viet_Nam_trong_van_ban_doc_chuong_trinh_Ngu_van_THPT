@@ -2022,10 +2022,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       void processPendingQueue(accountData.queue);
     } catch (error) {
       if (postCreated) {
-        showFailure(
-          error,
-          "Cập nhật sau khi gửi bài",
-          "Câu chuyện đã được gửi. Hãy tải lại trang hoặc xem mục Tài khoản để kiểm tra trạng thái; không cần gửi lại.",
+        console.error("[Cộng đồng] Cập nhật sau khi gửi bài thất bại.", {
+          code: error?.code || error?.name || "unknown",
+          message: error?.message || String(error),
+        });
+        showStatus(
+          "Câu chuyện đã được gửi, nhưng chưa tải được trạng thái mới. Hãy tải lại trang hoặc kiểm tra mục Tài khoản; không gửi lại.",
+          true,
         );
       } else if (error?.name === "CommunitySubmissionUnconfirmedError") {
         uploadedPaths = [];
