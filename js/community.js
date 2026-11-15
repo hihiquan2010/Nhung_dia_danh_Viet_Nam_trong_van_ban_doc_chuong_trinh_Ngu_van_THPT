@@ -2007,7 +2007,10 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         throw userError("Bạn có thể thêm tối đa 8 hashtag địa danh, mỗi thẻ tối đa 40 ký tự.");
       }
 
-      uploadedPaths = await uploadImages(files, currentUser.id, "posts");
+      for (const file of files) {
+        const path = await uploadImage(file, currentUser.id, "posts");
+        if (path) uploadedPaths.push(path);
+      }
       await invokeCommunity("create-post", {
         title,
         literary_work: literaryWork,
