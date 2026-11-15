@@ -7,9 +7,7 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-const MAX_TITLE_LENGTH = 120;
 const MAX_WORK_LENGTH = 180;
-const MAX_ANALYSIS_LENGTH = 5_000;
 const MAX_COMMENT_LENGTH = 2_000;
 const MAX_AVATAR_NAME_LENGTH = 80;
 const MAX_LOCATION_TAGS = 8;
@@ -444,14 +442,11 @@ async function handleRequest(request: Request): Promise<Response> {
     if (imagePaths.length > 10) {
       return jsonResponse({ error: "invalid_image_path" }, 400);
     }
-    if (!title || title.length > MAX_TITLE_LENGTH) {
-      return jsonResponse({ error: "invalid_title" }, 400);
+    if (!title && !analysis) {
+      return jsonResponse({ error: "invalid_post" }, 400);
     }
     if (literaryWork.length > MAX_WORK_LENGTH) {
       return jsonResponse({ error: "invalid_literary_work" }, 400);
-    }
-    if (analysis.length < 10 || analysis.length > MAX_ANALYSIS_LENGTH) {
-      return jsonResponse({ error: "invalid_analysis" }, 400);
     }
     if (
       !Array.isArray(locationTags) ||
@@ -496,6 +491,9 @@ async function handleRequest(request: Request): Promise<Response> {
       }
       if (error.message.includes("invalid_mentions")) {
         return jsonResponse({ error: "invalid_mentions" }, 400);
+      }
+      if (error.message.includes("invalid_post")) {
+        return jsonResponse({ error: "invalid_post" }, 400);
       }
       return jsonResponse(
         { error: "database_unavailable" },
