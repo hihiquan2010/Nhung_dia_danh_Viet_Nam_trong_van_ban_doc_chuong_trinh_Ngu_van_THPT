@@ -642,6 +642,18 @@ body[data-view="community"] #owner-panel {
   padding: 4px 14px 16px;
 }
 
+.post-submit-status {
+  min-height: 1.4em;
+  margin: 12px 0 8px;
+  color: #35523d;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.post-submit-status[data-error="true"] {
+  color: #a32626;
+}
+
 #publish-button {
   margin-top: 4px;
   padding-inline: 24px;

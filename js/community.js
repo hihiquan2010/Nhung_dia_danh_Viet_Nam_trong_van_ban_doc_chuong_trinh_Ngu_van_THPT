@@ -20,6 +20,7 @@ const ownerPanel = document.getElementById("owner-panel");
 const authForm = document.getElementById("auth-form");
 const profileForm = document.getElementById("profile-form");
 const postForm = document.getElementById("post-form");
+const postSubmitStatus = document.getElementById("post-submit-status");
 const moderatorForm = document.getElementById("moderator-form");
 const announcementForm = document.getElementById("announcement-form");
 const statusMessage = document.getElementById("status-message");
@@ -196,6 +197,11 @@ function showStatus(message, isError = false) {
 function showActionStatus(element, message, isError = false) {
   element.textContent = message;
   element.dataset.error = String(isError);
+}
+
+function showPostSubmitStatus(message, isError = false) {
+  if (!postSubmitStatus) return;
+  showActionStatus(postSubmitStatus, message, isError);
 }
 
 function userError(message, name = "CommunityUserError") {
@@ -746,7 +752,11 @@ function renderPosts(
       share.setAttribute("aria-expanded", String(opening));
       if (opening) {
         shareLink.value = createPostShareUrl(post);
-        showActionStatus(actionStatus, "Sao chép liên kết hoặc chia sẻ qua ứng dụng.");
+        showActionStatus(actionStatus, "Bảng chia sẻ đã mở. Chọn cách bạn muốn gửi liên kết.");
+        requestAnimationFrame(() => {
+          sharePanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          copyShareLink.focus({ preventScroll: true });
+        });
       } else {
         showActionStatus(actionStatus, "");
       }
@@ -1955,6 +1965,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     if (publishButton.disabled) return;
 
     setBusy(publishButton, true, "Đang gửi câu chuyện...");
+    showPostSubmitStatus("Đang gửi câu chuyện...");
     let uploadedPaths = [];
     let postCreated = false;
     try {
@@ -2009,33 +2020,45 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       selectedMentionUsers.clear();
       renderSelectedMentions();
       mentionResults.hidden = true;
-      composerOpen = false;
-      postPanel.hidden = true;
-      openPostButton.hidden = false;
       updateCharacterCount("post-title-input", "post-title-count");
       updateCharacterCount("post-analysis", "post-analysis-count");
       renderPostImagePreview();
-      showStatus("Đã nhận câu chuyện. Chỉ bạn thấy bài trong lúc chờ kiểm tra.");
-      const accountData = await loadMyContent();
-      if (hasAccountView()) await loadNotifications();
-      await loadPosts();
-      void processPendingQueue(accountData.queue);
+      showPostSubmitStatus("Đã nhận câu chuyện. Chỉ bạn thấy bài trong lúc chờ kiểm tra.");
+      void (async () => {
+        try {
+          const accountData = await loadMyContent();
+          if (hasAccountView()) await loadNotifications();
+          await loadPosts();
+          void processPendingQueue(accountData.queue);
+        } catch (error) {
+          console.error("[Cộng đồng] Cập nhật sau khi gửi bài thất bại.", {
+            code: error?.code || error?.name || "unknown",
+            message: error?.message || String(error),
+          });
+          showPostSubmitStatus(
+            "Câu chuyện đã được gửi, nhưng chưa tải được trạng thái mới. Hãy tải lại trang hoặc kiểm tra mục Tài khoản; không gửi lại.",
+            true,
+          );
+        }
+      })();
     } catch (error) {
       if (postCreated) {
         console.error("[Cộng đồng] Cập nhật sau khi gửi bài thất bại.", {
           code: error?.code || error?.name || "unknown",
           message: error?.message || String(error),
         });
-        showStatus(
+        showPostSubmitStatus(
           "Câu chuyện đã được gửi, nhưng chưa tải được trạng thái mới. Hãy tải lại trang hoặc kiểm tra mục Tài khoản; không gửi lại.",
           true,
         );
       } else if (error?.name === "CommunitySubmissionUnconfirmedError") {
         uploadedPaths = [];
         showFailure(error, "Xác nhận gửi bài", "Hãy kiểm tra mục Tài khoản trước khi thử lại.");
+        showPostSubmitStatus(statusMessage.textContent, true);
       } else {
         await Promise.all(uploadedPaths.map((path) => removeUploadedImage(path)));
         showFailure(error, "Đăng bài", "Hãy kiểm tra nội dung và ảnh rồi thử lại.");
+        showPostSubmitStatus(statusMessage.textContent, true);
       }
     } finally {
       setBusy(publishButton, false);
