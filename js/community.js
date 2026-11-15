@@ -271,10 +271,11 @@ function normalizeImagePaths(value) {
 
 const MAX_POST_IMAGES = 10;
 
-function updateCharacterCount(inputId, counterId) {
-  const input = document.getElementById(inputId);
-  const counter = document.getElementById(counterId);
-  counter.textContent = `${input.value.length}/${input.maxLength}`;
+const PROFANITY_PATTERN =
+  /(^|[^\p{L}\p{N}])(?:địt(?:\s+mẹ)?|đụ(?:\s+mẹ)?|đéo|lồn|cặc|buồi|đm{1,2}|đcm|dcm|dmm?|dit(?=\s+me)|vcl|vl|fuck|shit|bitch)(?=$|[^\p{L}\p{N}])/iu;
+
+function containsProfanity(value) {
+  return PROFANITY_PATTERN.test(value);
 }
 
 let selectedImageObjectUrls = [];
@@ -330,12 +331,6 @@ function renderPostImagePreview() {
   });
 }
 
-document.getElementById("post-title-input")?.addEventListener("input", () => {
-  updateCharacterCount("post-title-input", "post-title-count");
-});
-document.getElementById("post-analysis")?.addEventListener("input", () => {
-  updateCharacterCount("post-analysis", "post-analysis-count");
-});
 postImageInput?.addEventListener("change", renderPostImagePreview);
 imageRatioInput?.addEventListener("change", renderPostImagePreview);
 
@@ -588,7 +583,8 @@ function renderPosts(
     }
     const title = document.createElement("h3");
     title.textContent = post.title;
-    card.append(authorRow, title);
+    card.append(authorRow);
+    if (post.title) card.append(title);
     if (
       currentUser &&
       !currentUserIsBanned &&
@@ -626,7 +622,7 @@ function renderPosts(
         const image = document.createElement("img");
         image.className = "post-image";
         image.src = imageUrl;
-        image.alt = `Ảnh minh họa cho ${post.title}`;
+        image.alt = `Ảnh minh họa cho ${post.title || "câu chuyện"}`;
         image.loading = "lazy";
         image.dataset.ratio = post.image_ratio || "natural";
         image.style.height = "auto";
@@ -642,11 +638,13 @@ function renderPosts(
       card.append(gallery);
     }
 
-    const analysis = document.createElement("p");
-    analysis.className = "post-analysis";
-    analysis.textContent = post.analysis;
     card.id = `post-${post.id}`;
-    card.append(analysis);
+    if (post.analysis) {
+      const analysis = document.createElement("p");
+      analysis.className = "post-analysis";
+      analysis.textContent = post.analysis;
+      card.append(analysis);
+    }
     const actions = document.createElement("div");
     actions.className = "post-actions";
     const like = document.createElement("button");
@@ -804,7 +802,8 @@ function renderPosts(
       featured.className = "featured-post";
       featured.href = `?post=${encodeURIComponent(post.id)}#post-${encodeURIComponent(post.id)}`;
       const featuredTitle = document.createElement("strong");
-      featuredTitle.textContent = metadata.is_pinned ? `📌 ${post.title}` : post.title;
+      const displayTitle = post.title || post.analysis?.slice(0, 100) || "Câu chuyện mới";
+      featuredTitle.textContent = metadata.is_pinned ? `📌 ${displayTitle}` : displayTitle;
       const featuredSummary = document.createElement("span");
       featuredSummary.textContent =
         `${metadata.likes_count} tim · ${metadata.comments_count} bình luận · ${metadata.shares_count} chia sẻ`;
@@ -864,9 +863,8 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         "Nội dung đã được lưu riêng tư và đang chờ AI kiểm duyệt. Hãy thử tải lại sau ít phút.",
       database_unavailable: "Chưa thể lưu dữ liệu. Hãy kiểm tra kết nối rồi thử lại.",
       invalid_comment: "Bình luận không được để trống và tối đa 2.000 ký tự.",
-      invalid_title: "Tiêu đề phải có từ 1 đến 120 ký tự.",
+      invalid_post: "Hãy nhập tiêu đề hoặc câu chuyện để đăng bài.",
       invalid_literary_work: "Tác phẩm hoặc địa danh không được dài quá 180 ký tự.",
-      invalid_analysis: "Câu chuyện cần từ 10 đến 5.000 ký tự.",
       invalid_queue_item: "Không tìm thấy nội dung cần kiểm duyệt. Hãy tải lại trang.",
       invalid_like_request: "Chưa thể cập nhật lượt thích. Hãy tải lại trang.",
       invalid_location_tags: "Hashtag địa danh chưa hợp lệ (tối đa 8 thẻ).",
@@ -1105,7 +1103,12 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   }
 
   async function deletePost(post) {
-    if (!window.confirm(`Xóa bài “${post.title}” của bạn? Thao tác này không thể hoàn tác.`)) return;
+    const postTitle = post.title || "không có tiêu đề";
+    if (
+      !window.confirm(
+        `Xóa bài “${postTitle}” của bạn? Thao tác này không thể hoàn tác.`,
+      )
+    ) return;
     try {
       await invokeCommunity("delete-post", { post_id: post.id });
       showStatus("Đã xóa bài viết của bạn.");
@@ -1178,7 +1181,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   async function sharePost(post, shareButton, input, feedback) {
     const url = createPostShareUrl(post);
     try {
-      await navigator.share({ title: post.title, url });
+      await navigator.share({ title: post.title || "Câu chuyện từ cộng đồng", url });
     } catch (error) {
       if (error?.name === "AbortError") {
         showActionStatus(feedback, "");
@@ -1565,7 +1568,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       const item = document.createElement("article");
       item.className = "moderation-item";
       const title = document.createElement("h4");
-      title.textContent = post.title;
+      title.textContent = post.title || "Bài viết không có tiêu đề";
       const author = document.createElement("p");
       author.textContent =
         `Tác giả: ${post.profiles?.display_name || "Thành viên"} · ` +
@@ -1983,14 +1986,16 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       const files = Array.from(formData.getAll("image")).filter(
         (file) => file instanceof File && file.size > 0,
       );
-      if (!title || title.length > 120) {
-        throw userError("Tiêu đề phải có từ 1 đến 120 ký tự.");
+      if (!title && !analysis) {
+        throw userError("Hãy nhập tiêu đề hoặc câu chuyện để đăng bài.");
+      }
+      if ([title, literaryWork, analysis, ...uniqueLocationTags].some(containsProfanity)) {
+        throw userError(
+          "Thông tin bài đăng có từ ngữ không phù hợp. Hãy chỉnh sửa trước khi gửi.",
+        );
       }
       if (literaryWork.length > 180) {
         throw userError("Tác phẩm hoặc địa danh không được dài quá 180 ký tự.");
-      }
-      if (analysis.length < 10 || analysis.length > 5000) {
-        throw userError("Câu chuyện cần từ 10 đến 5.000 ký tự.");
       }
       if (files.length > MAX_POST_IMAGES) {
         throw userError(`Bạn có thể đăng tối đa ${MAX_POST_IMAGES} ảnh trong một bài.`);
@@ -2020,8 +2025,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       selectedMentionUsers.clear();
       renderSelectedMentions();
       mentionResults.hidden = true;
-      updateCharacterCount("post-title-input", "post-title-count");
-      updateCharacterCount("post-analysis", "post-analysis-count");
       renderPostImagePreview();
       showPostSubmitStatus("Đã nhận câu chuyện. Chỉ bạn thấy bài trong lúc chờ kiểm tra.");
       void (async () => {

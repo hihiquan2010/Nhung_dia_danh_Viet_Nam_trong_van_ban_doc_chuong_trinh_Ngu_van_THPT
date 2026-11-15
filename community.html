@@ -242,32 +242,22 @@
             </button>
           </div>
           <form id="post-form">
-            <label for="post-title-input">Đặt tiêu đề cho câu chuyện</label>
+            <p class="field-meta">
+              Chỉ cần nhập tiêu đề hoặc câu chuyện; bạn có thể để trống một trong hai.
+            </p>
+            <label for="post-title-input">Tiêu đề</label>
             <input
               id="post-title-input"
               name="title"
-              required
-              maxlength="120"
               placeholder="Ví dụ: Lần đầu mình đến Mường Lát"
             />
-            <div class="field-meta">
-              <span>Chọn một điều khiến bạn nhớ nhất.</span>
-              <span id="post-title-count">0/120</span>
-            </div>
             <label for="post-analysis">Câu chuyện của bạn</label>
             <textarea
               id="post-analysis"
               name="analysis"
-              required
-              minlength="10"
-              maxlength="5000"
               rows="5"
               placeholder="Bạn đã đọc hoặc đến nơi nào? Điều gì khiến nơi ấy ở lại trong bạn?"
             ></textarea>
-            <div class="field-meta">
-              <span>Viết ít nhất 10 ký tự; bạn có thể kể dài hơn nếu muốn.</span>
-              <span id="post-analysis-count">0/5000</span>
-            </div>
             <details class="post-optional-fields">
               <summary>
                 <i class="fa-solid fa-plus" aria-hidden="true"></i>
@@ -481,6 +471,6 @@
     <span id="footer"></span>
     <script src="../js/ico.js"></script>
     <script type="module" src="./js/header_footer.js?v=community-account-nav-20261111"></script>
-    <script type="module" src="./js/community.js?v=10"></script>
+    <script type="module" src="./js/community.js?v=11"></script>
   </body>
 </html>
