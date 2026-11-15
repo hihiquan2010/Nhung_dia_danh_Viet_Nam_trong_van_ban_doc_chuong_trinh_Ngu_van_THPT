@@ -9,7 +9,7 @@
       content="Đăng nhập và chia sẻ bài viết về văn học, địa danh Việt Nam."
     />
     <link rel="stylesheet" href="./css/style.css" />
-    <link rel="stylesheet" href="./css/community.css?v=responsive-layout-20261111" />
+    <link rel="stylesheet" href="./css/community.css?v=easy-posting-20261115" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -25,7 +25,10 @@
       <header class="community-heading">
         <p class="eyebrow">DẤU CHÂN VĂN HỌC</p>
         <h1>Cộng đồng</h1>
-        <p>Chia sẻ cảm nhận và câu chuyện về những miền đất trong trang văn.</p>
+        <p>
+          Bạn nhớ nhất điều gì về một miền đất trong trang văn? Đọc những câu
+          chuyện từ cộng đồng, hoặc đăng nhập để kể câu chuyện của riêng bạn.
+        </p>
       </header>
 
       <nav class="community-nav" aria-label="Điều hướng cộng đồng">
@@ -212,7 +215,9 @@
           </span>
           <div>
             <h2 id="community-feed-title">Bảng tin cộng đồng</h2>
-            <p class="muted">Đọc bài viết, chia sẻ góc nhìn và bình luận.</p>
+            <p class="muted">
+              Những câu chuyện chân thật về văn học và miền đất Việt Nam.
+            </p>
           </div>
           <button type="button" id="open-post-button" hidden>
             <i class="fa-solid fa-pen" aria-hidden="true"></i> Viết bài
@@ -226,100 +231,125 @@
           aria-labelledby="post-title"
         >
           <div class="section-heading">
-            <h2 id="post-title">Bài viết và phân tích mới</h2>
+            <div>
+              <h2 id="post-title">Kể câu chuyện của bạn</h2>
+              <p class="post-form-intro">
+                Không cần viết cầu kỳ. Hãy bắt đầu từ một điều bạn nhớ nhất.
+              </p>
+            </div>
             <button type="button" class="button-secondary" id="close-post-button">
               Đóng
             </button>
           </div>
           <form id="post-form">
-            <label for="post-title-input">Tiêu đề</label>
+            <label for="post-title-input">Đặt tiêu đề cho câu chuyện</label>
             <input
               id="post-title-input"
               name="title"
               required
               maxlength="120"
-              placeholder="Bạn muốn chia sẻ điều gì?"
+              placeholder="Ví dụ: Lần đầu mình đến Mường Lát"
             />
             <div class="field-meta">
-              <span>Một tiêu đề ngắn giúp mọi người dễ tìm bài viết.</span>
+              <span>Chọn một điều khiến bạn nhớ nhất.</span>
               <span id="post-title-count">0/120</span>
             </div>
-            <label for="literary-work"
-              >Tác phẩm / địa danh (không bắt buộc)</label
-            >
-            <input
-              id="literary-work"
-              name="literary_work"
-              maxlength="180"
-              placeholder="Ví dụ: Tây Tiến — Mường Lát"
-            />
-            <label for="location-tags">Hashtag địa danh (cách nhau bằng dấu phẩy)</label>
-            <input
-              id="location-tags"
-              name="location_tags"
-              maxlength="335"
-              placeholder="Ví dụ: #MườngLát, #TâyBắc"
-            />
-            <label for="image-ratio">Tỉ lệ khung hình ảnh</label>
-            <select id="image-ratio" name="image_ratio">
-              <option value="natural">Giữ nguyên tỉ lệ ảnh</option>
-              <option value="square">Vuông 1:1</option>
-              <option value="landscape">Ngang 4:3</option>
-              <option value="portrait">Dọc 3:4</option>
-            </select>
-            <label for="post-analysis">Nội dung phân tích</label>
+            <label for="post-analysis">Câu chuyện của bạn</label>
             <textarea
               id="post-analysis"
               name="analysis"
               required
               minlength="10"
               maxlength="5000"
-              rows="6"
-              placeholder="Viết nội dung phân tích (10–5.000 ký tự)..."
+              rows="5"
+              placeholder="Bạn đã đọc hoặc đến nơi nào? Điều gì khiến nơi ấy ở lại trong bạn?"
             ></textarea>
             <div class="field-meta">
-              <span>Tối thiểu 10 ký tự · tối đa 5.000 ký tự.</span>
+              <span>Viết ít nhất 10 ký tự; bạn có thể kể dài hơn nếu muốn.</span>
               <span id="post-analysis-count">0/5000</span>
             </div>
-            <label for="post-image"
-              >Ảnh minh họa <span class="optional-label">· không bắt buộc</span></label
-            >
-            <input
-              id="post-image"
-              name="image"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-            />
-            <p class="upload-hint">
-              JPG, PNG hoặc WebP · tối đa 10 ảnh · 5 MB mỗi ảnh
-            </p>
-            <div
-              id="post-image-preview"
-              class="image-selection"
-              aria-live="polite"
-              hidden
-            ></div>
-            <label for="mention-search">Gắn thẻ thành viên</label>
-            <input
-              id="mention-search"
-              type="search"
-              autocomplete="off"
-              placeholder="Tìm theo tên hiển thị..."
-              aria-describedby="mention-help"
-            />
-            <p id="mention-help" class="upload-hint">
-              Người được gắn thẻ sẽ nhận thông báo sau khi bài viết được duyệt.
-            </p>
-            <div id="mention-results" class="mention-results" role="listbox" hidden></div>
-            <div id="selected-mentions" class="selected-mentions" aria-live="polite"></div>
+            <details class="post-optional-fields">
+              <summary>
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                Thêm địa danh, ảnh hoặc gắn thẻ
+                <span>(không bắt buộc)</span>
+              </summary>
+              <div class="post-optional-content">
+                <label for="literary-work">
+                  Tác phẩm hoặc địa danh
+                  <span class="optional-label">· không bắt buộc</span>
+                </label>
+                <input
+                  id="literary-work"
+                  name="literary_work"
+                  maxlength="180"
+                  placeholder="Ví dụ: Tây Tiến — Mường Lát"
+                />
+                <label for="location-tags">
+                  Từ khóa địa danh
+                  <span class="optional-label">· không bắt buộc</span>
+                </label>
+                <input
+                  id="location-tags"
+                  name="location_tags"
+                  maxlength="335"
+                  placeholder="Ví dụ: Mường Lát, Tây Bắc"
+                />
+                <label for="post-image">
+                  Ảnh minh họa
+                  <span class="optional-label">· không bắt buộc</span>
+                </label>
+                <input
+                  id="post-image"
+                  name="image"
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                />
+                <p class="upload-hint">
+                  JPG, PNG hoặc WebP · tối đa 10 ảnh · 5 MB mỗi ảnh
+                </p>
+                <div
+                  id="post-image-preview"
+                  class="image-selection"
+                  aria-live="polite"
+                  hidden
+                ></div>
+                <label for="image-ratio">Cách hiển thị ảnh</label>
+                <select id="image-ratio" name="image_ratio">
+                  <option value="natural">Giữ nguyên tỉ lệ ảnh</option>
+                  <option value="square">Vuông 1:1</option>
+                  <option value="landscape">Ngang 4:3</option>
+                  <option value="portrait">Dọc 3:4</option>
+                </select>
+                <label for="mention-search">
+                  Gắn thẻ thành viên
+                  <span class="optional-label">· không bắt buộc</span>
+                </label>
+                <input
+                  id="mention-search"
+                  type="search"
+                  autocomplete="off"
+                  placeholder="Tìm theo tên hiển thị..."
+                  aria-describedby="mention-help"
+                />
+                <p id="mention-help" class="upload-hint">
+                  Người được gắn thẻ sẽ nhận thông báo sau khi bài được duyệt.
+                </p>
+                <div id="mention-results" class="mention-results" role="listbox" hidden></div>
+                <div id="selected-mentions" class="selected-mentions" aria-live="polite"></div>
+              </div>
+            </details>
             <p class="muted moderation-note">
-              Bài viết và bình luận được kiểm tra đầu vào rồi lưu riêng tư ở
-              trạng thái chờ Gemini kiểm duyệt. Chỉ nội dung phù hợp mới được
-              công khai; nội dung không phù hợp sẽ bị xóa. Ảnh không được gửi
-              tới Google Gemini.
+              Sau khi gửi, bài sẽ được kiểm tra trước khi xuất hiện công khai.
+              Trong lúc chờ, chỉ bạn thấy bài viết; bài phù hợp mới xuất hiện
+              trên bảng tin. Bạn có thể xem trạng thái trong mục Tài khoản.
+              Ảnh không được gửi cho hệ thống AI để kiểm tra.
             </p>
-            <button type="submit" id="publish-button">Đăng bài</button>
+            <button type="submit" id="publish-button">
+              <i class="fa-solid fa-paper-plane" aria-hidden="true"></i>
+              Gửi câu chuyện
+            </button>
           </form>
         </section>
 
@@ -444,6 +474,6 @@
     </main>
     <span id="footer"></span>
     <script type="module" src="./js/header_footer.js?v=community-account-nav-20261111"></script>
-    <script type="module" src="./js/community.js?v=8"></script>
+    <script type="module" src="./js/community.js?v=9"></script>
   </body>
 </html>

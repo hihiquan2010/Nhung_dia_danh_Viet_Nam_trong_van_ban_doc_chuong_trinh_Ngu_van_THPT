@@ -551,6 +551,7 @@ body[data-view="community"] #owner-panel {
 }
 
 #post-panel {
+  scroll-margin-top: 112px;
   padding: clamp(20px, 3vw, 30px);
   border: 1px solid #d9e1f4;
   border-left: 4px solid #3b5bac;
@@ -560,11 +561,85 @@ body[data-view="community"] #owner-panel {
 }
 
 #post-panel h2 {
-  margin-bottom: 20px;
+  margin-bottom: 0;
+}
+
+.post-form-intro {
+  margin: 6px 0 0;
+  color: #60695e;
+  font-size: 0.92rem;
+  line-height: 1.55;
 }
 
 #post-form > label:first-child {
   margin-top: 0;
+}
+
+#post-form > input[name="title"],
+#post-form > textarea[name="analysis"] {
+  background: #fff;
+  border-color: #bfcab9;
+}
+
+#post-form > textarea[name="analysis"] {
+  min-height: 180px;
+}
+
+.post-optional-fields {
+  margin: 22px 0 16px;
+  border: 1px solid #dfe4da;
+  border-radius: 12px;
+  background: rgba(248, 250, 246, 0.8);
+}
+
+.post-optional-fields summary {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  color: #35523d;
+  cursor: pointer;
+  font-size: 0.92rem;
+  font-weight: 700;
+  list-style: none;
+}
+
+.post-optional-fields summary::-webkit-details-marker {
+  display: none;
+}
+
+.post-optional-fields summary::marker {
+  content: "";
+}
+
+.post-optional-fields summary:focus-visible {
+  outline: 3px solid rgba(82, 119, 94, 0.35);
+  outline-offset: 2px;
+}
+
+.post-optional-fields summary span {
+  color: #767b71;
+  font-size: 0.82rem;
+  font-weight: 400;
+}
+
+.post-optional-fields[open] summary {
+  border-bottom: 1px solid #dfe4da;
+  border-radius: 12px 12px 0 0;
+}
+
+.post-optional-fields summary i {
+  transition: transform 0.18s ease;
+}
+
+.post-optional-fields[open] summary i {
+  transform: rotate(45deg);
+}
+
+.post-optional-content {
+  padding: 4px 14px 16px;
 }
 
 #publish-button {
@@ -1029,6 +1104,9 @@ body[data-view="community"] #owner-panel {
 .feed-area > .area-heading #open-post-button {
   flex: 0 0 auto;
   margin-left: auto;
+  min-height: 46px;
+  padding-inline: 20px;
+  box-shadow: 0 6px 16px rgba(44, 76, 59, 0.18);
 }
 
 .community .post-like {
@@ -1466,6 +1544,18 @@ body[data-view="community"] #owner-panel {
 
   .section-heading {
     align-items: flex-start;
+  }
+
+  #post-panel .section-heading {
+    gap: 8px;
+  }
+
+  #post-panel .section-heading > .button-secondary {
+    flex: 0 0 auto;
+  }
+
+  .post-optional-fields summary {
+    flex-wrap: wrap;
   }
 
   .feed-area > .area-heading {

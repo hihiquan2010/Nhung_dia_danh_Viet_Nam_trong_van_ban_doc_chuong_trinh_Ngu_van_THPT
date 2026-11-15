@@ -198,9 +198,9 @@ function showActionStatus(element, message, isError = false) {
   element.dataset.error = String(isError);
 }
 
-function userError(message) {
+function userError(message, name = "CommunityUserError") {
   const error = new Error(message);
-  error.name = "CommunityUserError";
+  error.name = name;
   return error;
 }
 
@@ -210,7 +210,10 @@ function showFailure(error, operation, guidance) {
     status: error?.status,
     message: error?.message || String(error),
   });
-  if (error?.name === "CommunityUserError") {
+  if (
+    error?.name === "CommunityUserError" ||
+    error?.name === "CommunitySubmissionUnconfirmedError"
+  ) {
     showStatus(error.message, true);
     return;
   }
@@ -853,7 +856,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       invalid_comment: "Bình luận không được để trống và tối đa 2.000 ký tự.",
       invalid_title: "Tiêu đề phải có từ 1 đến 120 ký tự.",
       invalid_literary_work: "Tác phẩm hoặc địa danh không được dài quá 180 ký tự.",
-      invalid_analysis: "Nội dung phân tích cần từ 10 đến 5.000 ký tự.",
+      invalid_analysis: "Câu chuyện cần từ 10 đến 5.000 ký tự.",
       invalid_queue_item: "Không tìm thấy nội dung cần kiểm duyệt. Hãy tải lại trang.",
       invalid_like_request: "Chưa thể cập nhật lượt thích. Hãy tải lại trang.",
       invalid_location_tags: "Hashtag địa danh chưa hợp lệ (tối đa 8 thẻ).",
@@ -890,12 +893,20 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       code: code || "unknown",
       message: responseBody?.message || error.message,
     });
-    throw userError(
-      messages[code] ||
-        (error.message.includes("Failed to fetch")
-          ? "Không thể kết nối dịch vụ cộng đồng. Hãy kiểm tra internet rồi thử lại."
-          : "Dịch vụ cộng đồng chưa thể hoàn tất thao tác. Hãy thử lại sau."),
-    );
+    const requestFailed = error.name === "FunctionsFetchError" ||
+      /failed to (fetch|send)|networkerror/i.test(error.message);
+    const submissionOutcomeUnknown = action === "create-post" &&
+      (requestFailed || error.context?.status >= 500);
+    if (submissionOutcomeUnknown) {
+      throw userError(
+        "Kết nối bị gián đoạn nên chưa xác nhận được bài đã gửi hay chưa. Hãy kiểm tra mục Tài khoản trước khi thử lại để tránh đăng trùng.",
+        "CommunitySubmissionUnconfirmedError",
+      );
+    }
+    const fallbackMessage = requestFailed
+      ? "Không thể kết nối dịch vụ cộng đồng. Hãy kiểm tra internet rồi thử lại."
+      : "Dịch vụ cộng đồng chưa thể hoàn tất thao tác. Hãy thử lại sau.";
+    throw userError(messages[code] || fallbackMessage);
   }
 
   function validateImage(file) {
@@ -1941,8 +1952,11 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
   async function publishPost(event) {
     event.preventDefault();
-    setBusy(publishButton, true, "Đang gửi vào hàng chờ...");
+    if (publishButton.disabled) return;
+
+    setBusy(publishButton, true, "Đang gửi câu chuyện...");
     let uploadedPaths = [];
+    let postCreated = false;
     try {
       const formData = new FormData(postForm);
       const title = formData.get("title").trim();
@@ -1965,7 +1979,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         throw userError("Tác phẩm hoặc địa danh không được dài quá 180 ký tự.");
       }
       if (analysis.length < 10 || analysis.length > 5000) {
-        throw userError("Nội dung phân tích cần từ 10 đến 5.000 ký tự.");
+        throw userError("Câu chuyện cần từ 10 đến 5.000 ký tự.");
       }
       if (files.length > MAX_POST_IMAGES) {
         throw userError(`Bạn có thể đăng tối đa ${MAX_POST_IMAGES} ảnh trong một bài.`);
@@ -1989,6 +2003,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         mention_user_ids: [...selectedMentionUsers.keys()],
       });
 
+      postCreated = true;
       uploadedPaths = [];
       postForm.reset();
       selectedMentionUsers.clear();
@@ -2000,14 +2015,25 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       updateCharacterCount("post-title-input", "post-title-count");
       updateCharacterCount("post-analysis", "post-analysis-count");
       renderPostImagePreview();
-      showStatus("Bài viết đã được gửi vào hàng chờ; hiện chỉ bạn nhìn thấy.");
+      showStatus("Đã nhận câu chuyện. Chỉ bạn thấy bài trong lúc chờ kiểm tra.");
       const accountData = await loadMyContent();
       if (hasAccountView()) await loadNotifications();
       await loadPosts();
       void processPendingQueue(accountData.queue);
     } catch (error) {
-      await Promise.all(uploadedPaths.map((path) => removeUploadedImage(path)));
-      showFailure(error, "Đăng bài", "Hãy kiểm tra nội dung và ảnh rồi thử lại.");
+      if (postCreated) {
+        showFailure(
+          error,
+          "Cập nhật sau khi gửi bài",
+          "Câu chuyện đã được gửi. Hãy tải lại trang hoặc xem mục Tài khoản để kiểm tra trạng thái; không cần gửi lại.",
+        );
+      } else if (error?.name === "CommunitySubmissionUnconfirmedError") {
+        uploadedPaths = [];
+        showFailure(error, "Xác nhận gửi bài", "Hãy kiểm tra mục Tài khoản trước khi thử lại.");
+      } else {
+        await Promise.all(uploadedPaths.map((path) => removeUploadedImage(path)));
+        showFailure(error, "Đăng bài", "Hãy kiểm tra nội dung và ảnh rồi thử lại.");
+      }
     } finally {
       setBusy(publishButton, false);
     }
