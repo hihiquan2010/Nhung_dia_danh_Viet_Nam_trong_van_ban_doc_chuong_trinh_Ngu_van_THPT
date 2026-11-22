@@ -5,6 +5,8 @@ import { menuData } from "./data.js";
 const MEDIA_BUCKET = "community-media";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const SIGNED_IMAGE_TTL_SECONDS = 24 * 60 * 60;
+const USER_URL_PATTERN =
+  /https?:\/\/[^\s<>"'`]+|www\.[^\s<>"'`]+|(?<![@\p{L}\p{N}_])(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+[\p{L}]{2,}(?:[/?#][^\s<>"'`]*)?/giu;
 const IMAGE_EXTENSIONS = new Map([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],
@@ -17,6 +19,11 @@ const accountArea = document.getElementById("community-account");
 const postPanel = document.getElementById("post-panel");
 const moderationPanel = document.getElementById("moderation-panel");
 const ownerPanel = document.getElementById("owner-panel");
+const adminTools = document.getElementById("admin-tools");
+const externalLinkDialog = document.getElementById("external-link-dialog");
+const externalLinkDestination = document.getElementById("external-link-destination");
+const confirmExternalLinkButton = document.getElementById("confirm-external-link");
+const cancelExternalLinkButton = document.getElementById("cancel-external-link");
 const authForm = document.getElementById("auth-form");
 const profileForm = document.getElementById("profile-form");
 const postForm = document.getElementById("post-form");
@@ -25,8 +32,13 @@ const moderatorForm = document.getElementById("moderator-form");
 const announcementForm = document.getElementById("announcement-form");
 const statusMessage = document.getElementById("status-message");
 const postsList = document.getElementById("posts-list");
+const postSearchInput = document.getElementById("post-search-input");
+const postAuthorFilter = document.getElementById("post-author-filter");
+const postSearchStatus = document.getElementById("post-search-status");
 const moderationPosts = document.getElementById("moderation-posts");
 const banProposals = document.getElementById("ban-proposals");
+const moderationUserSearchInput = document.getElementById("moderation-user-search-input");
+const moderationUserResults = document.getElementById("moderation-user-results");
 const moderatorList = document.getElementById("moderator-list");
 const announcementList = document.getElementById("announcement-list");
 const signInButton = document.getElementById("sign-in-button");
@@ -56,13 +68,99 @@ const mentionResults = document.getElementById("mention-results");
 const selectedMentions = document.getElementById("selected-mentions");
 const featuredPosts = document.getElementById("featured-posts");
 const placeDiscoverySection = document.getElementById("place-discovery");
+let pendingExternalUrl = null;
+
+function normalizeExternalUrl(value) {
+  const candidate = /^https?:\/\//i.test(value) ? value : `https://${value}`;
+  try {
+    const url = new URL(candidate);
+    if (
+      !["http:", "https:"].includes(url.protocol) ||
+      !url.hostname ||
+      url.username ||
+      url.password
+    ) {
+      return null;
+    }
+    return url;
+  } catch {
+    return null;
+  }
+}
+
+function confirmExternalNavigation(value) {
+  const url = normalizeExternalUrl(value);
+  if (!url) return;
+  if (
+    !externalLinkDialog ||
+    !externalLinkDestination ||
+    typeof externalLinkDialog.showModal !== "function"
+  ) {
+    if (window.confirm(`Bạn sắp rời khỏi trang để đến ${url.href}. Tiếp tục?`)) {
+      window.location.assign(url.href);
+    }
+    return;
+  }
+  pendingExternalUrl = url.href;
+  externalLinkDestination.textContent = `${url.hostname}\n${url.href}`;
+  if (!externalLinkDialog.open) externalLinkDialog.showModal();
+}
+
+function appendSafeUserText(container, value) {
+  const text = String(value ?? "");
+  let cursor = 0;
+  for (const match of text.matchAll(USER_URL_PATTERN)) {
+    const raw = match[0];
+    let urlText = raw;
+    while (/[.,!?;:)\]}»"'”’]$/.test(urlText)) urlText = urlText.slice(0, -1);
+    if (!urlText) continue;
+    const start = match.index;
+    const end = start + urlText.length;
+    container.append(document.createTextNode(text.slice(cursor, start)));
+    const url = normalizeExternalUrl(urlText);
+    if (!url) {
+      container.append(document.createTextNode(urlText));
+    } else {
+      const linkButton = document.createElement("button");
+      linkButton.type = "button";
+      linkButton.className = "user-content-url";
+      linkButton.textContent = urlText;
+      linkButton.setAttribute(
+        "aria-label",
+        `Xác nhận trước khi mở liên kết ${url.hostname}`,
+      );
+      linkButton.addEventListener("click", () => confirmExternalNavigation(url.href));
+      container.append(linkButton);
+    }
+    cursor = end;
+  }
+  container.append(document.createTextNode(text.slice(cursor)));
+}
+
+externalLinkDialog?.addEventListener("cancel", () => {
+  pendingExternalUrl = null;
+});
+cancelExternalLinkButton?.addEventListener("click", () => {
+  pendingExternalUrl = null;
+  externalLinkDialog.close();
+});
+confirmExternalLinkButton?.addEventListener("click", () => {
+  const url = pendingExternalUrl && normalizeExternalUrl(pendingExternalUrl);
+  pendingExternalUrl = null;
+  externalLinkDialog.close();
+  if (url) window.location.assign(url.href);
+});
+
 const placeSearchInput = document.getElementById("place-search");
 const placeSuggestions = document.getElementById("place-suggestions");
 const activeTagFilter = document.getElementById("active-tag-filter");
 const imageUrlCache = new Map();
+const postSearchIndex = new WeakMap();
 const selectedMentionUsers = new Map();
 let mentionSearchTimer = null;
 let mentionSearchRevision = 0;
+let moderationSearchTimer = null;
+let moderationSearchRevision = 0;
 let composerOpen = false;
 let recommendationPosts = [];
 let recommendationMetadata = new Map();
@@ -110,6 +208,91 @@ function normalizePlaceName(value) {
     .replace(/Đ/g, "D")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "");
+}
+
+function populatePostAuthorFilter(posts) {
+  if (!postAuthorFilter) return;
+
+  const selectedAuthorName = postAuthorFilter.value;
+  const authors = new Set();
+  for (const post of posts) {
+    authors.add(post.profiles?.display_name || "Thành viên");
+  }
+
+  const defaultOption = document.createElement("option");
+  defaultOption.value = "";
+  defaultOption.textContent = "Tất cả người đăng";
+  postAuthorFilter.replaceChildren(defaultOption);
+  for (const authorName of [...authors].sort((a, b) => a.localeCompare(b, "vi"))) {
+    const option = document.createElement("option");
+    option.value = authorName;
+    option.textContent = authorName;
+    postAuthorFilter.append(option);
+  }
+  postAuthorFilter.value = authors.has(selectedAuthorName) ? selectedAuthorName : "";
+}
+
+function applyPostSearch() {
+  if (!postsList) return;
+
+  const query = normalizePlaceName(postSearchInput?.value || "");
+  const authorName = postAuthorFilter?.value || "";
+  const cards = [...postsList.querySelectorAll(".post-card")].map((card) => {
+    const searchData = postSearchIndex.get(card);
+    const locationsMatch = Boolean(
+      query &&
+        searchData?.locationTags.some((tag) =>
+          normalizePlaceName(tag).includes(query),
+        ),
+    );
+    const titleMatches = Boolean(
+      query && normalizePlaceName(searchData?.title).includes(query),
+    );
+    return {
+      card,
+      matches: (!query || locationsMatch || titleMatches) &&
+        (!authorName || searchData?.authorName === authorName),
+      rank: locationsMatch ? 2 : titleMatches ? 1 : 0,
+      locationsMatch,
+      titleMatches,
+    };
+  });
+
+  let visibleCount = 0;
+  let locationMatchCount = 0;
+  let titleMatchCount = 0;
+  for (const entry of cards) {
+    entry.card.hidden = !entry.matches;
+    entry.card.style.order = String(2 - entry.rank);
+    if (!entry.matches) continue;
+    visibleCount += 1;
+    if (entry.locationsMatch) locationMatchCount += 1;
+    else if (entry.titleMatches) titleMatchCount += 1;
+  }
+
+  if (featuredPosts) {
+    featuredPosts.hidden = Boolean(query || authorName) || !featuredPosts.childElementCount;
+  }
+  const emptyState = postsList.querySelector(".empty-state");
+  if (emptyState) emptyState.hidden = Boolean(query || authorName);
+  if (!postSearchStatus) return;
+
+  if (query && !visibleCount) {
+    postSearchStatus.textContent =
+      "Không tìm thấy bài phù hợp trong 50 bài mới nhất. Thử từ khóa khác hoặc xóa bộ lọc người đăng.";
+  } else if (query) {
+    postSearchStatus.textContent =
+      `Ưu tiên địa danh: ${locationMatchCount} bài; tiếp theo là tiêu đề: ${titleMatchCount} bài. ` +
+      "Kết quả trong 50 bài mới nhất.";
+  } else if (authorName) {
+    postSearchStatus.textContent =
+      `Hiển thị ${visibleCount} bài của ${authorName} trong 50 bài mới nhất.`;
+  } else if (cards.length) {
+    postSearchStatus.textContent =
+      `Đang hiển thị ${visibleCount} bài trong 50 bài mới nhất.`;
+  } else {
+    postSearchStatus.textContent = "";
+  }
 }
 
 function renderPlaceRecommendations(posts = [], metadata = new Map(), query = "") {
@@ -396,7 +579,7 @@ function appendComments(
     author.textContent = `${comment.profiles?.display_name || "Thành viên"} · ${formatDate(comment.created_at)}`;
     const content = document.createElement("p");
     content.className = "comment-content";
-    content.textContent = comment.content;
+    appendSafeUserText(content, comment.content);
     commentBody.append(author, content);
     commentItem.append(avatar, commentBody);
     commentList.append(commentItem);
@@ -410,7 +593,7 @@ function appendComments(
     pending.textContent = `Bình luận của bạn đang chờ AI kiểm duyệt · ${formatDate(comment.created_at)}`;
     const content = document.createElement("p");
     content.className = "comment-content";
-    content.textContent = comment.content;
+    appendSafeUserText(content, comment.content);
     commentItem.append(pending, content);
     commentList.append(commentItem);
   }
@@ -467,7 +650,7 @@ function appendComments(
   card.append(commentSection);
 }
 
-function addBanRequestForm(container, targetUserId, onBan) {
+function addBanRequestForm(container, targetUserId, targetLabel, onBan) {
   const form = document.createElement("form");
   form.className = "moderation-actions";
 
@@ -502,6 +685,14 @@ function addBanRequestForm(container, targetUserId, onBan) {
   form.append(reasonLabel, durationLabel, button);
   form.addEventListener("submit", (event) => {
     event.preventDefault();
+    const durationLabel = duration.value === "permanent"
+      ? "vĩnh viễn"
+      : duration.options[duration.selectedIndex].textContent;
+    if (
+      !window.confirm(
+        `Xác nhận gửi lệnh BAN ${durationLabel} cho ${targetLabel} với lý do: ${reason.value.trim()}?`,
+      )
+    ) return;
     void onBan({
       target_user_id: targetUserId,
       reason: reason.value.trim(),
@@ -524,7 +715,6 @@ function renderPosts(
   posts,
   currentUser,
   currentRole,
-  onBan,
   currentUserIsBanned,
   canComment,
   commentsUnavailable,
@@ -544,6 +734,7 @@ function renderPosts(
       ? "Hồ sơ này chưa có bài viết nào được duyệt."
       : "Chưa có bài đăng nào. Hãy chia sẻ điều đầu tiên!";
     postsList.append(emptyState);
+    applyPostSearch();
     return;
   }
 
@@ -557,6 +748,11 @@ function renderPosts(
     };
     const card = document.createElement("article");
     card.className = "post-card";
+    postSearchIndex.set(card, {
+      title: post.title || "",
+      locationTags: post.location_tags || [],
+      authorName: post.profiles?.display_name || "Thành viên",
+    });
     const authorRow = document.createElement("div");
     authorRow.className = "post-author";
     authorRow.append(makeAvatar(post.profiles));
@@ -582,22 +778,13 @@ function renderPosts(
       authorRow.append(pinned);
     }
     const title = document.createElement("h3");
-    title.textContent = post.title;
+    appendSafeUserText(title, post.title);
     card.append(authorRow);
     if (post.title) card.append(title);
-    if (
-      currentUser &&
-      !currentUserIsBanned &&
-      currentUser.id !== post.author_id &&
-      (currentRole === "moderator" || currentRole === "owner")
-    ) {
-      addBanRequestForm(card, post.author_id, onBan);
-    }
-
     if (post.literary_work) {
       const literaryWork = document.createElement("p");
       literaryWork.className = "post-literary-work";
-      literaryWork.textContent = post.literary_work;
+      appendSafeUserText(literaryWork, post.literary_work);
       card.append(literaryWork);
     }
     if (post.location_tags?.length) {
@@ -642,7 +829,7 @@ function renderPosts(
     if (post.analysis) {
       const analysis = document.createElement("p");
       analysis.className = "post-analysis";
-      analysis.textContent = post.analysis;
+      appendSafeUserText(analysis, post.analysis);
       card.append(analysis);
     }
     const actions = document.createElement("div");
@@ -820,6 +1007,7 @@ function renderPosts(
     .slice(0, 5)
     .forEach((entry) => featuredPosts.append(entry.element));
   featuredPosts.hidden = featuredPosts.childElementCount === 0;
+  applyPostSearch();
 }
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
@@ -1014,7 +1202,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       if (entry.content) {
         const content = document.createElement("p");
         content.className = "account-content-preview";
-        content.textContent = entry.content;
+        appendSafeUserText(content, entry.content);
         item.append(content);
       }
       const mediaPaths = normalizeImagePaths(entry.image_paths ?? entry.image_path);
@@ -1400,6 +1588,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         sharedPostMissing = true;
       }
     }
+    populatePostAuthorFilter(posts);
 
     let comments = [];
     let commentsError = null;
@@ -1513,7 +1702,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       }),
       currentUser,
       currentRole,
-      requestBan,
       currentUserIsBanned,
       Boolean(currentRole) && !currentUserIsBanned,
       Boolean(commentsError),
@@ -1561,9 +1749,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     moderationPosts.replaceChildren();
     banProposals.replaceChildren();
 
-    if (!data.posts.length) {
-      moderationPosts.textContent = "Chưa có bài viết cần xem.";
-    }
     for (const post of data.posts) {
       const item = document.createElement("article");
       item.className = "moderation-item";
@@ -1574,7 +1759,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         `Tác giả: ${post.profiles?.display_name || "Thành viên"} · ` +
         `trạng thái: ${post.status}`;
       const preview = document.createElement("p");
-      preview.textContent = post.analysis.slice(0, 360);
+      appendSafeUserText(preview, post.analysis.slice(0, 360));
       const actions = document.createElement("div");
       actions.className = "moderation-actions";
       const reason = document.createElement("input");
@@ -1587,6 +1772,10 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       button.textContent = status === "rejected" ? "Ẩn bài" : "Khôi phục bài";
       button.dataset.danger = String(status === "rejected");
       button.addEventListener("click", async () => {
+        if (
+          status === "rejected" &&
+          !window.confirm(`Xác nhận ẩn bài “${post.title || "không có tiêu đề"}”?`)
+        ) return;
         try {
           await invokeCommunity("moderate-post", {
             post_id: post.id,
@@ -1604,7 +1793,6 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       item.append(title, author, preview, actions);
       moderationPosts.append(item);
     }
-
     if (!data.proposals.length) {
       banProposals.textContent = "Không có đề xuất BAN đang chờ.";
     }
@@ -1632,6 +1820,12 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         button.textContent = approve ? "Duyệt BAN" : "Từ chối";
         button.dataset.danger = String(approve);
         button.addEventListener("click", async () => {
+          if (
+            approve &&
+            !window.confirm(
+              `Xác nhận duyệt lệnh BAN tài khoản …${proposal.target_user_id.slice(-8)}?`,
+            )
+          ) return;
           try {
             await invokeCommunity("resolve-ban", {
               proposal_id: proposal.id,
@@ -1683,6 +1877,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         button.textContent = "Gỡ thông báo";
         button.dataset.danger = "true";
         button.addEventListener("click", async () => {
+          if (!window.confirm(`Xác nhận gỡ thông báo “${announcement.title}” khỏi trang chủ?`)) {
+            return;
+          }
           try {
             await invokeCommunity("archive-announcement", {
               announcement_id: announcement.id,
@@ -1696,6 +1893,46 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         item.append(button);
       }
       announcementList.append(item);
+    }
+  }
+
+  async function searchModerationUsers(query) {
+    const revision = ++moderationSearchRevision;
+    moderationUserResults.replaceChildren();
+    const normalizedQuery = query.trim();
+    if (
+      normalizedQuery.length < 2 ||
+      (currentRole !== "moderator" && currentRole !== "owner") ||
+      currentUserIsBanned
+    ) return;
+
+    try {
+      const result = await invokeCommunity("search-users", { query: normalizedQuery });
+      if (revision !== moderationSearchRevision) return;
+      const users = result.users || [];
+      if (!users.length) {
+        moderationUserResults.textContent = "Không tìm thấy tài khoản phù hợp.";
+        return;
+      }
+      for (const user of users) {
+        const item = document.createElement("article");
+        item.className = "moderation-item";
+        const title = document.createElement("h4");
+        title.textContent = user.display_name || "Thành viên";
+        const accountId = document.createElement("p");
+        accountId.className = "muted";
+        accountId.textContent = `Mã tài khoản kết thúc bằng …${user.id.slice(-8)}`;
+        item.append(title, accountId);
+        addBanRequestForm(
+          item,
+          user.id,
+          `${user.display_name || "thành viên"} (…${user.id.slice(-8)})`,
+          requestBan,
+        );
+        moderationUserResults.append(item);
+      }
+    } catch (error) {
+      showFailure(error, "Tìm tài khoản kiểm duyệt", "Hãy kiểm tra tên và thử lại.");
     }
   }
 
@@ -1734,6 +1971,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         !signedIn ||
         currentUserIsBanned ||
         (currentRole !== "moderator" && currentRole !== "owner");
+    }
+    if (adminTools) {
+      adminTools.hidden =
+        !signedIn ||
+        currentUserIsBanned ||
+        (currentRole !== "moderator" && currentRole !== "owner");
+      if (adminTools.hidden) adminTools.open = false;
     }
     if (ownerPanel) {
       ownerPanel.hidden = !signedIn || currentUserIsBanned || currentRole !== "owner";
@@ -2239,8 +2483,24 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     void setModeratorRole(true);
   });
   document.getElementById("remove-moderator-button")
-    ?.addEventListener("click", () => void setModeratorRole(false));
+    ?.addEventListener("click", () => {
+      const email = moderatorForm.elements.namedItem("email").value.trim();
+      if (!email || !window.confirm(`Xác nhận gỡ quyền Moderator của ${email}?`)) return;
+      void setModeratorRole(false);
+    });
   announcementForm?.addEventListener("submit", publishAnnouncement);
+  moderationUserSearchInput?.addEventListener("input", () => {
+    clearTimeout(moderationSearchTimer);
+    moderationSearchRevision += 1;
+    moderationUserResults.replaceChildren();
+    const query = moderationUserSearchInput.value;
+    moderationSearchTimer = setTimeout(
+      () => void searchModerationUsers(query),
+      250,
+    );
+  });
+  postSearchInput?.addEventListener("input", applyPostSearch);
+  postAuthorFilter?.addEventListener("change", applyPostSearch);
   placeSearchInput?.addEventListener("input", () => {
     renderPlaceRecommendations(
       recommendationPosts,
