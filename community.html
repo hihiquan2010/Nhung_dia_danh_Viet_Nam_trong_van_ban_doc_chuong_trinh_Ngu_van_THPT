@@ -402,6 +402,26 @@
                   aria-live="polite"
                   hidden
                 ></div>
+                <label for="post-video">
+                  Video minh họa
+                  <span class="optional-label">· không bắt buộc</span>
+                </label>
+                <input
+                  id="post-video"
+                  name="video"
+                  type="file"
+                  accept="video/mp4,video/webm"
+                  multiple
+                />
+                <p class="upload-hint">
+                  MP4 hoặc WebM · tối đa 2 video · 50 MB mỗi video
+                </p>
+                <div
+                  id="post-video-preview"
+                  class="video-selection"
+                  aria-live="polite"
+                  hidden
+                ></div>
                 <label for="image-ratio">Cách hiển thị ảnh</label>
                 <select id="image-ratio" name="image_ratio">
                   <option value="natural">Giữ nguyên tỉ lệ ảnh</option>
@@ -431,7 +451,8 @@
               Sau khi gửi, bài sẽ được kiểm tra trước khi xuất hiện công khai.
               Trong lúc chờ, chỉ bạn thấy bài viết; bài phù hợp mới xuất hiện
               trên bảng tin. Bạn có thể xem trạng thái trong mục Tài khoản.
-              Ảnh không được gửi cho hệ thống AI để kiểm tra.
+              Ảnh và video không được gửi cho hệ thống AI để phân tích nội dung;
+              bài vẫn chờ kiểm duyệt theo quy trình cộng đồng.
             </p>
             <p
               id="post-submit-status"

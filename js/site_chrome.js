@@ -200,7 +200,8 @@ export function attachSiteSearch(assetBasePath) {
       return;
     }
 
-    window.location.href = `${assetBasePath}html/${pageFileName}`;
+    const pageName = pageFileName.replace(/\.html$/i, "");
+    window.location.href = `${assetBasePath}dia-danh/${encodeURIComponent(pageName)}`;
   }
 
   searchButton.addEventListener("click", handleSearch);
