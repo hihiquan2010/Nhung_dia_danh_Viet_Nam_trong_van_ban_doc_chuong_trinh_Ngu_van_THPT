@@ -64,6 +64,14 @@ export default {
     const contentType = headers.get("Content-Type") || "";
     if (
       contentType.includes("text/html") ||
+      contentType.includes("text/css") ||
+      contentType.includes("javascript")
+    ) {
+      headers.set("Cache-Control", "no-cache, must-revalidate");
+    }
+
+    if (
+      contentType.includes("text/html") ||
       contentType.includes("javascript")
     ) {
       const body = await response.text();

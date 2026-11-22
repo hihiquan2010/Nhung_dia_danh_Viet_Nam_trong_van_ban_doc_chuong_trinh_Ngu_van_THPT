@@ -1414,31 +1414,33 @@ body[data-view="community"] #owner-panel {
   white-space: pre-wrap;
 }
 
-.user-content-url {
+.community button.user-content-url {
   display: inline;
   max-width: 100%;
+  min-height: 0;
   padding: 0;
   border: 0;
-  border-radius: 3px;
+  border-radius: 0;
   background: transparent;
   color: #28559c;
   cursor: pointer;
   font: inherit;
   overflow-wrap: anywhere;
   text-align: left;
+  transform: none;
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 2px;
 }
 
-.user-content-url:hover {
+.community button.user-content-url:hover,
+.community button.user-content-url:focus-visible {
+  border: 0;
+  background: transparent;
   color: #183c78;
+  outline: none;
+  transform: none;
   text-decoration-thickness: 2px;
-}
-
-.user-content-url:focus-visible {
-  outline: 2px solid #4268a8;
-  outline-offset: 2px;
 }
 
 .external-link-dialog {
