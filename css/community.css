@@ -1346,11 +1346,23 @@ body[data-view="community"] #owner-panel {
 .post-share-link-row input {
   width: 100%;
   min-width: 0;
-  padding: 9px 10px;
-  border: 1px solid #d8d4cb;
-  border-radius: 8px;
-  background: #fff;
+  padding: 9px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: #333;
+  font-family: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: filter 0.18s ease, color 0.18s ease;
+}
+
+.post-share-link-row input:hover,
+.post-share-link-row input:focus {
+  color: #262626;
+  filter: brightness(0.75);
+  outline: 0;
 }
 
 .post-share-native {
