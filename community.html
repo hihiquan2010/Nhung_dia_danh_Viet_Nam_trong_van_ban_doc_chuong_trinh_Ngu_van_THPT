@@ -9,7 +9,7 @@
       content="Đăng nhập và chia sẻ bài viết về văn học, địa danh Việt Nam."
     />
     <link rel="stylesheet" href="./css/style.css" />
-    <link rel="stylesheet" href="./css/community.css?v=easy-posting-20261115" />
+    <link rel="stylesheet" href="./css/community.css?v=public-post-search-20261121" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -185,6 +185,103 @@
           <h3>Thông báo của bạn</h3>
           <div id="notification-list" class="notification-list"></div>
         </section>
+
+        <details id="admin-tools" class="admin-tools" hidden>
+          <summary>
+            <i class="fa-solid fa-shield-halved" aria-hidden="true"></i>
+            Công cụ Moderator / Owner
+          </summary>
+          <p class="muted admin-tools-intro">
+            Khu vực quản trị riêng. Mở khi cần; các công cụ không nằm cạnh bài đăng.
+          </p>
+          <section
+            id="moderation-panel"
+            class="panel admin-tools-panel"
+            hidden
+            aria-labelledby="moderation-title"
+          >
+            <h2 id="moderation-title">Công cụ Moderator</h2>
+            <p class="muted">
+              Moderator có thể ẩn/khôi phục bài viết và đề xuất cấm tài khoản
+              users. Đề xuất cấm cần một Moderator khác xác nhận.
+            </p>
+            <section class="moderation-user-search" aria-labelledby="moderation-user-search-title">
+              <h3 id="moderation-user-search-title">Tìm tài khoản cần xử lý</h3>
+              <label for="moderation-user-search-input">Tên hiển thị thành viên</label>
+              <input
+                id="moderation-user-search-input"
+                type="search"
+                autocomplete="off"
+                placeholder="Nhập ít nhất 2 ký tự..."
+              />
+              <p class="muted">Lệnh BAN chỉ xuất hiện trong khu vực quản trị và cần xác nhận trước khi gửi.</p>
+              <div id="moderation-user-results" class="moderation-list" aria-live="polite"></div>
+            </section>
+            <div id="moderation-posts" class="moderation-list"></div>
+            <h3>Đề xuất cấm đang chờ</h3>
+            <div id="ban-proposals" class="moderation-list"></div>
+          </section>
+
+          <section
+            id="owner-panel"
+            class="panel admin-tools-panel"
+            hidden
+            aria-labelledby="owner-title"
+          >
+            <h2 id="owner-title">Công cụ Owner</h2>
+            <form id="moderator-form">
+              <label for="moderator-email">Email tài khoản đã xác nhận</label>
+              <input
+                id="moderator-email"
+                name="email"
+                type="email"
+                required
+                maxlength="254"
+                autocomplete="off"
+              />
+              <div class="button-row">
+                <button type="submit">Thêm Moderator</button>
+                <button
+                  type="button"
+                  class="button-secondary"
+                  id="remove-moderator-button"
+                >
+                  Gỡ Moderator
+                </button>
+              </div>
+            </form>
+            <h3>Danh sách Moderator</h3>
+            <div id="moderator-list" class="moderation-list"></div>
+
+            <form id="announcement-form">
+              <h3>Đăng thông báo trang chủ</h3>
+              <label for="announcement-title">Tiêu đề</label>
+              <input
+                id="announcement-title"
+                name="title"
+                required
+                maxlength="160"
+              />
+              <label for="announcement-body">Nội dung</label>
+              <textarea
+                id="announcement-body"
+                name="body"
+                required
+                maxlength="4000"
+                rows="4"
+              ></textarea>
+              <label for="announcement-ends-at">Tự ẩn sau (không bắt buộc)</label>
+              <input
+                id="announcement-ends-at"
+                name="ends_at"
+                type="datetime-local"
+              />
+              <button type="submit">Đăng thông báo</button>
+            </form>
+            <h3>Thông báo đã đăng</h3>
+            <div id="announcement-list" class="moderation-list"></div>
+          </section>
+        </details>
       </section>
 
       <section
@@ -372,82 +469,6 @@
           <div id="place-suggestions" class="place-suggestions" aria-live="polite"></div>
         </section>
 
-        <section
-          id="moderation-panel"
-          class="panel"
-          hidden
-          aria-labelledby="moderation-title"
-        >
-          <h2 id="moderation-title">Công cụ Moderator</h2>
-          <p class="muted">
-            Moderator có thể ẩn/khôi phục bài viết và đề xuất cấm tài khoản
-            users. Đề xuất cấm cần một Moderator khác xác nhận.
-          </p>
-          <div id="moderation-posts" class="moderation-list"></div>
-          <h3>Đề xuất cấm đang chờ</h3>
-          <div id="ban-proposals" class="moderation-list"></div>
-        </section>
-
-        <section
-          id="owner-panel"
-          class="panel"
-          hidden
-          aria-labelledby="owner-title"
-        >
-          <h2 id="owner-title">Công cụ Owner</h2>
-          <form id="moderator-form">
-            <label for="moderator-email">Email tài khoản đã xác nhận</label>
-            <input
-              id="moderator-email"
-              name="email"
-              type="email"
-              required
-              maxlength="254"
-              autocomplete="off"
-            />
-            <div class="button-row">
-              <button type="submit">Thêm Moderator</button>
-              <button
-                type="button"
-                class="button-secondary"
-                id="remove-moderator-button"
-              >
-                Gỡ Moderator
-              </button>
-            </div>
-          </form>
-          <h3>Danh sách Moderator</h3>
-          <div id="moderator-list" class="moderation-list"></div>
-
-          <form id="announcement-form">
-            <h3>Đăng thông báo trang chủ</h3>
-            <label for="announcement-title">Tiêu đề</label>
-            <input
-              id="announcement-title"
-              name="title"
-              required
-              maxlength="160"
-            />
-            <label for="announcement-body">Nội dung</label>
-            <textarea
-              id="announcement-body"
-              name="body"
-              required
-              maxlength="4000"
-              rows="4"
-            ></textarea>
-            <label for="announcement-ends-at">Tự ẩn sau (không bắt buộc)</label>
-            <input
-              id="announcement-ends-at"
-              name="ends_at"
-              type="datetime-local"
-            />
-            <button type="submit">Đăng thông báo</button>
-          </form>
-          <h3>Thông báo đã đăng</h3>
-          <div id="announcement-list" class="moderation-list"></div>
-        </section>
-
         <section class="posts-section" aria-labelledby="posts-title">
           <div class="section-heading">
             <h2 id="posts-title">Bài đăng cộng đồng</h2>
@@ -455,6 +476,27 @@
               <i class="fa-solid fa-rotate"></i> Tải lại
             </button>
           </div>
+          <div class="post-search-controls">
+            <div>
+              <label for="post-search-input">Tìm kiếm bài đăng</label>
+              <input
+                id="post-search-input"
+                type="search"
+                autocomplete="off"
+                placeholder="Nhập tên địa danh hoặc từ trong tiêu đề..."
+              />
+            </div>
+            <div>
+              <label for="post-author-filter">Lọc theo người đăng</label>
+              <select id="post-author-filter">
+                <option value="">Tất cả người đăng</option>
+              </select>
+            </div>
+            <p class="muted">
+              Ưu tiên bài khớp tên địa danh, sau đó đến tiêu đề. Tìm trong 50 bài mới nhất.
+            </p>
+          </div>
+          <p id="post-search-status" class="post-search-status" role="status" aria-live="polite"></p>
           <div id="featured-posts" class="featured-posts" hidden></div>
           <p id="active-tag-filter" class="active-tag-filter" hidden></p>
           <p
@@ -467,10 +509,32 @@
         </section>
       </section>
       </div>
+      <dialog
+        id="external-link-dialog"
+        class="external-link-dialog"
+        aria-labelledby="external-link-title"
+      >
+        <div class="external-link-dialog-content">
+          <span class="external-link-warning" aria-hidden="true">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          </span>
+          <h2 id="external-link-title">Bạn sắp rời khỏi trang</h2>
+          <p>Chỉ tiếp tục nếu bạn tin tưởng trang web được mở:</p>
+          <p id="external-link-destination" class="external-link-destination"></p>
+          <div class="button-row">
+            <button type="button" class="button-secondary" id="cancel-external-link">
+              Ở lại trang
+            </button>
+            <button type="button" id="confirm-external-link">
+              Tiếp tục đến trang này
+            </button>
+          </div>
+        </div>
+      </dialog>
     </main>
     <span id="footer"></span>
     <script src="../js/ico.js"></script>
     <script type="module" src="./js/header_footer.js?v=community-account-nav-20261111"></script>
-    <script type="module" src="./js/community.js?v=12"></script>
+    <script type="module" src="./js/community.js?v=15"></script>
   </body>
 </html>
