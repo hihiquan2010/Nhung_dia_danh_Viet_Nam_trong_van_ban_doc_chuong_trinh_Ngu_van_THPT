@@ -402,11 +402,6 @@ body[data-view="community"] #owner-panel {
   border-left: 4px solid #52775e;
 }
 
-/* Post panel ── accent blue left border */
-#post-panel {
-  border-left: 4px solid #3b5bac;
-}
-
 /* Moderator / owner panels */
 #moderation-panel,
 #owner-panel {
