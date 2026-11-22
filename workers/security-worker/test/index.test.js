@@ -114,3 +114,30 @@ test("rewrites HTML and JavaScript internal page links", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test("prevents stale caching of HTML and CSS responses", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    globalThis.fetch = async (request) =>
+      new Response("asset", {
+        headers: {
+          "Content-Type": String(request).endsWith(".css")
+            ? "text/css"
+            : "text/html",
+        },
+      });
+
+    for (const path of ["/community.html", "/css/community.css"]) {
+      const response = await securityWorker.fetch(
+        new Request(`https://diadanhvanhoc.com${path}`),
+      );
+      assert.equal(
+        response.headers.get("Cache-Control"),
+        "no-cache, must-revalidate",
+      );
+    }
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
