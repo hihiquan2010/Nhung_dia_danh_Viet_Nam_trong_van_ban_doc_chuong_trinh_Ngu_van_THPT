@@ -637,8 +637,7 @@ body[data-view="community"] #owner-panel {
 #post-panel {
   scroll-margin-top: 112px;
   padding: clamp(20px, 3vw, 30px);
-  border: 1px solid #d9e1f4;
-  border-left: 4px solid #3b5bac;
+  border: 0;
   background:
     radial-gradient(ellipse at 100% 0%, rgba(232, 237, 248, 0.62), transparent 38%),
     #fff;
