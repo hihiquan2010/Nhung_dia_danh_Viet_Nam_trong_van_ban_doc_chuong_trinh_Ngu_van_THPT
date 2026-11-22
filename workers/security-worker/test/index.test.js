@@ -53,3 +53,64 @@ test("does not enable HSTS on an HTTP response", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test("redirects old HTML paths to clean place routes", async () => {
+  const response = await securityWorker.fetch(
+    new Request("https://diadanhvanhoc.com/html/Song_Huong.html"),
+  );
+
+  assert.equal(response.status, 301);
+  assert.equal(
+    response.headers.get("Location"),
+    "https://diadanhvanhoc.com/dia-danh/Song_Huong",
+  );
+});
+
+test("maps clean place routes to the hidden HTML file", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    globalThis.fetch = async (request) => {
+      assert.equal(
+        String(request),
+        "https://diadanhvanhoc.com/html/Song_Huong.html",
+      );
+      return new Response("<html>Hương</html>", {
+        headers: { "Content-Type": "text/html" },
+      });
+    };
+
+    const response = await securityWorker.fetch(
+      new Request("https://diadanhvanhoc.com/dia-danh/Song_Huong"),
+    );
+
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), "<html>Hương</html>");
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("rewrites HTML and JavaScript internal page links", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    globalThis.fetch = async () =>
+      new Response(
+        '<a href="../html/Song_Huong.html">Sông Hương</a>; const p="./html/Song_Huong.html";',
+        { headers: { "Content-Type": "text/javascript" } },
+      );
+
+    const response = await securityWorker.fetch(
+      new Request("https://diadanhvanhoc.com/js/data.js"),
+    );
+    const body = await response.text();
+
+    assert.equal(
+      body,
+      '<a href="/dia-danh/Song_Huong">Sông Hương</a>; const p="/dia-danh/Song_Huong";',
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});

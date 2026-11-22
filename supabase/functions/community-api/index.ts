@@ -12,6 +12,7 @@ const MAX_COMMENT_LENGTH = 2_000;
 const MAX_AVATAR_NAME_LENGTH = 80;
 const MAX_LOCATION_TAGS = 8;
 const MAX_MENTIONS = 10;
+const MAX_POST_VIDEOS = 2;
 const MEDIA_BUCKET = "community-media";
 const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.5-flash-lite";
 
@@ -313,7 +314,7 @@ async function handleRequest(request: Request): Promise<Response> {
   if (action === "get-my-content") {
     const { data: posts, error: postsError } = await adminClient
       .from("posts")
-      .select("id, title, literary_work, analysis, image_path, image_paths, created_at, status")
+      .select("id, title, literary_work, analysis, image_path, image_paths, video_paths, created_at, status")
       .eq("author_id", userId)
       .in("status", ["pending", "approved"])
       .order("created_at", { ascending: false })
@@ -442,6 +443,15 @@ async function handleRequest(request: Request): Promise<Response> {
     if (imagePaths.length > 10) {
       return jsonResponse({ error: "invalid_image_path" }, 400);
     }
+    let videoPaths: string[] = [];
+    try {
+      videoPaths = normalizeOwnedPaths(body.video_paths, userId, "posts");
+    } catch {
+      return jsonResponse({ error: "invalid_video_path" }, 400);
+    }
+    if (videoPaths.length > MAX_POST_VIDEOS) {
+      return jsonResponse({ error: "invalid_video_path" }, 400);
+    }
     if (!title && !analysis) {
       return jsonResponse({ error: "invalid_post" }, 400);
     }
@@ -483,6 +493,7 @@ async function handleRequest(request: Request): Promise<Response> {
       p_location_tags: locationTags,
       p_image_ratio: imageRatio,
       p_mention_user_ids: mentionUserIds,
+      p_video_paths: videoPaths.length ? videoPaths : null,
     });
     if (error) {
       console.error("Could not enqueue post moderation.", error.message);
@@ -517,7 +528,7 @@ async function handleRequest(request: Request): Promise<Response> {
     if (!isUuid(postId)) return jsonResponse({ error: "invalid_post" }, 400);
     const { data: post, error: postError } = await adminClient
       .from("posts")
-      .select("author_id, image_path, image_paths")
+      .select("author_id, image_path, image_paths, video_paths")
       .eq("id", postId)
       .maybeSingle();
     if (postError) {
@@ -538,7 +549,10 @@ async function handleRequest(request: Request): Promise<Response> {
         error.message.includes("forbidden") ? 403 : 503,
       );
     }
-    const paths = normalizeOwnedPaths(imagePaths ?? post.image_paths ?? post.image_path, userId, "posts");
+    const paths = [
+      ...normalizeOwnedPaths(imagePaths ?? post.image_paths ?? post.image_path, userId, "posts"),
+      ...normalizeOwnedPaths(post.video_paths, userId, "posts"),
+    ];
     if (paths.length) {
       const { error: removeError } = await adminClient.storage
         .from(MEDIA_BUCKET)
@@ -680,13 +694,16 @@ async function handleRequest(request: Request): Promise<Response> {
       if (!verdict.allowed && claimed.entity_type === "post") {
         const { data: post, error: postError } = await adminClient
           .from("posts")
-          .select("image_path, image_paths")
+          .select("image_path, image_paths, video_paths")
           .eq("id", claimed.entity_id)
           .maybeSingle();
         if (postError) {
           console.error("Could not load rejected post image path.", postError.message);
         } else {
-          rejectedImagePaths = normalizeOwnedPaths(post?.image_paths ?? post?.image_path, userId, "posts");
+          rejectedImagePaths = [
+            ...normalizeOwnedPaths(post?.image_paths ?? post?.image_path, userId, "posts"),
+            ...normalizeOwnedPaths(post?.video_paths, userId, "posts"),
+          ];
         }
       }
       const { error: finishError } = await adminClient.rpc(

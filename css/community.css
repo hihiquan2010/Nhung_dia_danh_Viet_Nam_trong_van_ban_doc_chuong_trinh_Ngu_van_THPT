@@ -1200,8 +1200,72 @@ body[data-view="community"] #owner-panel {
   display: block;
   height: 240px;
   margin: 0;
-  border: 1px solid #e8e5de;
+  border: 1px solid rgba(100, 82, 54, 0.18);
+  border-radius: 14px;
+  box-shadow:
+    0 16px 26px rgba(55, 45, 30, 0.15),
+    0 4px 8px rgba(55, 45, 30, 0.1);
+  transform: perspective(900px) translateZ(0);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
   object-fit: cover;
+}
+
+.post-gallery .post-image:hover {
+  transform: perspective(900px) translateY(-5px) rotateX(1deg) scale(1.012);
+  box-shadow:
+    0 22px 34px rgba(55, 45, 30, 0.21),
+    0 7px 12px rgba(55, 45, 30, 0.12);
+}
+
+.video-selection {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.video-selection[hidden] {
+  display: none;
+}
+
+.video-selection-item {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid #dedbd2;
+  border-radius: 12px;
+  background: #1f1f1d;
+}
+
+.video-selection-item video,
+.post-video {
+  display: block;
+  width: 100%;
+  max-height: 420px;
+  background: #171715;
+}
+
+.video-selection-item figcaption {
+  padding: 6px 8px;
+  color: #f5f3ed;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.post-video-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: 12px;
+  margin: 12px 0 18px;
+}
+
+.post-video-gallery .post-video {
+  min-height: 220px;
+  border: 1px solid rgba(100, 82, 54, 0.18);
+  border-radius: 14px;
+  box-shadow:
+    0 16px 26px rgba(55, 45, 30, 0.15),
+    0 4px 8px rgba(55, 45, 30, 0.1);
 }
 
 .post-delete {
@@ -1282,11 +1346,23 @@ body[data-view="community"] #owner-panel {
 .post-share-link-row input {
   width: 100%;
   min-width: 0;
-  padding: 9px 10px;
-  border: 1px solid #d8d4cb;
-  border-radius: 8px;
-  background: #fff;
+  padding: 9px 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
   color: #333;
+  font-family: inherit;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition: filter 0.18s ease, color 0.18s ease;
+}
+
+.post-share-link-row input:hover,
+.post-share-link-row input:focus {
+  color: #262626;
+  filter: brightness(0.75);
+  outline: 0;
 }
 
 .post-share-native {

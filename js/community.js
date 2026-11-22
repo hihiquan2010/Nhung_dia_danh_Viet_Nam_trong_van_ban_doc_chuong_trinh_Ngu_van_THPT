@@ -4,6 +4,8 @@ import { menuData } from "./data.js";
 
 const MEDIA_BUCKET = "community-media";
 const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
+const MAX_POST_VIDEOS = 2;
 const SIGNED_IMAGE_TTL_SECONDS = 24 * 60 * 60;
 const USER_URL_PATTERN =
   /https?:\/\/[^\s<>"'`]+|www\.[^\s<>"'`]+|(?<![@\p{L}\p{N}_])(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+[\p{L}]{2,}(?:[/?#][^\s<>"'`]*)?/giu;
@@ -11,6 +13,10 @@ const IMAGE_EXTENSIONS = new Map([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],
   ["image/webp", "webp"],
+]);
+const VIDEO_EXTENSIONS = new Map([
+  ["video/mp4", "mp4"],
+  ["video/webm", "webm"],
 ]);
 
 const authPanel = document.getElementById("auth-panel");
@@ -51,6 +57,8 @@ const avatarFileInput = document.getElementById("avatar-file");
 const avatarPreview = document.getElementById("avatar-preview");
 const postImageInput = document.getElementById("post-image");
 const postImagePreview = document.getElementById("post-image-preview");
+const postVideoInput = document.getElementById("post-video");
+const postVideoPreview = document.getElementById("post-video-preview");
 const accountRole = document.getElementById("account-role");
 const accountPermissions = document.getElementById("account-permissions");
 const accountContent = document.getElementById("account-content");
@@ -517,6 +525,55 @@ function renderPostImagePreview() {
 postImageInput?.addEventListener("change", renderPostImagePreview);
 imageRatioInput?.addEventListener("change", renderPostImagePreview);
 
+let selectedVideoObjectUrls = [];
+
+function renderPostVideoPreview() {
+  selectedVideoObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+  selectedVideoObjectUrls = [];
+  postVideoPreview.replaceChildren();
+
+  const files = Array.from(postVideoInput.files || []).filter((file) => file.size > 0);
+  if (!files.length) {
+    postVideoPreview.hidden = true;
+    return;
+  }
+
+  postVideoPreview.hidden = false;
+  const message = document.createElement("p");
+  message.className = "image-selection-message";
+  const oversizedVideo = files.find((file) => file.size > MAX_VIDEO_BYTES);
+  if (files.length > MAX_POST_VIDEOS) {
+    message.textContent = `Đã chọn ${files.length} video. Hãy chọn tối đa ${MAX_POST_VIDEOS} video.`;
+    message.dataset.error = "true";
+  } else if (!files.every((file) => VIDEO_EXTENSIONS.has(file.type))) {
+    message.textContent = "Chỉ chấp nhận video MP4 hoặc WebM.";
+    message.dataset.error = "true";
+  } else if (oversizedVideo) {
+    message.textContent = `Video “${oversizedVideo.name}” vượt quá giới hạn 50 MB.`;
+    message.dataset.error = "true";
+  } else {
+    message.textContent = `${files.length} video đã chọn · bài sẽ chờ kiểm duyệt.`;
+  }
+  postVideoPreview.append(message);
+
+  files.slice(0, MAX_POST_VIDEOS).forEach((file, index) => {
+    const url = URL.createObjectURL(file);
+    selectedVideoObjectUrls.push(url);
+    const figure = document.createElement("figure");
+    figure.className = "video-selection-item";
+    const video = document.createElement("video");
+    video.src = url;
+    video.controls = true;
+    video.preload = "metadata";
+    const caption = document.createElement("figcaption");
+    caption.textContent = `Video ${index + 1}`;
+    figure.append(video, caption);
+    postVideoPreview.append(figure);
+  });
+}
+
+postVideoInput?.addEventListener("change", renderPostVideoPreview);
+
 async function signedImageUrl(supabase, path) {
   if (!path) return "";
   const cached = imageUrlCache.get(path);
@@ -706,7 +763,6 @@ function addBanRequestForm(container, targetUserId, targetLabel, onBan) {
 
 function createPostShareUrl(post) {
   const url = new URL("./community.html", location.href);
-  url.searchParams.set("post", post.id);
   url.hash = `post-${post.id}`;
   return url.href;
 }
@@ -823,6 +879,23 @@ function renderPosts(
         gallery.append(image);
       }
       card.append(gallery);
+    }
+    const videoPaths = normalizeImagePaths(post.video_paths);
+    if (videoPaths.length) {
+      const videoGallery = document.createElement("div");
+      videoGallery.className = "post-video-gallery";
+      for (const videoPath of videoPaths) {
+        const videoUrl = post.video_urls?.get?.(videoPath) || "";
+        if (!videoUrl) continue;
+        const video = document.createElement("video");
+        video.className = "post-video";
+        video.src = videoUrl;
+        video.controls = true;
+        video.preload = "metadata";
+        video.playsInline = true;
+        videoGallery.append(video);
+      }
+      if (videoGallery.childElementCount) card.append(videoGallery);
     }
 
     card.id = `post-${post.id}`;
@@ -1115,6 +1188,16 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     }
   }
 
+  function validateVideo(file) {
+    if (!file) return;
+    if (!VIDEO_EXTENSIONS.has(file.type)) {
+      throw userError("Chỉ chấp nhận video MP4 hoặc WebM.");
+    }
+    if (file.size > MAX_VIDEO_BYTES) {
+      throw userError("Video vượt quá giới hạn 50 MB.");
+    }
+  }
+
   async function uploadImage(file, userId, folder) {
     if (!file) return null;
     validateImage(file);
@@ -1131,6 +1214,25 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         message: error.message,
       });
       throw userError("Chưa thể tải ảnh lên. Hãy kiểm tra định dạng, kích thước và kết nối.");
+    }
+    return path;
+  }
+
+  async function uploadVideo(file, userId, folder) {
+    if (!file) return null;
+    validateVideo(file);
+    const extension = VIDEO_EXTENSIONS.get(file.type);
+    const path = `${userId}/${folder}/${crypto.randomUUID()}.${extension}`;
+    const { error } = await supabase.storage.from(MEDIA_BUCKET).upload(path, file, {
+      cacheControl: "31536000",
+      contentType: file.type,
+      upsert: false,
+    });
+    if (error) {
+      throw storageError(
+        "Tải video lên",
+        "Video chưa được tải lên. Hãy kiểm tra dung lượng và thử lại.",
+      );
     }
     return path;
   }
@@ -1222,6 +1324,27 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
           }
         }
         item.append(gallery);
+      }
+      const videoPaths = normalizeImagePaths(entry.video_paths);
+      if (videoPaths.length) {
+        const gallery = document.createElement("div");
+        gallery.className = "post-video-gallery";
+        for (const path of videoPaths) {
+          try {
+            const video = document.createElement("video");
+            video.className = "post-video";
+            video.src = await signedImageUrl(supabase, path);
+            video.controls = true;
+            video.preload = "metadata";
+            gallery.append(video);
+          } catch (error) {
+            console.error("[Cộng đồng] Không thể tải video cá nhân.", {
+              path,
+              message: error?.message,
+            });
+          }
+        }
+        if (gallery.childElementCount) item.append(gallery);
       }
       if (entry.status === "approved") {
         const link = document.createElement("a");
@@ -1542,7 +1665,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     let postsQuery = supabase
       .from("posts")
       .select(
-        "id, author_id, title, literary_work, analysis, image_path, image_paths, location_tags, image_ratio, is_pinned, created_at, profiles(display_name, avatar_path)",
+        "id, author_id, title, literary_work, analysis, image_path, image_paths, video_paths, location_tags, image_ratio, is_pinned, created_at, profiles(display_name, avatar_path)",
       )
       .eq("status", "approved")
       .order("is_pinned", { ascending: false })
@@ -1575,7 +1698,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       const { data: sharedPost, error } = await supabase
         .from("posts")
         .select(
-          "id, author_id, title, literary_work, analysis, image_path, image_paths, location_tags, image_ratio, is_pinned, created_at, profiles(display_name, avatar_path)",
+          "id, author_id, title, literary_work, analysis, image_path, image_paths, video_paths, location_tags, image_ratio, is_pinned, created_at, profiles(display_name, avatar_path)",
         )
         .eq("id", sharedPostId)
         .eq("status", "approved")
@@ -1608,6 +1731,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     const imagePaths = [
       viewedProfileAvatarPath,
       ...posts.flatMap((post) => normalizeImagePaths(post.image_paths ?? post.image_path)),
+      ...posts.flatMap((post) => normalizeImagePaths(post.video_paths)),
       ...posts.map((post) => post.profiles?.avatar_path),
       ...comments.map((comment) => comment.profiles?.avatar_path),
     ].filter(Boolean);
@@ -1684,11 +1808,14 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     renderPosts(
       posts.map((post) => {
         const mediaPaths = normalizeImagePaths(post.image_paths ?? post.image_path);
+        const videoPaths = normalizeImagePaths(post.video_paths);
         return {
           ...post,
           image_paths: mediaPaths,
+          video_paths: videoPaths,
           location_tags: post.location_tags || [],
           image_urls: new Map(mediaPaths.map((path) => [path, imageUrls.get(path) || ""])),
+          video_urls: new Map(videoPaths.map((path) => [path, imageUrls.get(path) || ""])),
           image_url: imageUrls.get(mediaPaths[0]) || "",
           profiles: post.profiles
             ? {
@@ -2214,6 +2341,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     setBusy(publishButton, true, "Đang gửi câu chuyện...");
     showPostSubmitStatus("Đang gửi câu chuyện...");
     let uploadedPaths = [];
+    let uploadedVideoPaths = [];
     let postCreated = false;
     try {
       const formData = new FormData(postForm);
@@ -2230,6 +2358,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       const files = Array.from(formData.getAll("image")).filter(
         (file) => file instanceof File && file.size > 0,
       );
+      const videoFiles = Array.from(formData.getAll("video")).filter(
+        (file) => file instanceof File && file.size > 0,
+      );
       if (!title && !analysis) {
         throw userError("Hãy nhập tiêu đề hoặc câu chuyện để đăng bài.");
       }
@@ -2244,6 +2375,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       if (files.length > MAX_POST_IMAGES) {
         throw userError(`Bạn có thể đăng tối đa ${MAX_POST_IMAGES} ảnh trong một bài.`);
       }
+      if (videoFiles.length > MAX_POST_VIDEOS) {
+        throw userError(`Bạn có thể đăng tối đa ${MAX_POST_VIDEOS} video trong một bài.`);
+      }
       if (
         uniqueLocationTags.length > 8 ||
         uniqueLocationTags.some((tag) => tag.length < 2 || tag.length > 41)
@@ -2255,12 +2389,17 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         const path = await uploadImage(file, currentUser.id, "posts");
         if (path) uploadedPaths.push(path);
       }
+      for (const file of videoFiles) {
+        const path = await uploadVideo(file, currentUser.id, "posts");
+        if (path) uploadedVideoPaths.push(path);
+      }
       await invokeCommunity("create-post", {
         title,
         literary_work: literaryWork,
         analysis,
         image_path: uploadedPaths[0] || null,
         image_paths: uploadedPaths,
+        video_paths: uploadedVideoPaths,
         location_tags: uniqueLocationTags,
         image_ratio: imageRatio,
         mention_user_ids: [...selectedMentionUsers.keys()],
@@ -2268,11 +2407,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
       postCreated = true;
       uploadedPaths = [];
+      uploadedVideoPaths = [];
       postForm.reset();
       selectedMentionUsers.clear();
       renderSelectedMentions();
       mentionResults.hidden = true;
       renderPostImagePreview();
+      renderPostVideoPreview();
       showPostSubmitStatus("Đã nhận câu chuyện. Chỉ bạn thấy bài trong lúc chờ kiểm tra.");
       void (async () => {
         try {
@@ -2303,10 +2444,13 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         );
       } else if (error?.name === "CommunitySubmissionUnconfirmedError") {
         uploadedPaths = [];
+        uploadedVideoPaths = [];
         showFailure(error, "Xác nhận gửi bài", "Hãy kiểm tra mục Tài khoản trước khi thử lại.");
         showPostSubmitStatus(statusMessage.textContent, true);
       } else {
-        await Promise.all(uploadedPaths.map((path) => removeUploadedImage(path)));
+        await Promise.all(
+          [...uploadedPaths, ...uploadedVideoPaths].map((path) => removeUploadedImage(path)),
+        );
         showFailure(error, "Đăng bài", "Hãy kiểm tra nội dung và ảnh rồi thử lại.");
         showPostSubmitStatus(statusMessage.textContent, true);
       }
