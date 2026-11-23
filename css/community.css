@@ -1566,6 +1566,39 @@ body[data-view="community"] #owner-panel {
   margin-top: 18px;
 }
 
+.external-link-dialog #cancel-external-link {
+  border: 1.5px solid #cbd1dc;
+  background: #fff;
+  color: #526174;
+  font-weight: 600;
+  box-shadow: none;
+}
+
+.external-link-dialog #cancel-external-link:hover,
+.external-link-dialog #cancel-external-link:focus-visible {
+  border-color: #aeb7c6;
+  background: #f1f4f8;
+  color: #34465d;
+  transform: none;
+}
+
+.external-link-dialog #confirm-external-link {
+  border: 1.5px solid #1f382b;
+  background: #1f382b;
+  color: #fff;
+  font-weight: 800;
+  box-shadow: 0 7px 18px rgba(31, 56, 43, 0.24);
+}
+
+.external-link-dialog #confirm-external-link:hover,
+.external-link-dialog #confirm-external-link:focus-visible {
+  border-color: #15291f;
+  background: #15291f;
+  color: #fff;
+  box-shadow: 0 9px 22px rgba(21, 41, 31, 0.32);
+  transform: translateY(-1px);
+}
+
 .comment-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
