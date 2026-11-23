@@ -1130,6 +1130,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       invalid_like_request: "Chưa thể cập nhật lượt thích. Hãy tải lại trang.",
       invalid_location_tags: "Hashtag địa danh chưa hợp lệ (tối đa 8 thẻ).",
       invalid_image_ratio: "Tỉ lệ ảnh đã chọn không hợp lệ.",
+      invalid_video_path: "Video chưa hợp lệ. Hãy chọn MP4/WebM dưới 50 MB.",
       invalid_mentions: "Không thể gắn thẻ tài khoản này. Hãy tải lại danh sách thành viên.",
       invalid_notifications: "Danh sách thông báo không hợp lệ.",
       post_pending_ai: "Bài viết đang chờ AI kiểm duyệt; chưa thể thay đổi trạng thái.",

@@ -493,7 +493,6 @@ async function handleRequest(request: Request): Promise<Response> {
       p_location_tags: locationTags,
       p_image_ratio: imageRatio,
       p_mention_user_ids: mentionUserIds,
-      p_video_paths: videoPaths.length ? videoPaths : null,
     });
     if (error) {
       console.error("Could not enqueue post moderation.", error.message);
@@ -515,6 +514,19 @@ async function handleRequest(request: Request): Promise<Response> {
     if (!queued?.queue_id || !queued?.post_id) {
       console.error("Post moderation enqueue returned no identifiers.", { userId });
       return jsonResponse({ error: "database_unavailable" }, 503);
+    }
+    if (videoPaths.length) {
+      const { error: videoUpdateError } = await adminClient
+        .from("posts")
+        .update({ video_paths: videoPaths })
+        .eq("id", queued.post_id);
+      if (videoUpdateError) {
+        console.error("Could not attach uploaded videos to the post.", videoUpdateError.message);
+        await adminClient.storage
+          .from(MEDIA_BUCKET)
+          .remove(videoPaths);
+        return jsonResponse({ error: "database_unavailable" }, 503);
+      }
     }
     return jsonResponse({
       status: "pending",
