@@ -158,7 +158,7 @@ test("rewrites place page assets and local links to absolute paths", async () =>
     const body = await response.text();
 
     assert.match(body, /href="\/css\/style\.css"/);
-    assert.match(body, /src="\/html\/header_footer_fplaces\.js"/);
+    assert.match(body, /src="\/html\/header_footer_fplaces\.js\?v=place-links-20261123"/);
     assert.match(body, /href="\/dia-danh\/Song_Huong"/);
     assert.match(body, /src="\/HÌNH NCKH 10-11-12\/test\.jpg"/);
     assert.equal(
