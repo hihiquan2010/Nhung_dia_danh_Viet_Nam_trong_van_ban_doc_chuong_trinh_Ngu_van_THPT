@@ -141,3 +141,31 @@ test("prevents stale caching of HTML and CSS responses", async () => {
     globalThis.fetch = originalFetch;
   }
 });
+
+test("rewrites place page assets and local links to absolute paths", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    globalThis.fetch = async () =>
+      new Response(
+        '<head><link rel="stylesheet" href="../css/style.css"><script src="./header_footer_fplaces.js"></script></head><body><a href="./Song_Huong.html">Sông Hương</a><img src="../HÌNH NCKH 10-11-12/test.jpg"></body>',
+        { headers: { "Content-Type": "text/html" } },
+      );
+
+    const response = await securityWorker.fetch(
+      new Request("https://diadanhvanhoc.com/dia-danh/Song_Huong"),
+    );
+    const body = await response.text();
+
+    assert.match(body, /href="\/css\/style\.css"/);
+    assert.match(body, /src="\/html\/header_footer_fplaces\.js"/);
+    assert.match(body, /href="\/dia-danh\/Song_Huong"/);
+    assert.match(body, /src="\/HÌNH NCKH 10-11-12\/test\.jpg"/);
+    assert.equal(
+      response.headers.get("Cache-Control"),
+      "no-cache, must-revalidate",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
