@@ -12,8 +12,21 @@ function getFileNameFromUrl(pageUrl) {
   return pageUrl.split("/").pop();
 }
 
+function getCurrentPageFileName() {
+  const pageName = window.location.pathname
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter(Boolean)
+    .pop()
+    ?.replace(/\.html$/i, "") || "";
+  return `${pageName}.html`.toLowerCase();
+}
+
 function getPageUrl(pageFileName) {
   const currentPagePath = window.location.pathname.replace(/\\/g, "/");
+  if (currentPagePath.includes("/dia-danh/")) {
+    return `/dia-danh/${pageFileName.replace(/\.html$/i, "")}`;
+  }
   return currentPagePath.includes("/html/")
     ? `./${pageFileName}`
     : `./html/${pageFileName}`;
@@ -69,7 +82,7 @@ function renderWorkPlaces() {
   const placesContainer = introColumn?.querySelector("[data-work-places]");
   if (!placesContainer) return;
 
-  const currentFileName = window.location.pathname.split("/").pop().toLowerCase();
+  const currentFileName = getCurrentPageFileName();
   const currentWork = menuData
     .flatMap((gradeEntry) => gradeEntry.works)
     .find(
@@ -165,10 +178,10 @@ function getAllPlaces() {
 }
 
 function getCurrentPlace(places) {
-  const currentPagePath = window.location.pathname.toLowerCase();
+  const currentFileName = getCurrentPageFileName();
 
   return places.find((place) =>
-    currentPagePath.endsWith(place.pageFileName.toLowerCase()),
+    place.pageFileName.toLowerCase() === currentFileName,
   );
 }
 
@@ -425,7 +438,7 @@ document.addEventListener("DOMContentLoaded", () => {
   setupWorkColumnResizer();
   setupPoemColumnHeight();
 
-  const currentFileName = window.location.pathname.split("/").pop().toLowerCase();
+  const currentFileName = getCurrentPageFileName();
 
   const isWorkPage = menuData
     .flatMap((gradeEntry) => gradeEntry.works)
