@@ -8,6 +8,8 @@ permissions:
 
 jobs:
   deploy:
+    if: github.ref == 'refs/heads/main'
+    environment: cloudflare-production
     runs-on: ubuntu-latest
     defaults:
       run:

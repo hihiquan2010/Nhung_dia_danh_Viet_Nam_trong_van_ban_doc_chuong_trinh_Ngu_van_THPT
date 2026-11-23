@@ -1,7 +1,7 @@
 .horizontal-recommend {
   max-width: 50%;
   margin: 30px auto;
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
 }
 
 .recommend-title {

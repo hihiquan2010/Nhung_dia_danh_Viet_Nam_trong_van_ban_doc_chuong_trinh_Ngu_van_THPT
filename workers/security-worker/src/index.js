@@ -10,7 +10,7 @@ const securityHeaders = {
 function safePageName(segment) {
   try {
     const name = decodeURIComponent(segment);
-    return /^[A-Za-z0-9_-]+$/.test(name) ? name : null;
+    return /^[A-Za-z0-9_()-]+$/.test(name) ? name : null;
   } catch {
     return null;
   }
@@ -19,11 +19,11 @@ function safePageName(segment) {
 function rewriteInternalLinks(body) {
   return body
     .replace(
-      /(href|src)=["'](?:\.{1,2}\/)?html\/([A-Za-z0-9_-]+)\.html([^"']*)["']/gi,
+      /(href|src)=["'](?:\.{1,2}\/)?html\/([A-Za-z0-9_()-]+)\.html([^"']*)["']/gi,
       '$1="/dia-danh/$2"',
     )
     .replace(
-      /(["'`])(?:\.{1,2}\/)?html\/([A-Za-z0-9_-]+)\.html\1/g,
+      /(["'`])(?:\.{1,2}\/)?html\/([A-Za-z0-9_()-]+)\.html\1/g,
       '$1/dia-danh/$2$1',
     );
 }
@@ -39,7 +39,7 @@ function rewritePlacePagePaths(body) {
       '$1="/$2"',
     )
     .replace(
-      /(href|src)=["']\.\/([A-Za-z0-9_-]+)\.html([^"'#]*)["']/gi,
+      /(href|src)=["']\.\/([A-Za-z0-9_()-]+)\.html([^"'#]*)["']/gi,
       '$1="/dia-danh/$2"',
     )
     .replace(
@@ -51,6 +51,45 @@ function rewritePlacePagePaths(body) {
 export default {
   async fetch(request) {
     const url = new URL(request.url);
+
+    if (url.pathname === "/minigame" || url.pathname === "/minigame/") {
+      const upstreamUrl = new URL("/html/game.html", url.origin);
+      const upstreamResponse = await fetch(upstreamUrl);
+      const headers = new Headers(upstreamResponse.headers);
+
+      for (const [name, value] of Object.entries(securityHeaders)) {
+        headers.set(name, value);
+      }
+      headers.set("Cache-Control", "no-cache, must-revalidate");
+
+      if (url.protocol === "https:") {
+        headers.set("Strict-Transport-Security", "max-age=31536000");
+      }
+
+      if (headers.get("Content-Type")?.includes("text/html")) {
+        return new Response(
+          rewritePlacePagePaths(await upstreamResponse.text()),
+          {
+            status: upstreamResponse.status,
+            statusText: upstreamResponse.statusText,
+            headers,
+          },
+        );
+      }
+
+      return new Response(upstreamResponse.body, {
+        status: upstreamResponse.status,
+        statusText: upstreamResponse.statusText,
+        headers,
+      });
+    }
+
+    if (url.pathname.toLowerCase() === "/html/game.html") {
+      return Response.redirect(
+        new URL(`/minigame${url.search}${url.hash}`, url.origin),
+        301,
+      );
+    }
 
     if (url.pathname.startsWith("/html/")) {
       const pageName = safePageName(url.pathname.slice("/html/".length).replace(/\.html$/i, ""));

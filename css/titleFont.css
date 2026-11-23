@@ -1,12 +1,12 @@
 .nproject {
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
   font-size: 1rem;
   color: rgb(20, 173, 40);
   margin-top: 10px;
 }
 
 .titletWeb {
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
   font-size: 2.5rem;
   line-height: 3.5rem;
   text-align: center;

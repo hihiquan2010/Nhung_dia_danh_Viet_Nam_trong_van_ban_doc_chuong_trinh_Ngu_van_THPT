@@ -5,7 +5,10 @@
 * Browsers: last 4 version
 */
 
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap");
+
 :root {
+  --font-family-base: "Be Vietnam Pro", "Noto Sans", "Segoe UI", Arial, sans-serif;
   --bg-soft: #eeeae062;
   --panel-bg: #5f5f5469;
   --menu-dark: #2c2b27;
@@ -15,6 +18,14 @@
   --shadow-soft: rgba(0, 0, 0, 0.08);
 }
 
+body,
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-family-base);
+}
+
 body {
   background-color: var(--bg-soft);
   background-repeat: no-repeat;
@@ -22,7 +33,7 @@ body {
   background-position: center;
   background-attachment: fixed;
   margin: 0;
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
 }
 
 .community-link {
@@ -63,7 +74,7 @@ body {
     0 12px 32px rgba(48, 39, 24, 0.15),
     inset 0 0 36px rgba(154, 122, 72, 0.1);
   box-sizing: border-box;
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
   overflow: auto;
 }
 
@@ -364,7 +375,7 @@ img {
 }
 
 .nproject {
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
   font-size: 1rem;
   color: rgb(20, 173, 40);
   padding: 10px;
@@ -372,7 +383,7 @@ img {
 }
 
 .titletWeb {
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
   font-size: 2.5rem;
   line-height: 3.5rem;
   text-align: center;
@@ -394,7 +405,7 @@ img {
 .menu-container {
   width: 100%;
   max-width: 1000px;
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
   margin: 0 auto;
 }
 
@@ -579,7 +590,7 @@ img {
           justify-content: space-between;
   gap: 30px;
   width: 100%;
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
   padding: 20px;
   -webkit-box-sizing: border-box;
           box-sizing: border-box;
@@ -722,7 +733,7 @@ img {
 }
 
 .main-title {
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
   font-size: 3rem;
   color: #2c4c3b;
   margin: 0;
@@ -735,7 +746,7 @@ img {
 }
 
 .sub-title {
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
   font-style: italic;
   font-size: 1.2rem;
   color: #9c603b;
@@ -757,7 +768,7 @@ img {
   margin: 0 auto;
   gap: 30px;
   padding: 20px 40px;
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
   color: #333;
   border-radius: 12px;
   -webkit-box-align: stretch;
@@ -963,7 +974,7 @@ img {
 }
 
 .image-header h3 {
-  font-family: "Code Pro", sans-serif;
+  font-family: var(--font-family-base);
   color: #2c4c3b;
   font-size: 1.5rem;
   margin: 0;
