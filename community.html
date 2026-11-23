@@ -9,7 +9,7 @@
       content="Đăng nhập và chia sẻ bài viết về văn học, địa danh Việt Nam."
     />
     <link rel="stylesheet" href="./css/style.css" />
-    <link rel="stylesheet" href="./css/community.css?v=link-style-fix-20261122" />
+    <link rel="stylesheet" href="./css/community.css?v=post-format-20261123" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -349,6 +349,22 @@
               placeholder="Ví dụ: Lần đầu mình đến Mường Lát"
             />
             <label for="post-analysis">Câu chuyện của bạn</label>
+            <div class="post-format-toolbar" role="toolbar" aria-label="Định dạng câu chuyện">
+              <button type="button" data-format="bold" title="In đậm (Ctrl+B)">B</button>
+              <button type="button" data-format="italic" title="In nghiêng (Ctrl+I)"><em>I</em></button>
+              <button type="button" data-format="bullet" title="Gạch đầu dòng">
+                <i class="fa-solid fa-list-ul" aria-hidden="true"></i>
+              </button>
+              <button type="button" data-format="left" title="Căn trái">
+                <i class="fa-solid fa-align-left" aria-hidden="true"></i>
+              </button>
+              <button type="button" data-format="center" title="Căn giữa">
+                <i class="fa-solid fa-align-center" aria-hidden="true"></i>
+              </button>
+              <button type="button" data-format="justify" title="Căn đều hai bên">
+                <i class="fa-solid fa-align-justify" aria-hidden="true"></i>
+              </button>
+            </div>
             <textarea
               id="post-analysis"
               name="analysis"
@@ -556,6 +572,6 @@
     <span id="footer"></span>
     <script src="../js/ico.js"></script>
     <script type="module" src="./js/header_footer.js?v=community-account-nav-20261111"></script>
-    <script type="module" src="./js/community.js?v=15"></script>
+    <script type="module" src="./js/community.js?v=17"></script>
   </body>
 </html>
