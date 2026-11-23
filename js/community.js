@@ -2339,6 +2339,14 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     event.preventDefault();
     if (publishButton.disabled) return;
 
+    const { data: sessionData, error: sessionError } =
+      await supabase.auth.getSession();
+    if (sessionError || !sessionData?.session?.access_token) {
+      showPostSubmitStatus("Phiên đăng nhập đã hết hạn. Hãy đăng nhập lại.", true);
+      location.assign(getAccountHref());
+      return;
+    }
+
     setBusy(publishButton, true, "Đang gửi câu chuyện...");
     showPostSubmitStatus("Đang gửi câu chuyện...");
     let uploadedPaths = [];
