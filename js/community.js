@@ -59,6 +59,7 @@ const postImageInput = document.getElementById("post-image");
 const postImagePreview = document.getElementById("post-image-preview");
 const postVideoInput = document.getElementById("post-video");
 const postVideoPreview = document.getElementById("post-video-preview");
+const postAnalysisInput = document.getElementById("post-analysis");
 const accountRole = document.getElementById("account-role");
 const accountPermissions = document.getElementById("account-permissions");
 const accountContent = document.getElementById("account-content");
@@ -143,6 +144,99 @@ function appendSafeUserText(container, value) {
     cursor = end;
   }
   container.append(document.createTextNode(text.slice(cursor)));
+}
+
+function appendFormattedInline(container, value) {
+  const text = String(value ?? "");
+  const patterns = [
+    { marker: "**", tag: "strong" },
+    { marker: "__", tag: "strong" },
+    { marker: "*", tag: "em" },
+    { marker: "_", tag: "em" },
+  ];
+  let earliest = null;
+  for (const pattern of patterns) {
+    const start = text.indexOf(pattern.marker);
+    if (start >= 0 && (!earliest || start < earliest.start)) {
+      earliest = { ...pattern, start };
+    }
+  }
+  if (!earliest) {
+    appendSafeUserText(container, text);
+    return;
+  }
+  appendSafeUserText(container, text.slice(0, earliest.start));
+  const end = text.indexOf(earliest.marker, earliest.start + earliest.marker.length);
+  if (end < 0) {
+    appendSafeUserText(container, text.slice(earliest.start));
+    return;
+  }
+  const element = document.createElement(earliest.tag);
+  appendFormattedInline(element, text.slice(
+    earliest.start + earliest.marker.length,
+    end,
+  ));
+  container.append(element);
+  appendFormattedInline(container, text.slice(end + earliest.marker.length));
+}
+
+function appendFormattedBlock(container, value, alignment = "") {
+  const text = String(value ?? "").replace(/\r\n/g, "\n").trim();
+  if (!text) return;
+  const block = document.createElement("div");
+  block.className = "post-format-block";
+  if (["left", "center", "right", "justify"].includes(alignment)) {
+    block.dataset.align = alignment;
+  }
+  const parts = text.split(/\n{2,}/);
+  for (const part of parts) {
+    const lines = part.split("\n");
+    let index = 0;
+    while (index < lines.length) {
+      if (!lines[index].trim()) {
+        index += 1;
+      } else if (/^(?:[-*•])\s+/.test(lines[index])) {
+        const list = document.createElement("ul");
+        while (index < lines.length && /^(?:[-*•])\s+/.test(lines[index])) {
+          const item = document.createElement("li");
+          appendFormattedInline(
+            item,
+            lines[index].replace(/^(?:[-*•])\s+/, ""),
+          );
+          list.append(item);
+          index += 1;
+        }
+        block.append(list);
+      } else {
+        const paragraph = document.createElement("p");
+        let paragraphText = "";
+        while (
+          index < lines.length &&
+          lines[index].trim() &&
+          !/^(?:[-*•])\s+/.test(lines[index])
+        ) {
+          paragraphText += `${paragraphText ? "\n" : ""}${lines[index]}`;
+          index += 1;
+        }
+        appendFormattedInline(paragraph, paragraphText);
+        block.append(paragraph);
+      }
+    }
+  }
+  container.append(block);
+}
+
+function appendFormattedPostText(container, value) {
+  const text = String(value ?? "");
+  const alignmentPattern =
+    /\[(left|center|right|justify)\]([\s\S]*?)\[\/\1\]/gi;
+  let cursor = 0;
+  for (const match of text.matchAll(alignmentPattern)) {
+    appendFormattedBlock(container, text.slice(cursor, match.index));
+    appendFormattedBlock(container, match[2], match[1].toLowerCase());
+    cursor = match.index + match[0].length;
+  }
+  appendFormattedBlock(container, text.slice(cursor));
 }
 
 externalLinkDialog?.addEventListener("cancel", () => {
@@ -574,6 +668,55 @@ function renderPostVideoPreview() {
 
 postVideoInput?.addEventListener("change", renderPostVideoPreview);
 
+const postFormatToolbar = document.querySelector(".post-format-toolbar");
+
+function formatPostSelection(type) {
+  if (!postAnalysisInput) return;
+  const start = postAnalysisInput.selectionStart;
+  const end = postAnalysisInput.selectionEnd;
+  const selected = postAnalysisInput.value.slice(start, end);
+  let replacement = "";
+  if (type === "bold") {
+    replacement = `**${selected || "văn bản đậm"}**`;
+  } else if (type === "italic") {
+    replacement = `*${selected || "văn bản nghiêng"}*`;
+  } else if (type === "bullet") {
+    const lines = (selected || "Nội dung").split("\n");
+    replacement = lines.map((line) => `- ${line}`).join("\n");
+  } else {
+    const alignment = type === "left" ? "left" : type === "center"
+      ? "center"
+      : "justify";
+    replacement =
+      `[${alignment}]${selected || "Nội dung cần căn chỉnh"}[/${alignment}]`;
+  }
+  postAnalysisInput.setRangeText(
+    replacement,
+    start,
+    end,
+    "end",
+  );
+  postAnalysisInput.focus();
+  postAnalysisInput.dispatchEvent(new Event("input", { bubbles: true }));
+}
+
+postFormatToolbar?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-format]");
+  if (!button) return;
+  formatPostSelection(button.dataset.format);
+});
+
+postAnalysisInput?.addEventListener("keydown", (event) => {
+  if (!(event.ctrlKey || event.metaKey)) return;
+  if (event.key.toLowerCase() === "b") {
+    event.preventDefault();
+    formatPostSelection("bold");
+  } else if (event.key.toLowerCase() === "i") {
+    event.preventDefault();
+    formatPostSelection("italic");
+  }
+});
+
 async function signedImageUrl(supabase, path) {
   if (!path) return "";
   const cached = imageUrlCache.get(path);
@@ -900,9 +1043,9 @@ function renderPosts(
 
     card.id = `post-${post.id}`;
     if (post.analysis) {
-      const analysis = document.createElement("p");
+      const analysis = document.createElement("div");
       analysis.className = "post-analysis";
-      appendSafeUserText(analysis, post.analysis);
+      appendFormattedPostText(analysis, post.analysis);
       card.append(analysis);
     }
     const actions = document.createElement("div");
@@ -1303,9 +1446,9 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
         item.append(work);
       }
       if (entry.content) {
-        const content = document.createElement("p");
+        const content = document.createElement("div");
         content.className = "account-content-preview";
-        appendSafeUserText(content, entry.content);
+        appendFormattedPostText(content, entry.content);
         item.append(content);
       }
       const mediaPaths = normalizeImagePaths(entry.image_paths ?? entry.image_path);

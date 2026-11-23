@@ -1276,7 +1276,74 @@ body[data-view="community"] #owner-panel {
   line-height: 1.7;
   color: #333;
   overflow-wrap: anywhere;
-  white-space: pre-wrap;
+}
+
+.post-format-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 6px 0 8px;
+}
+
+.community .post-format-toolbar button {
+  display: inline-grid;
+  min-width: 36px;
+  min-height: 36px;
+  place-items: center;
+  padding: 7px 9px;
+  border: 1px solid #d5d9cd;
+  border-radius: 8px;
+  background: #fff;
+  color: #35523d;
+  font-size: 0.88rem;
+  transform: none;
+}
+
+.community .post-format-toolbar button:hover,
+.community .post-format-toolbar button:focus-visible {
+  border-color: #52775e;
+  background: #edf3eb;
+  color: #35523d;
+  transform: none;
+  outline: none;
+}
+
+.post-format-block {
+  margin: 0;
+}
+
+.post-format-block p {
+  margin: 0 0 10px;
+  white-space: pre-line;
+}
+
+.post-format-block p:last-child {
+  margin-bottom: 0;
+}
+
+.post-format-block ul {
+  margin: 0 0 10px;
+  padding-left: 24px;
+}
+
+.post-format-block li {
+  margin: 3px 0;
+}
+
+.post-format-block[data-align="left"] {
+  text-align: left;
+}
+
+.post-format-block[data-align="center"] {
+  text-align: center;
+}
+
+.post-format-block[data-align="right"] {
+  text-align: right;
+}
+
+.post-format-block[data-align="justify"] {
+  text-align: justify;
 }
 
 /* Post action buttons */
