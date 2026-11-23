@@ -31,7 +31,7 @@ export const menuData = [
         places: [{ name: "Cửa Hiền Quan", url: "./html/Cua_Hien_Quan.html" }],
       },
       {
-        name: "Bình Ngô Đại Cáo",
+        name: "Bình Ngô đại cáo",
         link: "./html/Binh_Ngo_Dai_Cao.html",
         places: [
           { name: "Hàm Tử", url: "./html/Ham_Tu.html" },
@@ -289,3 +289,4 @@ export function resolvePlaceUrl(placeUrl) {
   const pageFileName = placeUrl.split("/").pop();
   return `./html/${pageFileName}`;
 }
+
