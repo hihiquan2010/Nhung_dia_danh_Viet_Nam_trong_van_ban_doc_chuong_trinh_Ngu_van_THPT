@@ -28,6 +28,22 @@ function rewriteInternalLinks(body) {
     );
 }
 
+function rewritePlacePagePaths(body) {
+  return body
+    .replace(
+      /(href|src)=["']\.\.\/([^"'#]+)["']/gi,
+      '$1="/$2"',
+    )
+    .replace(
+      /(href|src)=["']\.\/([A-Za-z0-9_-]+)\.html([^"'#]*)["']/gi,
+      '$1="/dia-danh/$2"',
+    )
+    .replace(
+      /(href|src)=["']\.\/([^"'#]+)["']/gi,
+      '$1="/html/$2"',
+    );
+}
+
 export default {
   async fetch(request) {
     const url = new URL(request.url);
@@ -45,7 +61,37 @@ export default {
     if (url.pathname.startsWith("/dia-danh/")) {
       const pageName = safePageName(url.pathname.slice("/dia-danh/".length));
       if (pageName) {
-        return fetch(new URL(`/html/${encodeURIComponent(pageName)}.html`, url.origin));
+        const upstreamUrl = new URL(`/html/${encodeURIComponent(pageName)}.html`, url.origin);
+        const upstreamResponse = await fetch(upstreamUrl);
+        const headers = new Headers(upstreamResponse.headers);
+
+        for (const [name, value] of Object.entries(securityHeaders)) {
+          headers.set(name, value);
+        }
+        headers.set("Cache-Control", "no-cache, must-revalidate");
+        headers.set("X-Robots-Tag", "noindex, nofollow");
+
+        if (new URL(request.url).protocol === "https:") {
+          headers.set("Strict-Transport-Security", "max-age=31536000");
+        }
+
+        if (headers.get("Content-Type")?.includes("text/html")) {
+          const body = await upstreamResponse.text();
+          const rewrittenBody = rewritePlacePagePaths(
+            rewriteInternalLinks(body),
+          );
+          return new Response(rewrittenBody, {
+            status: upstreamResponse.status,
+            statusText: upstreamResponse.statusText,
+            headers,
+          });
+        }
+
+        return new Response(upstreamResponse.body, {
+          status: upstreamResponse.status,
+          statusText: upstreamResponse.statusText,
+          headers,
+        });
       }
       return new Response("Không tìm thấy trang.", { status: 404 });
     }
