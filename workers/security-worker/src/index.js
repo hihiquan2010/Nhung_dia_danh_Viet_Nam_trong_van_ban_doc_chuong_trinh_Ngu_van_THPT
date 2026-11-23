@@ -31,6 +31,10 @@ function rewriteInternalLinks(body) {
 function rewritePlacePagePaths(body) {
   return body
     .replace(
+      /src=["']\.\/header_footer_fplaces\.js["']/gi,
+      'src="/html/header_footer_fplaces.js?v=place-links-20261123"',
+    )
+    .replace(
       /(href|src)=["']\.\.\/([^"'#]+)["']/gi,
       '$1="/$2"',
     )
