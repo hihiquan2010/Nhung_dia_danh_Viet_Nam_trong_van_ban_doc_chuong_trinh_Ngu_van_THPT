@@ -47,7 +47,7 @@ export function renderSiteHeader(
             <i class="fa-solid fa-rotate" aria-hidden="true"></i>
             <span class="icon-text">Làm mới</span>
           </a>
-          <a href="/minigame">
+          <a href="${assetBasePath}html/game.html">
             <i class="fa-solid fa-gamepad" aria-hidden="true"></i>
             <span class="icon-text">Trò chơi</span>
           </a>

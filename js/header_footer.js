@@ -3,7 +3,7 @@ import {
   refreshSiteChromeStylesheet,
   renderSiteFooter,
   renderSiteHeader,
-} from "./site_chrome.js?v=responsive-layout-20261111";
+} from "./site_chrome.js?v=header-route-fix-20261124";
 
 function initHistats() {
   if (!document.getElementById("histats_counter")) return;
@@ -24,9 +24,14 @@ function initHistats() {
 }
 
 function initHeaderFooter() {
-  const assetBasePath = window.location.pathname.includes("/html/")
+  const currentPath = window.location.pathname;
+  const assetBasePath = currentPath.startsWith("/html/")
     ? "../"
-    : "./";
+    : currentPath.startsWith("/dia-danh/") ||
+        currentPath === "/minigame" ||
+        currentPath === "/minigame/"
+      ? "/"
+      : "./";
   refreshSiteChromeStylesheet();
   renderSiteHeader(assetBasePath);
   renderSiteFooter({ includeStats: assetBasePath === "./" });

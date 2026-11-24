@@ -4,7 +4,7 @@ import {
   refreshSiteChromeStylesheet,
   renderSiteFooter,
   renderSiteHeader,
-} from "../js/site_chrome.js?v=responsive-layout-20261111";
+} from "../js/site_chrome.js?v=header-route-fix-20261124";
 
 const assetBasePath = "../";
 
