@@ -10,7 +10,7 @@ export function refreshSiteChromeStylesheet() {
   if (!stylesheet) return;
 
   const stylesheetUrl = new URL(stylesheet.href);
-  stylesheetUrl.searchParams.set("v", "footer-redesign-20261111");
+  stylesheetUrl.searchParams.set("v", "global-font-20261124");
   stylesheet.href = stylesheetUrl.href;
 
   const animationStylesheet = stylesheets.find((link) =>
