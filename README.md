@@ -39,6 +39,10 @@ cạnh tên trên từng bài.
 
 Header, tìm kiếm và footer được dùng chung từ `js/site_chrome.js` trên trang chủ,
 cộng đồng, minigame và các trang địa danh.
+Minigame production dùng đường dẫn `/minigame`, lấy câu hỏi từ danh mục trong
+`js/data.js` (không lấy bài cộng đồng), có năm kiểu thử thách và bảng xếp hạng
+theo điểm tốt nhất của tài khoản đã đăng nhập. Mỗi chế độ chơi tiếp không giới
+hạn cho tới khi người chơi trượt lượt.
 
 ### Vai trò cộng đồng
 

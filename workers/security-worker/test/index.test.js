@@ -66,6 +66,60 @@ test("redirects old HTML paths to clean place routes", async () => {
   );
 });
 
+test("supports place routes whose source filenames contain parentheses", async () => {
+  const response = await securityWorker.fetch(
+    new Request("https://diadanhvanhoc.com/html/Ha_Noi(khoi11).html"),
+  );
+
+  assert.equal(response.status, 301);
+  assert.equal(
+    response.headers.get("Location"),
+    "https://diadanhvanhoc.com/dia-danh/Ha_Noi(khoi11)",
+  );
+});
+
+test("redirects the legacy game path to the minigame route", async () => {
+  const response = await securityWorker.fetch(
+    new Request("https://diadanhvanhoc.com/html/game.html?mode=football"),
+  );
+
+  assert.equal(response.status, 301);
+  assert.equal(
+    response.headers.get("Location"),
+    "https://diadanhvanhoc.com/minigame?mode=football",
+  );
+});
+
+test("serves the minigame route with root-relative assets", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    globalThis.fetch = async (request) => {
+      assert.equal(String(request), "https://diadanhvanhoc.com/html/game.html");
+      return new Response(
+        '<link href="../css/game.css"><script src="../js/game.js"></script><a href="../index.html">Home</a>',
+        { headers: { "Content-Type": "text/html" } },
+      );
+    };
+
+    const response = await securityWorker.fetch(
+      new Request("https://diadanhvanhoc.com/minigame"),
+    );
+    const body = await response.text();
+
+    assert.equal(response.status, 200);
+    assert.match(body, /href="\/css\/game\.css"/);
+    assert.match(body, /src="\/js\/game\.js"/);
+    assert.match(body, /href="\/index\.html"/);
+    assert.equal(
+      response.headers.get("Cache-Control"),
+      "no-cache, must-revalidate",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test("maps clean place routes to the hidden HTML file", async () => {
   const originalFetch = globalThis.fetch;
 
@@ -164,6 +218,30 @@ test("rewrites place page assets and local links to absolute paths", async () =>
     assert.equal(
       response.headers.get("Cache-Control"),
       "no-cache, must-revalidate",
+    );
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("rewrites internal HTML links with parenthesized filenames", async () => {
+  const originalFetch = globalThis.fetch;
+
+  try {
+    globalThis.fetch = async () =>
+      new Response(
+        '<a href="./html/Ha_Noi(khoi11).html">Hà Nội</a>; const page="./html/Ha_Noi(khoi11).html";',
+        { headers: { "Content-Type": "text/javascript" } },
+      );
+
+    const response = await securityWorker.fetch(
+      new Request("https://diadanhvanhoc.com/js/data.js"),
+    );
+    const body = await response.text();
+
+    assert.equal(
+      body,
+      '<a href="/dia-danh/Ha_Noi(khoi11)">Hà Nội</a>; const page="/dia-danh/Ha_Noi(khoi11)";',
     );
   } finally {
     globalThis.fetch = originalFetch;

@@ -2,14 +2,13 @@
 <html lang="vi">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       name="description"
-      content="Minigame trắc nghiệm địa danh trong các tác phẩm Ngữ văn THPT."
+      content="Chơi minigame kiến thức địa danh và tác phẩm Ngữ văn THPT."
     />
     <link rel="stylesheet" href="../css/style.css" />
-    <link rel="stylesheet" href="../css/game.css" />
+    <link rel="stylesheet" href="../css/game.css?v=runner-action-20261123" />
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
@@ -25,48 +24,71 @@
     <main class="game-page">
       <header class="game-heading">
         <p class="game-eyebrow">DẤU CHÂN VĂN HỌC · MINIGAME</p>
-        <h1>Địa danh trong trang văn</h1>
+        <h1>Chơi vui, nhớ địa danh</h1>
         <p>
-          Thử xem bạn nhớ được bao nhiêu địa danh gắn với các tác phẩm Ngữ văn
-          THPT nhé!
+          Năm kiểu thử thách, cùng một nguồn kiến thức từ danh mục tác phẩm và
+          địa danh chính thức của website. Chơi liên tục và cố gắng trụ lâu nhất!
         </p>
       </header>
 
-      <section id="intro-panel" class="game-card intro-panel">
-        <div class="game-symbol" aria-hidden="true">
-          <i class="fa-solid fa-map-location-dot"></i>
+      <section class="mode-section" aria-labelledby="mode-title">
+        <div class="section-heading">
+          <div>
+            <p class="game-eyebrow">CHỌN THỬ THÁCH</p>
+            <h2 id="mode-title">Bạn muốn chơi kiểu nào?</h2>
+          </div>
+          <p class="mode-status" id="auth-status" aria-live="polite"></p>
         </div>
-        <h2>Sẵn sàng khám phá?</h2>
-        <p>
-          Trả lời 10 câu hỏi ngẫu nhiên. Mỗi câu có 15 giây và đáp án được lấy
-          từ danh mục tác phẩm, địa danh ngay trên website.
-        </p>
-        <div class="game-facts" aria-label="Thể lệ">
-          <span><i class="fa-solid fa-list-ol" aria-hidden="true"></i> 10 câu hỏi</span>
-          <span><i class="fa-regular fa-clock" aria-hidden="true"></i> 15 giây/câu</span>
-          <span><i class="fa-solid fa-star" aria-hidden="true"></i> Điểm thưởng tốc độ</span>
+        <div class="mode-grid" id="mode-list">
+          <button class="mode-card" type="button" data-mode="football">
+            <span class="mode-icon mode-football"><i class="fa-solid fa-futbol" aria-hidden="true"></i></span>
+            <span class="mode-card-title">Đá bóng luân lưu</span>
+            <span class="mode-card-description">Ngắm hướng sút và canh đúng nhịp để ghi bàn.</span>
+          </button>
+          <button class="mode-card" type="button" data-mode="table-tennis">
+            <span class="mode-icon mode-table-tennis"><i class="fa-solid fa-table-tennis-paddle-ball" aria-hidden="true"></i></span>
+            <span class="mode-card-title">Bóng bàn trí nhớ</span>
+            <span class="mode-card-description">Đỡ bóng đúng tên, bỏ qua địa danh lạc đề.</span>
+          </button>
+          <button class="mode-card" type="button" data-mode="basketball">
+            <span class="mode-icon mode-basketball"><i class="fa-solid fa-basketball" aria-hidden="true"></i></span>
+            <span class="mode-card-title">Ném rổ địa danh</span>
+            <span class="mode-card-description">Kéo bóng lên và thả vào chiếc rổ mục tiêu.</span>
+          </button>
+          <button class="mode-card" type="button" data-mode="wood-stack">
+            <span class="mode-icon mode-wood"><i class="fa-solid fa-cubes-stacked" aria-hidden="true"></i></span>
+            <span class="mode-card-title">Xếp gỗ tháp chữ</span>
+            <span class="mode-card-description">Canh khối gỗ đang chạy rồi thả lên tháp.</span>
+          </button>
+          <button class="mode-card" type="button" data-mode="obstacle">
+            <span class="mode-icon mode-obstacle"><i class="fa-solid fa-person-running" aria-hidden="true"></i></span>
+            <span class="mode-card-title">Vượt ải trang văn</span>
+            <span class="mode-card-description">Nhảy qua rào thấp, cúi tránh vật cản cao.</span>
+          </button>
         </div>
-        <button id="start-button" class="game-button" type="button">
-          <i class="fa-solid fa-play" aria-hidden="true"></i> Bắt đầu chơi
-        </button>
       </section>
 
-      <section
-        id="quiz-panel"
-        class="game-card quiz-panel"
-        aria-labelledby="question-text"
-        hidden
-      >
+      <section id="play-panel" class="game-card play-panel" hidden>
+        <div class="play-heading">
+          <div>
+            <p class="game-eyebrow" id="mode-label"></p>
+            <h2 id="scene-title"></h2>
+          </div>
+          <button id="back-to-modes" class="text-button" type="button">
+            <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Chọn trò khác
+          </button>
+        </div>
+        <div id="game-scene" class="game-scene" aria-live="polite"></div>
         <div class="quiz-topline">
-          <p id="question-count" class="question-count"></p>
-          <p id="score-display" class="score-display"></p>
+          <p id="question-count"></p>
+          <p id="score-display"></p>
         </div>
         <div
           class="progress-track"
           role="progressbar"
           aria-label="Tiến độ trò chơi"
           aria-valuemin="0"
-          aria-valuemax="10"
+          aria-valuemax="1"
           aria-valuenow="0"
         >
           <span id="progress-bar"></span>
@@ -75,29 +97,20 @@
           <span>Thời gian</span>
           <span id="timer-display" class="timer-display" aria-live="off">15</span>
         </div>
-        <h2 id="question-text" class="question-text"></h2>
-        <div id="answer-list" class="answer-list"></div>
+        <h3 id="question-text" class="question-text"></h3>
+        <div id="game-controls" class="game-controls"></div>
         <p id="answer-feedback" class="answer-feedback" aria-live="polite"></p>
-        <button id="next-button" class="game-button next-button" type="button" hidden>
-          Câu tiếp theo <i class="fa-solid fa-arrow-right" aria-hidden="true"></i>
-        </button>
       </section>
 
-      <section
-        id="result-panel"
-        class="game-card result-panel"
-        aria-labelledby="result-title"
-        aria-live="polite"
-        hidden
-      >
+      <section id="result-panel" class="game-card result-panel" hidden>
         <div class="game-symbol result-symbol" aria-hidden="true">
           <i class="fa-solid fa-trophy"></i>
         </div>
-        <p class="game-eyebrow">HOÀN THÀNH MINIGAME</p>
-        <h2 id="result-title">Bạn đã hoàn thành!</h2>
+        <p class="game-eyebrow">KẾT THÚC LƯỢT CHƠI</p>
+        <h2 id="result-title">Bạn đã thua lượt này!</h2>
         <p id="final-score" class="final-score"></p>
         <p id="result-message" class="result-message"></p>
-        <p id="best-score" class="best-score"></p>
+        <p id="submission-status" class="submission-status" aria-live="polite"></p>
         <div class="result-actions">
           <button id="restart-button" class="game-button" type="button">
             <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Chơi lại
@@ -106,13 +119,38 @@
         </div>
       </section>
 
+      <section class="game-card leaderboard-card" aria-labelledby="leaderboard-title">
+        <div class="section-heading leaderboard-heading">
+          <div>
+            <p class="game-eyebrow">THÀNH TÍCH CỘNG ĐỒNG</p>
+            <h2 id="leaderboard-title">Bảng xếp hạng</h2>
+          </div>
+          <label class="leaderboard-select-label" for="leaderboard-mode">
+            Chế độ
+            <select id="leaderboard-mode">
+              <option value="football">Đá bóng</option>
+              <option value="table-tennis">Bóng bàn</option>
+              <option value="basketball">Bóng rổ</option>
+              <option value="wood-stack">Xếp gỗ</option>
+              <option value="obstacle">Vượt ải</option>
+            </select>
+          </label>
+        </div>
+        <p class="leaderboard-note" id="leaderboard-status" aria-live="polite">
+          Đang tải thành tích…
+        </p>
+        <ol id="leaderboard-list" class="leaderboard-list"></ol>
+        <p class="leaderboard-signin" id="leaderboard-signin" hidden>
+          <a href="../account.html">Đăng nhập</a> để ghi danh thành tích của bạn.
+        </p>
+      </section>
       <p class="game-note">
-        Minigame hoạt động trực tiếp trên website, không cần đăng nhập hoặc dịch
-        vụ bên ngoài.
+        Có thể chơi không cần đăng nhập; chỉ người đăng nhập mới ghi được điểm
+        lên bảng xếp hạng. Mỗi chế độ chỉ kết thúc khi bạn trượt lượt.
       </p>
     </main>
     <footer id="footer"></footer>
     <script type="module" src="../js/header_footer.js?v=community-account-nav-20261111"></script>
-    <script type="module" src="../js/game.js"></script>
+    <script type="module" src="../js/game.js?v=endless-until-loss-20261124"></script>
   </body>
 </html>
