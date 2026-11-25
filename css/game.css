@@ -488,13 +488,32 @@
   inset: 0;
   overflow: hidden;
   border-bottom: 8px solid #748b70;
-  background: linear-gradient(#e9f1e7, #f8f2e7);
+  background:
+    radial-gradient(ellipse 29px 11px at 72% 21%, rgba(255, 255, 255, 0.82) 60%, transparent 63%),
+    radial-gradient(ellipse 24px 9px at 22% 30%, rgba(255, 255, 255, 0.72) 60%, transparent 63%),
+    linear-gradient(#e9f1e7 0 72%, #f8f2e7 72%);
+}
+
+.obstacle-course::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 8px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0 34px,
+    rgba(70, 91, 62, 0.3) 34px 49px
+  );
+  animation: ground-scroll 600ms linear infinite;
+  content: "";
 }
 
 .course-sign {
   position: absolute;
-  top: 35px;
-  right: 7%;
+  z-index: 3;
+  top: 34px;
+  right: 5%;
   max-width: 62%;
   margin: 0;
   padding: 8px 12px;
@@ -509,40 +528,47 @@
 
 .course-obstacle {
   position: absolute;
-  right: 5%;
   z-index: 2;
-  width: 48px;
-  height: 48px;
-  animation: obstacle-approach 5s linear forwards;
+  left: 100%;
 }
 
 .obstacle-ground {
-  bottom: 8px;
-  border: 5px solid #805632;
-  border-bottom: 0;
-  background:
-    repeating-linear-gradient(45deg, transparent 0 7px, rgba(101, 65, 33, 0.36) 7px 10px),
-    #d1a66e;
+  bottom: 7px;
+  width: 27px;
+  height: 42px;
+  border-radius: 12px 12px 3px 3px;
+  background: linear-gradient(90deg, #54734f 0 20%, #8ba26b 48% 64%, #4f704b 84%);
+  box-shadow: inset 3px 0 rgba(255, 255, 255, 0.16);
 }
 
 .obstacle-ground::after {
   position: absolute;
-  top: 45%;
-  left: -9px;
-  width: calc(100% + 18px);
-  height: 8px;
-  background: #78502e;
+  right: -9px;
+  bottom: 11px;
+  width: 11px;
+  height: 15px;
+  border: 3px solid #58764d;
+  border-left: 0;
+  border-radius: 0 9px 0 0;
   content: "";
 }
 
 .obstacle-overhead {
-  top: 48%;
-  width: 72px;
-  height: 18px;
-  border: 4px solid #714a2c;
-  border-radius: 4px;
-  background: repeating-linear-gradient(90deg, #c18b51 0 14px, #d9b17a 14px 26px);
-  box-shadow: 0 8px 0 -3px rgba(67, 55, 39, 0.18);
+  top: 47%;
+  width: 42px;
+  height: 20px;
+  border-radius: 50% 50% 42% 42%;
+  background: #71553f;
+  box-shadow: 12px -8px 0 -5px #71553f, -10px -6px 0 -6px #71553f;
+}
+
+.obstacle-overhead::after {
+  position: absolute;
+  top: 4px;
+  right: -7px;
+  border: 6px solid transparent;
+  border-left-color: #b77842;
+  content: "";
 }
 
 .course-runner {
@@ -555,15 +581,20 @@
   object-fit: contain;
   object-position: bottom;
   transform-origin: center bottom;
+  pointer-events: none;
   user-select: none;
 }
 
+.course-runner.runner-running {
+  animation: runner-run 240ms steps(2, end) infinite alternate;
+}
+
 .course-runner.runner-jumping {
-  animation: runner-jump 700ms cubic-bezier(0.25, 0.7, 0.35, 1);
+  animation: runner-jump 650ms cubic-bezier(0.25, 0.7, 0.35, 1);
 }
 
 .course-runner.runner-ducking {
-  animation: runner-duck 600ms ease-in-out;
+  animation: runner-duck 520ms ease-in-out;
 }
 
 .quiz-topline,
@@ -818,12 +849,15 @@
   }
 }
 
-@keyframes obstacle-approach {
-  from {
-    right: 5%;
-  }
+@keyframes ground-scroll {
   to {
-    right: 82%;
+    background-position-x: -49px;
+  }
+}
+
+@keyframes runner-run {
+  to {
+    transform: translateY(-3px);
   }
 }
 
@@ -833,10 +867,10 @@
     transform: translateY(0);
   }
   45% {
-    transform: translateY(-64px) rotate(-7deg);
+    transform: translateY(-60px) rotate(-7deg);
   }
   70% {
-    transform: translateY(-58px) rotate(4deg);
+    transform: translateY(-54px) rotate(4deg);
   }
 }
 
@@ -914,8 +948,12 @@
     height: 80px;
   }
 
-  .course-obstacle {
-    width: 40px;
+  .obstacle-ground {
+    width: 22px;
+  }
+
+  .obstacle-overhead {
+    width: 38px;
   }
 
   .leaderboard-heading {

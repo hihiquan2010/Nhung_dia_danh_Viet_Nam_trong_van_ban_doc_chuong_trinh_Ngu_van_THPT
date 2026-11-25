@@ -24,7 +24,7 @@ const GAME_MODES = {
   },
   obstacle: {
     name: "Vượt ải trang văn",
-    action: "Nhảy qua chướng ngại vật khi nó đến gần.",
+    action: "Chạy liên tục, nhảy qua bụi tre và cúi né chim bay.",
   },
 };
 
@@ -85,7 +85,10 @@ let timerId;
 let mechanicIntervalId;
 let mechanicTimeoutId;
 let roundAdvanceTimeoutId;
-let obstacleAction = "jump";
+let runnerFrameId;
+let runnerDuckTimeoutId;
+let runnerObstacles = [];
+let runnerDistance = 0;
 let tower = { left: 18, width: 64, blocks: [] };
 let movingBlockLeft = 0;
 let movingBlockDirection = 1;
@@ -140,9 +143,15 @@ function stopMechanics() {
   window.clearInterval(mechanicIntervalId);
   window.clearTimeout(mechanicTimeoutId);
   window.clearTimeout(roundAdvanceTimeoutId);
+  window.clearTimeout(runnerDuckTimeoutId);
+  window.cancelAnimationFrame(runnerFrameId);
   mechanicIntervalId = undefined;
   mechanicTimeoutId = undefined;
   roundAdvanceTimeoutId = undefined;
+  runnerDuckTimeoutId = undefined;
+  runnerFrameId = undefined;
+  runnerObstacles.forEach(({ element }) => element.remove());
+  runnerObstacles = [];
 }
 
 function startTimer() {
@@ -458,37 +467,36 @@ function renderScene() {
     course.className = "obstacle-course";
     const sign = document.createElement("p");
     sign.className = "course-sign";
-    sign.textContent = `${questions[currentQuestionIndex].correctPlace.name} · ${questions[currentQuestionIndex].work}`;
+    sign.textContent = `Địa danh: ${questions[currentQuestionIndex].correctPlace.name} · ${questions[currentQuestionIndex].work}`;
     const runner = document.createElement("img");
     runner.className = "course-runner";
     runner.src = "/html/minigame-runner.svg";
     runner.alt = "Nhân vật đang chạy";
-    const obstacle = createSceneItem("course-obstacle", "");
-    obstacleAction = currentQuestionIndex % 2 === 0 ? "jump" : "duck";
-    obstacle.classList.add(obstacleAction === "jump" ? "obstacle-ground" : "obstacle-overhead");
-    obstacle.dataset.action = obstacleAction;
-    course.append(
-      runner,
-      obstacle,
-      sign,
-    );
+    runner.draggable = false;
+    course.append(runner, sign);
     scene.append(course);
     gameControls.append(
-      makeButton("Nhảy qua · Space / ↑", "game-button", () => avoidObstacle("jump")),
+      makeButton("Nhảy · Space / ↑", "game-button", () => jumpRunner(runner)),
       makeButton(
-        "Cúi xuống · ↓",
+        "Cúi né · ↓",
         "game-button secondary-game-button",
-        () => avoidObstacle("duck"),
+        () => duckRunner(runner),
       ),
-      createSceneItem("game-control-hint", "Chọn động tác theo chướng ngại vật, không phải câu hỏi."),
+      createSceneItem("game-control-hint", "Chạm đường chạy hoặc nhấn Space để nhảy; dùng ↓ để cúi."),
     );
-    mechanicTimeoutId = window.setTimeout(
-      () => finishAttempt(false, "Bạn va phải chướng ngại vật!"),
-      5200,
-    );
+    course.addEventListener("pointerdown", (event) => {
+      if (event.target.closest(".course-obstacle")) return;
+      jumpRunner(runner);
+    });
   }
 
   gameScene.replaceChildren(scene);
+  if (selectedMode === "obstacle") {
+    startObstacleRun(
+      gameScene.querySelector(".obstacle-course"),
+      gameScene.querySelector(".course-runner"),
+    );
+  }
 }
 
 function finishAttempt(isSuccess, message, precision = 1) {
@@ -532,36 +540,91 @@ function finishAttempt(isSuccess, message, precision = 1) {
   }, isSuccess ? 650 : 900);
 }
 
-function avoidObstacle(action) {
-  if (answered) return;
-  const obstacle = gameScene.querySelector(".course-obstacle");
-  const position = getSceneFraction(obstacle);
-  if (position > 0.48) {
-    answerFeedback.textContent = "Chướng ngại vật còn xa — đợi thêm một nhịp.";
-    return;
-  }
-  if (position < 0.1) {
-    finishAttempt(false, "Quá muộn — chướng ngại vật đã vượt qua người chạy.");
-    return;
-  }
-  if (action !== obstacle.dataset.action) {
-    finishAttempt(
-      false,
-      obstacle.dataset.action === "jump"
-        ? "Rào chắn ở thấp — phải nhảy qua, đừng cúi."
-        : "Vật cản treo cao — phải cúi xuống để tránh.",
-    );
-    return;
+function jumpRunner(runner) {
+  if (answered || runner.classList.contains("runner-jumping")) return;
+  runner.classList.remove("runner-ducking");
+  window.clearTimeout(runnerDuckTimeoutId);
+  runner.classList.add("runner-jumping");
+  window.setTimeout(() => runner.classList.remove("runner-jumping"), 650);
+}
+
+function duckRunner(runner) {
+  if (answered || runner.classList.contains("runner-jumping")) return;
+  runner.classList.add("runner-ducking");
+  window.clearTimeout(runnerDuckTimeoutId);
+  runnerDuckTimeoutId = window.setTimeout(() => {
+    runner.classList.remove("runner-ducking");
+    runnerDuckTimeoutId = undefined;
+  }, 520);
+}
+
+function startObstacleRun(course, runner) {
+  runnerDistance = 0;
+  let previousFrameTime = 0;
+  let nextObstacleDistance = Math.max(360, course.clientWidth * 0.9);
+  let speed = 260;
+
+  function spawnObstacle() {
+    const type =
+      runnerDistance > 700 && Math.random() < 0.24
+        ? "obstacle-overhead"
+        : "obstacle-ground";
+    const element = createSceneItem("course-obstacle", "");
+    element.classList.add(type);
+    element.setAttribute("aria-hidden", "true");
+    element.style.left = `${course.clientWidth + 24}px`;
+    course.append(element);
+    runnerObstacles.push({ element, x: course.clientWidth + 24, type });
   }
 
-  const runner = gameScene.querySelector(".course-runner");
-  runner.classList.add(action === "jump" ? "runner-jumping" : "runner-ducking");
-  finishAttempt(
-    true,
-    action === "jump"
-      ? "Nhảy qua rào chắn thành công!"
-      : "Cúi xuống né vật cản thành công!",
-  );
+  function runFrame(timestamp) {
+    if (answered) return;
+    if (!previousFrameTime) previousFrameTime = timestamp;
+    const elapsedSeconds = Math.min((timestamp - previousFrameTime) / 1000, 0.05);
+    previousFrameTime = timestamp;
+    speed = Math.min(520, 260 + runnerDistance * 0.025);
+    runnerDistance += speed * elapsedSeconds;
+    score = Math.min(2_000_000_000, Math.floor(runnerDistance / 8));
+    updateScore();
+
+    if (runnerDistance >= nextObstacleDistance) {
+      spawnObstacle();
+      nextObstacleDistance =
+        runnerDistance + 470 + Math.random() * 210 - Math.min(90, (speed - 260) * 0.3);
+    }
+
+    const runnerBounds = runner.getBoundingClientRect();
+    const remainingObstacles = [];
+    for (const obstacle of runnerObstacles) {
+      obstacle.x -= speed * elapsedSeconds;
+      obstacle.element.style.left = `${obstacle.x}px`;
+      const bounds = obstacle.element.getBoundingClientRect();
+      const horizontalOverlap =
+        runnerBounds.right - 10 > bounds.left + 5 &&
+        runnerBounds.left + 10 < bounds.right - 5;
+      const avoided =
+        (obstacle.type === "obstacle-ground" &&
+          runner.classList.contains("runner-jumping")) ||
+        (obstacle.type === "obstacle-overhead" &&
+          runner.classList.contains("runner-ducking"));
+
+      if (horizontalOverlap && !avoided) {
+        finishGame("Bạn va phải chướng ngại vật!");
+        return;
+      }
+
+      if (obstacle.x + bounds.width >= 0) {
+        remainingObstacles.push(obstacle);
+      } else {
+        obstacle.element.remove();
+      }
+    }
+    runnerObstacles = remainingObstacles;
+    runnerFrameId = window.requestAnimationFrame(runFrame);
+  }
+
+  runner.classList.add("runner-running");
+  runnerFrameId = window.requestAnimationFrame(runFrame);
 }
 
 function renderQuestion() {
@@ -569,18 +632,23 @@ function renderQuestion() {
   const question = questions[currentQuestionIndex];
   roundNumber += 1;
   const modeName = GAME_MODES[selectedMode].name;
+  const isObstacleRun = selectedMode === "obstacle";
 
   modeLabel.textContent = modeName;
   sceneTitle.textContent = modeName;
-  questionCount.textContent = `Lượt ${roundNumber} · Danh mục ${currentQuestionIndex + 1}/${questions.length}`;
+  questionCount.textContent = isObstacleRun
+    ? `Địa danh: ${question.correctPlace.name} · ${question.work}`
+    : `Lượt ${roundNumber} · Danh mục ${currentQuestionIndex + 1}/${questions.length}`;
   const prompts = {
     football: `Tác phẩm “${question.work}” gắn với một trong các vùng sút. Chỉnh hướng và sút khi kim vào vùng xanh.`,
     "table-tennis": `Đỡ bóng nếu địa danh trên bóng thuộc tác phẩm “${question.work}”; để bóng lạc đề trôi qua.`,
     basketball: `Kéo bóng vào rổ ghi một địa danh thuộc tác phẩm “${question.work}”.`,
     "wood-stack": `Canh và thả khối gỗ mang tên “${question.correctPlace.name}” để dựng tháp địa danh.`,
-    obstacle: `Chạy qua ${question.correctPlace.name} trong tác phẩm “${question.work}”. Quan sát vật cản và nhảy hoặc cúi đúng lúc.`,
+    obstacle: "Chạy càng xa càng tốt! Nhảy qua bụi tre, cúi né chim bay và cố lập điểm cao.",
   };
   questionText.textContent = prompts[selectedMode];
+  progressTrack.hidden = isObstacleRun;
+  timerDisplay.closest(".timer-row").hidden = isObstacleRun;
   progressTrack.setAttribute("aria-valuemax", String(questions.length));
   progressTrack.setAttribute("aria-valuenow", String(currentQuestionIndex));
   progressBar.style.width = `${(currentQuestionIndex / questions.length) * 100}%`;
@@ -588,7 +656,7 @@ function renderQuestion() {
   answerFeedback.classList.remove("is-incorrect");
   renderScene();
   updateScore();
-  startTimer();
+  if (!isObstacleRun) startTimer();
 }
 
 async function loadLeaderboard() {
@@ -676,7 +744,10 @@ function finishGame(reason) {
   resultPanel.hidden = false;
   resultTitle.textContent = "Lượt chơi kết thúc";
   finalScore.textContent = `${score} điểm`;
-  resultMessage.textContent = `Bạn đã vượt qua ${Math.max(0, roundNumber - 1)} lượt. ${reason}`;
+  resultMessage.textContent =
+    selectedMode === "obstacle"
+      ? `Bạn đã chạy được ${score} điểm. ${reason}`
+      : `Bạn đã vượt qua ${Math.max(0, roundNumber - 1)} lượt. ${reason}`;
   submissionStatus.textContent = "";
   void saveScore();
 }
@@ -785,10 +856,10 @@ document.addEventListener("keydown", (event) => {
     }
   } else if (selectedMode === "obstacle" && [" ", "ArrowUp"].includes(event.key)) {
     event.preventDefault();
-    avoidObstacle("jump");
+    gameControls.querySelector("button")?.click();
   } else if (selectedMode === "obstacle" && event.key === "ArrowDown") {
     event.preventDefault();
-    avoidObstacle("duck");
+    gameControls.querySelectorAll("button")[1]?.click();
   }
 });
 
