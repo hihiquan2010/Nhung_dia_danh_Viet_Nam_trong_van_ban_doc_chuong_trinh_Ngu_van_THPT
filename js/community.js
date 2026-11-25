@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from "./supabase-config.js";
+import { TURNSTILE_SITE_KEY } from "./turnstile-config.js?v=auth-captcha-20261125";
 import { menuData } from "./data.js";
 
 const MEDIA_BUCKET = "community-media";
@@ -7,6 +8,8 @@ const MAX_IMAGE_BYTES = 5 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 50 * 1024 * 1024;
 const MAX_POST_VIDEOS = 2;
 const SIGNED_IMAGE_TTL_SECONDS = 24 * 60 * 60;
+const TURNSTILE_API_URL =
+  "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
 const USER_URL_PATTERN =
   /https?:\/\/[^\s<>"'`]+|www\.[^\s<>"'`]+|(?<![@\p{L}\p{N}_])(?:[\p{L}\p{N}](?:[\p{L}\p{N}-]{0,61}[\p{L}\p{N}])?\.)+[\p{L}]{2,}(?:[/?#][^\s<>"'`]*)?/giu;
 const IMAGE_EXTENSIONS = new Map([
@@ -31,6 +34,7 @@ const externalLinkDestination = document.getElementById("external-link-destinati
 const confirmExternalLinkButton = document.getElementById("confirm-external-link");
 const cancelExternalLinkButton = document.getElementById("cancel-external-link");
 const authForm = document.getElementById("auth-form");
+const authCaptchaContainer = document.getElementById("auth-captcha");
 const profileForm = document.getElementById("profile-form");
 const postForm = document.getElementById("post-form");
 const postSubmitStatus = document.getElementById("post-submit-status");
@@ -78,6 +82,34 @@ const selectedMentions = document.getElementById("selected-mentions");
 const featuredPosts = document.getElementById("featured-posts");
 const placeDiscoverySection = document.getElementById("place-discovery");
 let pendingExternalUrl = null;
+let turnstileApiPromise = null;
+
+function loadTurnstileApi() {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (turnstileApiPromise) return turnstileApiPromise;
+
+  turnstileApiPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = TURNSTILE_API_URL;
+    script.async = true;
+    script.defer = true;
+    script.onload = () => {
+      if (!window.turnstile) {
+        turnstileApiPromise = null;
+        reject(new Error("Cloudflare Turnstile did not initialize."));
+        return;
+      }
+      resolve(window.turnstile);
+    };
+    script.onerror = () => {
+      turnstileApiPromise = null;
+      reject(new Error("Could not load Cloudflare Turnstile."));
+    };
+    document.head.append(script);
+  });
+
+  return turnstileApiPromise;
+}
 
 function normalizeExternalUrl(value) {
   const candidate = /^https?:\/\//i.test(value) ? value : `https://${value}`;
@@ -1242,6 +1274,70 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   let currentUserIsBanned = false;
   let currentAccountContent = null;
   let authRevision = 0;
+  let captchaWidgetId = null;
+  let captchaToken = null;
+
+  function getAuthCaptchaToken() {
+    if (!TURNSTILE_SITE_KEY) {
+      throw userError(
+        "CAPTCHA chưa được cấu hình. Vui lòng báo quản trị viên.",
+      );
+    }
+    if (captchaWidgetId === null || !captchaToken) {
+      throw userError("Hãy hoàn thành xác minh CAPTCHA trước khi tiếp tục.");
+    }
+    return captchaToken;
+  }
+
+  function resetAuthCaptcha() {
+    captchaToken = null;
+    if (captchaWidgetId !== null && window.turnstile) {
+      window.turnstile.reset(captchaWidgetId);
+    }
+  }
+
+  async function initializeAuthCaptcha() {
+    if (!authCaptchaContainer) return;
+    if (!TURNSTILE_SITE_KEY) {
+      authCaptchaContainer.dataset.error = "true";
+      authCaptchaContainer.textContent =
+        "CAPTCHA chưa được cấu hình. Đăng nhập và tạo tài khoản đang bị khóa.";
+      return;
+    }
+
+    try {
+      const turnstile = await loadTurnstileApi();
+      captchaWidgetId = turnstile.render(authCaptchaContainer, {
+        sitekey: TURNSTILE_SITE_KEY,
+        theme: "light",
+        callback: (token) => {
+          captchaToken = token;
+          delete authCaptchaContainer.dataset.error;
+          showStatus("Đã xác minh bảo mật. Bạn có thể tiếp tục.", false);
+        },
+        "expired-callback": () => {
+          captchaToken = null;
+          showStatus("Xác minh CAPTCHA đã hết hạn. Vui lòng xác minh lại.", true);
+        },
+        "error-callback": (errorCode) => {
+          captchaToken = null;
+          console.error("[Cộng đồng] Turnstile verification failed.", {
+            code: errorCode,
+          });
+          showStatus(
+            "Không tải được CAPTCHA. Hãy tải lại trang rồi thử lại.",
+            true,
+          );
+        },
+      });
+    } catch (error) {
+      showFailure(
+        error,
+        "Khởi tạo CAPTCHA",
+        "Hãy tải lại trang hoặc thử lại sau.",
+      );
+    }
+  }
 
   async function invokeCommunity(action, payload) {
     const { data, error } = await supabase.functions.invoke("community-api", {
@@ -2384,12 +2480,23 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
   async function signIn(event) {
     event.preventDefault();
+    if (!authForm.reportValidity()) return;
+
+    let captchaToken;
+    try {
+      captchaToken = getAuthCaptchaToken();
+    } catch (error) {
+      showFailure(error, "Xác minh CAPTCHA", "Hãy hoàn thành xác minh rồi thử lại.");
+      return;
+    }
+
     setBusy(signInButton, true, "Đang đăng nhập...");
     try {
       const formData = new FormData(authForm);
       const { error } = await supabase.auth.signInWithPassword({
         email: formData.get("email").trim(),
         password: formData.get("password"),
+        options: { captchaToken },
       });
       if (error) throw error;
       authForm.reset();
@@ -2402,12 +2509,21 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     } catch (error) {
       showFailure(error, "Đăng nhập", "Hãy kiểm tra thông tin và thử lại.");
     } finally {
+      resetAuthCaptcha();
       setBusy(signInButton, false);
     }
   }
 
   async function signUp() {
     if (!authForm.reportValidity()) return;
+
+    let captchaToken;
+    try {
+      captchaToken = getAuthCaptchaToken();
+    } catch (error) {
+      showFailure(error, "Xác minh CAPTCHA", "Hãy hoàn thành xác minh rồi thử lại.");
+      return;
+    }
 
     setBusy(signUpButton, true, "Đang tạo tài khoản...");
     try {
@@ -2418,6 +2534,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       const { data, error } = await supabase.auth.signUp({
         email: formData.get("email").trim(),
         password: formData.get("password"),
+        options: { captchaToken },
       });
       if (error) throw error;
       authForm.reset();
@@ -2436,6 +2553,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     } catch (error) {
       showFailure(error, "Tạo tài khoản", "Hãy kiểm tra email và thử lại.");
     } finally {
+      resetAuthCaptcha();
       setBusy(signUpButton, false);
     }
   }
@@ -2770,6 +2888,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
       mentionResults.hidden = true;
     }
   });
+  void initializeAuthCaptcha();
   authForm?.addEventListener("submit", signIn);
   signUpButton?.addEventListener("click", signUp);
   profileForm?.addEventListener("submit", saveProfile);

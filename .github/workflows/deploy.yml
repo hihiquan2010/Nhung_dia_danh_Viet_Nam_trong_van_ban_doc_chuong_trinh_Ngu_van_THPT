@@ -27,12 +27,18 @@ jobs:
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          TURNSTILE_SITE_KEY: ${{ vars.TURNSTILE_SITE_KEY }}
         run: |
           if [[ -z "$SUPABASE_URL" || -z "$SUPABASE_ANON_KEY" ]]; then
             echo "::error::Set the SUPABASE_URL and SUPABASE_ANON_KEY repository secrets."
             exit 1
           fi
+          if [[ ! "$TURNSTILE_SITE_KEY" =~ ^[A-Za-z0-9_-]+$ ]]; then
+            echo "::error::Set the TURNSTILE_SITE_KEY repository variable to the Cloudflare Turnstile site key."
+            exit 1
+          fi
           node -e 'const fs = require("node:fs"); fs.writeFileSync("js/supabase-config.js", `export const SUPABASE_URL = ${JSON.stringify(process.env.SUPABASE_URL)};\nexport const SUPABASE_ANON_KEY = ${JSON.stringify(process.env.SUPABASE_ANON_KEY)};\n`);'
+          node -e 'const fs = require("node:fs"); fs.writeFileSync("js/turnstile-config.js", `export const TURNSTILE_SITE_KEY = ${JSON.stringify(process.env.TURNSTILE_SITE_KEY)};\n`);'
 
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5

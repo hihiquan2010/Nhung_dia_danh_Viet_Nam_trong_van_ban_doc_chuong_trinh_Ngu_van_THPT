@@ -33,7 +33,9 @@ printf '%s\n' 'Áp dụng migration vào database local...'
 "$supabase_cli" migration up
 
 status_env="$("$supabase_cli" status --output env)"
-SUPABASE_STATUS_ENV="$status_env" node - "$repo_root/js/supabase-config.js" <<'NODE'
+SUPABASE_STATUS_ENV="$status_env" node - \
+  "$repo_root/js/supabase-config.js" \
+  "$repo_root/js/turnstile-config.js" <<'NODE'
 const fs = require("node:fs");
 const lines = process.env.SUPABASE_STATUS_ENV.split(/\r?\n/);
 
@@ -56,6 +58,11 @@ fs.writeFileSync(
   `export const SUPABASE_URL = ${JSON.stringify(url)};\nexport const SUPABASE_ANON_KEY = ${JSON.stringify(key)};\n`,
   { encoding: "utf8" },
 );
+fs.writeFileSync(
+  process.argv[3],
+  'export const TURNSTILE_SITE_KEY = "1x00000000000000000000AA";\n',
+  { encoding: "utf8" },
+);
 NODE
 
 printf '%s\n' ''
@@ -63,5 +70,6 @@ printf '%s\n' 'Cộng đồng local: http://127.0.0.1:8765/community.html'
 printf '%s\n' 'Mở một Git Bash khác trong folder này và chạy: python -m http.server 8765'
 printf '%s\n' 'Supabase Studio local: http://127.0.0.1:54323'
 printf '%s\n' 'Email xác nhận test được lưu trong Mailpit: http://127.0.0.1:54324'
+printf '%s\n' 'Turnstile local dùng test site key luôn thành công; không dùng key này cho production.'
 printf '%s\n' 'Nhấn Ctrl+C để dừng Edge Function.'
 "$supabase_cli" functions serve community-api --env-file supabase/.env.local

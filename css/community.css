@@ -822,6 +822,17 @@ body[data-view="community"] #owner-panel {
   width: 100%;
 }
 
+.auth-captcha {
+  min-height: 65px;
+  margin: 14px 0;
+}
+
+.auth-captcha[data-error="true"] {
+  color: #a32626;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
 /* ── Muted text ────────────────────────────── */
 .muted {
   color: #6a6c65;

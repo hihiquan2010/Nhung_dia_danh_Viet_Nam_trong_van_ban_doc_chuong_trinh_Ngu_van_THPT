@@ -37,6 +37,27 @@ quan đến nội dung và tương tác, đồng thời cho phép tìm theo đ�
 Owner có thể ghim bài; vai trò tác giả hiển thị
 cạnh tên trên từng bài.
 
+### CAPTCHA và giới hạn đăng nhập
+
+Trang Tài khoản và Cộng đồng dùng Cloudflare Turnstile trước khi gọi Supabase
+Auth cho đăng nhập hoặc tạo tài khoản. Supabase phải bật xác minh CAPTCHA phía
+máy chủ; widget phía trình duyệt một mình không ngăn được request giả mạo.
+
+1. Tạo Turnstile widget cho `diadanhvanhoc.com` (và `www.diadanhvanhoc.com` nếu
+   domain đó được dùng), rồi đặt **site key** thành GitHub Actions repository
+   variable `TURNSTILE_SITE_KEY`.
+2. Trong Supabase Dashboard, mở Authentication → Bot and Abuse Protection, bật
+   CAPTCHA, chọn Cloudflare Turnstile và nhập **secret key**. Không đưa secret
+   key vào repository, GitHub Pages hay biến công khai.
+3. Supabase Auth giới hạn sign-in/sign-up theo IP. Mức mặc định hiện là 30 request
+   mỗi 5 phút, có burst tối đa 30; xem Authentication → Rate Limits và điều chỉnh
+   theo lưu lượng thực tế. Mạng trường học có thể dùng chung IP, nên giới hạn quá
+   thấp sẽ chặn cả người dùng hợp lệ.
+
+Workflow GitHub Pages dừng build nếu thiếu site key. Rate limit và CAPTCHA giảm
+bot/brute-force vào Auth, nhưng không thay thế bảo vệ DDoS ở tầng mạng hoặc hạ
+tầng của nhà cung cấp.
+
 Header, tìm kiếm và footer được dùng chung từ `js/site_chrome.js` trên trang chủ,
 cộng đồng, minigame và các trang địa danh.
 Minigame production dùng đường dẫn `/minigame`, lấy câu hỏi từ danh mục trong
@@ -70,7 +91,8 @@ qua chat, không đặt key vào JavaScript**.
    bỏ qua bởi Git.
 2. Chạy `bash scripts/run-community-local.sh`. Script khởi động Supabase local,
    áp dụng migration vào database **local**, tạo cấu hình trình duyệt dùng API/key
-   local và chạy Edge Function. Nó không kết nối project Supabase từ xa.
+   local cùng Turnstile test site key và chạy Edge Function. Nó không kết nối
+   project Supabase từ xa.
 3. Mở Git Bash thứ hai cùng thư mục, chạy `python -m http.server 8765`, rồi vào
    `http://127.0.0.1:8765/community.html`. Email đăng ký thử nghiệm được xem trong
    Supabase Mailpit local tại `http://127.0.0.1:54324`; Studio local ở
@@ -95,6 +117,8 @@ trước khi gửi nội dung cá nhân/nhạy cảm để kiểm duyệt.
 ### Triển khai Supabase và GitHub Pages
 
 `.github/workflows/deploy.yml` triển khai GitHub Pages khi có push lên nhánh `main`.
+Trước đó cần cấu hình repository variable `TURNSTILE_SITE_KEY` và bật CAPTCHA
+phía Supabase Auth như mục trên.
 Trước khi deploy, chạy `bash scripts/setup-gemini-local.sh` để nhập Gemini key tại
 prompt ẩn; key sẽ ở trong file local bị Git bỏ qua. Sau khi xác định đúng project
 ref Supabase, chạy
